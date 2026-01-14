@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.member.entitiy;
+package com.urisik.backend.domain.member.entity;
 
 import com.urisik.backend.domain.Allergy;
 import jakarta.persistence.*;

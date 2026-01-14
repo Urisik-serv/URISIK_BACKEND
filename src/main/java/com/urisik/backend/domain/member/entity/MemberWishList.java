@@ -1,5 +1,5 @@
-package com.urisik.backend.domain.member.entitiy;
-import com.urisik.backend.global.apiPayload.BaseEntity;
+package com.urisik.backend.domain.member.entity;
+import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

@@ -1,6 +1,6 @@
 package com.urisik.backend.domain;
 
-import com.urisik.backend.domain.member.entitiy.MemberAllergy;
+import com.urisik.backend.domain.member.entity.MemberAllergy;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

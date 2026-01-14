@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.member.entitiy;
+package com.urisik.backend.domain.member.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

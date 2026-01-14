@@ -1,8 +1,8 @@
-package com.urisik.backend.domain.member.entitiy;
+package com.urisik.backend.domain.member.entity;
 
 import com.urisik.backend.domain.enums.FamilyRole;
 import com.urisik.backend.domain.family.entity.FamilyRoom;
-import com.urisik.backend.global.apiPayload.BaseEntity;
+import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -56,13 +56,13 @@ public class FamilyMemberProfile extends BaseEntity {
     1:N 연관
     */
 
-    @OneToMany(mappedBy = "family_member_profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberAllergy> memberAllergyList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "family_member_profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberWishList> memberWishLists = new ArrayList<>();
 
-    @OneToMany(mappedBy = "family_member_profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DietPreference> dietPreferenceList = new ArrayList<>();
 
 
