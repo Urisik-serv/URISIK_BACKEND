@@ -47,6 +47,7 @@ public class SecurityConfig  {
                         // 1. ✅ 완전 공개 (회원가입/로그인, 문서, 정적 리소스 등)
                         .requestMatchers(
                                 "/api/auth/**",
+                                "/api/**",
                                 "/auth/signup",
                                 "/auth/login",
                                 "/swagger-ui/**",
