@@ -7,12 +7,14 @@ import com.urisik.backend.global.apiPayload.code.BaseErrorCode;
 import com.urisik.backend.global.apiPayload.code.BaseSuccessCode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.AccessLevel;
 
 @Getter
 @AllArgsConstructor
 @JsonPropertyOrder({"isSuccess", "code", "message", "result", "errorDetail"})
 public class ApiResponse<T> {
 
+    @Getter(AccessLevel.NONE)
     @JsonProperty("isSuccess")
     private final boolean isSuccess;
 
@@ -34,4 +36,3 @@ public class ApiResponse<T> {
         return new ApiResponse<>(false, code.getCode(), code.getMessage(), null, errorDetail);
     }
 }
-
