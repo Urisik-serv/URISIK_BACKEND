@@ -18,4 +18,11 @@ spring:
       hibernate:
         format_sql: true
 
+
+jwt:
+  token:
+    secretKey: ${JWT_KEY}
+    expiration:
+      access: 14400000
+
 debug: false

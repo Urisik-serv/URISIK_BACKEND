@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.family.entity;
 
-import com.urisik.backend.global.apiPayload.BaseEntity;
+import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,4 +1,4 @@
-package com.urisik.backend.global.apiPayload;
+package com.urisik.backend.global;
 
 import jakarta.persistence.*;
 import lombok.Getter;
