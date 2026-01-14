@@ -1,6 +1,5 @@
 ## Architecture
-![Uploading ChatGPT Image 2026년 1월 14일 오후 06_17_31.png…]()
-
+<img width="1536" height="1024" alt="ChatGPT Image 2026년 1월 14일 오후 06_17_31" src="https://github.com/user-attachments/assets/3a0e5bb0-b8d2-4200-aba6-4a3f4fab6ab5" />
 
 
 
