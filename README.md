@@ -1,33 +1,6 @@
 ## Architecture
-flowchart LR
-    User[User] --> Route53[Route 53]
-    Route53 --> CloudFront[CloudFront]
-    CloudFront --> ALB[ALB]
+![Uploading ChatGPT Image 2026년 1월 14일 오후 06_17_31.png…]()
 
-    subgraph AWS[AWS Cloud]
-        subgraph VPC[VPC]
-            subgraph PublicSubnet[Public Subnet]
-                ALB
-            end
-
-            subgraph PrivateSubnet[Private Subnet]
-                EC2[EC2 - Backend Server]
-                RDS[(RDS - MySQL)]
-                VectorDB[(Vector DB)]
-                NAT[NAT Gateway]
-
-                EC2 --> RDS
-                EC2 --> VectorDB
-                EC2 --> NAT
-            end
-        end
-    end
-
-    NAT --> ExternalAI[External AI APIs]
-
-    GitHub[GitHub] --> Actions[GitHub Actions]
-    Actions --> ECR[ECR]
-    ECR --> EC2
 
 
 
