@@ -1,0 +1,16 @@
+services:
+  app:
+    image: euuunchae/urisik:latest
+    container_name: urisik-app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+      # RDS 연결 정보
+      SPRING_DATASOURCE_URL: jdbc:mysql://urisik-server-db.crwokauswgl1.ap-northeast-2.rds.amazonaws.com:3306/urisik-server-db
+      SPRING_DATASOURCE_USERNAME: root
+
+      # 비밀번호
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    restart: always
