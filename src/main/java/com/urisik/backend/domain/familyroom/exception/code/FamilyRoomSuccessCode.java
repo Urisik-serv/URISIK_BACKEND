@@ -32,7 +32,11 @@ public enum FamilyRoomSuccessCode implements BaseSuccessCode {
 
     INVITE_CREATED(HttpStatus.OK,
             "INVITE_200",
-            "초대 토큰 생성 성공");
+            "초대 토큰 생성 성공"),
+
+    INVITE_PREVIEW(HttpStatus.OK,
+            "INVITE_200",
+            "초대 링크 조회 성공")
     ;
 
     private final HttpStatus httpStatus;
@@ -47,12 +51,5 @@ public enum FamilyRoomSuccessCode implements BaseSuccessCode {
                     .code(code)
                     .message(message)
                     .build();
-    }
-
-    /**
-     * Invite 도메인 성공 코드
-     */
-    public enum InviteSuccessCode {
-        INVITE_CREATED
     }
 }
