@@ -60,6 +60,7 @@ jobs:
             # .env 파일 생성 
             echo "DOCKERHUB_USERNAME=${{ vars.DOCKERHUB_USERNAME }}" > .env
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+            echo "JWT_KEY=${{ secrets.JWT_KEY }}" >> .env 
             
             # 컨테이너 교체 작업
             docker compose pull
