@@ -8,7 +8,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
 
       # RDS 연결 정보
-      - SPRING_DATASOURCE_URL=jdbc:mysql://urisik-server-db.crwokauswgl1.ap-northeast-2.rds.amazonaws.com:3306/urisik-server-db
+      - SPRING_DATASOURCE_URL=jdbc:mysql://urisik-db.crwokauswgl1.ap-northeast-2.rds.amazonaws.com:3306/urisik-db
       - SPRING_DATASOURCE_USERNAME=urisik
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
 
