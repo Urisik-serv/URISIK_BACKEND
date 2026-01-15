@@ -16,7 +16,19 @@ public enum FamilyRoomErrorCode implements BaseErrorCode {
 
     FAMILY_NAME_DUPLICATED(HttpStatus.CONFLICT,
             "FAMILY_ROOM_409",
-            "이미 있는 가족명입니다.")
+            "이미 있는 가족명입니다."),
+
+    INVITE_FORBIDDEN(HttpStatus.FORBIDDEN,
+            "INVITE_403",
+            "초대 토큰 생성 권한이 없습니다."),
+
+    INVITE_TOKEN_INVALID(HttpStatus.NOT_FOUND,
+            "INVITE_404",
+            "유효하지 않은 초대 링크입니다."),
+
+    INVITE_TOKEN_EXPIRED(HttpStatus.GONE,
+            "INVITE_410",
+            "만료된 초대 링크입니다.")
     ;
 
     private final HttpStatus httpStatus;
@@ -30,5 +42,14 @@ public enum FamilyRoomErrorCode implements BaseErrorCode {
                 .code(code)
                 .message(message)
                 .build();
+    }
+
+    /**
+     * Invite 도메인 에러 코드
+     */
+    public enum InviteErrorCode {
+        INVITE_FORBIDDEN,
+        INVITE_TOKEN_INVALID,
+        INVITE_TOKEN_EXPIRED
     }
 }
