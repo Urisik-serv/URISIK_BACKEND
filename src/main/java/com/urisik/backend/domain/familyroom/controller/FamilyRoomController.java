@@ -6,6 +6,7 @@ import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomSuccessCode
 import com.urisik.backend.domain.familyroom.service.FamilyRoomService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,7 +18,7 @@ public class FamilyRoomController {
 
     @PostMapping
     public ApiResponse<CreateFamilyRoomResDTO> createFamilyRoom(
-            // 로그인 인증 제외
+            // 로그인 정책 미정
             // @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody CreateFamilyRoomReqDTO request
     ) {

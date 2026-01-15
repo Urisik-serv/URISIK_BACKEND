@@ -1,6 +1,5 @@
-package com.urisik.backend.domain.entity;
+package com.urisik.backend.domain.familyroom.entity;
 
-import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,6 +29,4 @@ public class Invite {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_room_id", nullable = false)
     private FamilyRoom familyRoom;
-
-
 }
