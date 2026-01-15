@@ -8,11 +8,13 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
 
       # RDS 연결 정보
-      - SPRING_DATASOURCE_URL=jdbc:mysql://urisik-db.crwokauswgl1.ap-northeast-2.rds.amazonaws.com:3306/urisik-db
+      - SPRING_DATASOURCE_URL=jdbc:mysql://urisik-db.crwokauswgl1.ap-northeast-2.rds.amazonaws.com:3306/urisik-db?useSSL=false&serverTimezone=Asia/Seoul
       - SPRING_DATASOURCE_USERNAME=urisik
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
 
       # JWT 설정
-      - JWT_KEY=${JWT_KEY}
+      - JWT_TOKEN_SECRETKEY=${JWT_KEY}
+      - JWT_TOKEN_EXPIRATION_ACCESS=14400000
+
 
     restart: always
