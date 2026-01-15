@@ -3,10 +3,12 @@ package com.urisik.backend.global.auth;
 
 import com.urisik.backend.global.auth.jwt.JwtAuthFilter;
 import com.urisik.backend.global.auth.jwt.JwtUtil;
+import com.urisik.backend.global.auth.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,6 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig  {
 
+    private final CustomOAuth2UserService customOAuth2UserService;
     private final JwtUtil jwtUtil;
     //private final CustomUserDetailsService customUserDetailsService;
 
@@ -35,13 +38,23 @@ public class SecurityConfig  {
 
         http
                 .csrf(csrf -> csrf.disable())
+
                 .cors(cors -> {}) // 아래 corsConfigurationSource()랑 연결
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+
                 ) // 🔥 JWT 인증에서는 세션을 절대 사용하지 않게 설정// 🛑 HTML 폼 로그인 / 기본 로그아웃 비활성화
+
                 .formLogin(form -> form.disable())
+
                 .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class)
+
                 .logout(logout -> logout.disable())
+
+                .oauth2Login((oauth2) -> oauth2
+                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
+                                .userService(customOAuth2UserService)))
 
                 .authorizeHttpRequests(auth -> auth
                         // 1. ✅ 완전 공개 (회원가입/로그인, 문서, 정적 리소스 등)

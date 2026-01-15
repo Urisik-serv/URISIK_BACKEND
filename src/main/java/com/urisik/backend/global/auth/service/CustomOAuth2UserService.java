@@ -1,5 +1,7 @@
 package com.urisik.backend.global.auth.service;
 
+import com.urisik.backend.global.auth.dto.CustomOAuth2User;
+import com.urisik.backend.global.auth.dto.MemberDto;
 import com.urisik.backend.global.auth.dto.res.GoogleResponse;
 import com.urisik.backend.global.auth.dto.res.KakaoResponse;
 import com.urisik.backend.global.auth.dto.res.OAuth2Response;
@@ -32,7 +34,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             return null;
         }
 
-        return null;
+        String username = oAuth2Response.getProvider()+" "+oAuth2Response.getProviderId();
+
+        MemberDto memberDto = new MemberDto();
+        memberDto.setUsername(username);
+        memberDto.setName(oAuth2Response.getName());
+        memberDto.setRole("ROLE_USER");
+
+        return new CustomOAuth2User(memberDto);
+
+
         //추후 작성
     }
 
