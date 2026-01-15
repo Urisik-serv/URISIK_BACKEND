@@ -1,6 +1,6 @@
 package com.urisik.backend.global.auth;
 
-import com.urisik.backend.domain.member.entitiy.Member;
+import com.urisik.backend.domain.member.entity.Member;
 import lombok.Data;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
