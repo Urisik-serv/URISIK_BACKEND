@@ -6,17 +6,16 @@ import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomSuccessCode
 import com.urisik.backend.domain.familyroom.service.FamilyRoomService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/family-rooms")
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class FamilyRoomController {
 
     private final FamilyRoomService familyRoomService;
 
-    @PostMapping
+    @PostMapping("/family-rooms")
     public ApiResponse<CreateFamilyRoomResDTO> createFamilyRoom(
             // 로그인 정책 미정
             // @AuthenticationPrincipal CustomUserPrincipal principal,

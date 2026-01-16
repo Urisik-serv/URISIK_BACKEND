@@ -36,7 +36,11 @@ public enum FamilyRoomSuccessCode implements BaseSuccessCode {
 
     INVITE_PREVIEW(HttpStatus.OK,
             "INVITE_200",
-            "초대 링크 조회 성공")
+            "초대 링크 조회 성공"),
+
+    FAMILY_JOIN(HttpStatus.OK,
+            "FAMILY_JOIN_200",
+            "가족방 참여 성공")
     ;
 
     private final HttpStatus httpStatus;
