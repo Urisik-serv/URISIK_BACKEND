@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.enums;
+package com.urisik.backend.domain.familyroom.enums;
 
 public enum FamilyRole {
     MOM("엄마"),
@@ -15,6 +15,4 @@ public enum FamilyRole {
     public String getKoreanName() {
         return koreanName;
     }
-
-
 }
