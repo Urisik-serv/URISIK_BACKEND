@@ -39,6 +39,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 return;
             }
+
             // Bearer이면 추출
             token = token.replace("Bearer ", "");
             // AccessToken 검증하기: 올바른 토큰이면
@@ -52,6 +53,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         null,
                         List.of(new SimpleGrantedAuthority(role))
                 );
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
             filterChain.doFilter(request, response);
         } catch (Exception e) {

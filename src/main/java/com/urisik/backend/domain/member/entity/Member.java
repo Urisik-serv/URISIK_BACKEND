@@ -17,7 +17,7 @@ public class Member {
     private Long id;
 
     //소셜정보 + " " + 소셜 provider 값
-    @Column(name = "member_credential", nullable = false)
+    @Column(name = "member_credential", nullable = false, unique = true)
     private String credentialId;
 
     @Column(name = "member_name", nullable = false)

@@ -18,7 +18,6 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public Map<String, Object> getAttributes() {
-
         return null;
     }
 

@@ -36,16 +36,12 @@ public class JwtUtil {
     }
 
     /** Access Token 생성 */
-    public String createAccessToken(CustomOAuth2User member) {
+    public String createAccessToken(Long memberId,String role) {
         Instant now = Instant.now();
 
-        String role = member.getAuthorities().stream()
-                .findFirst()
-                .map(GrantedAuthority::getAuthority)
-                .orElse("ROLE_USER");
 
         return Jwts.builder()
-                .subject(String.valueOf(member.getId()))      // PK 들어감
+                .subject(String.valueOf(memberId))      // PK 들어감
                 .claim("role", role)
                 .claim("typ", "access")
                 .issuedAt(Date.from(now))
@@ -83,11 +79,6 @@ public class JwtUtil {
         return "refresh".equals(claims.get("typ", String.class));
     }
 
-    // acesss 인지
-    public boolean isAccess(String token) {
-        Claims claims = getClaims(token).getPayload();
-        return "access".equals(claims.get("typ", String.class));
-    }
 
 
     /** Claims 파싱 */
