@@ -9,15 +9,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/family-rooms")
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class FamilyRoomController {
 
     private final FamilyRoomService familyRoomService;
 
-    @PostMapping
+    @PostMapping("/family-rooms")
     public ApiResponse<CreateFamilyRoomResDTO> createFamilyRoom(
-            // 로그인 인증 제외
+            // 로그인 정책 미정
             // @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody CreateFamilyRoomReqDTO request
     ) {

@@ -1,7 +1,7 @@
 package com.urisik.backend.domain.familyroom.entity;
 
 import com.urisik.backend.domain.familyroom.enums.FamilyPolicy;
-import com.urisik.backend.domain.enums.FamilyRole;
+import com.urisik.backend.domain.familyroom.enums.FamilyRole;
 import com.urisik.backend.domain.familyroom.enums.FamilyStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -46,5 +46,18 @@ public class FamilyMember {
 
     public static FamilyMember createOwner(Long familyRoomId, Long memberId, FamilyPolicy policy) {
         return new FamilyMember(familyRoomId, memberId, policy);
+    }
+
+    /**
+     * 초대 토큰을 통해 가족방에 참여하는 경우 (프로필 미완료 상태)
+     */
+    public static FamilyMember createInvitedMember(
+            Long familyRoomId,
+            Long memberId,
+            FamilyPolicy familyPolicy
+    ) {
+        FamilyMember member = new FamilyMember(familyRoomId, memberId, familyPolicy);
+        member.familyRole = null; // 역할 미확정
+        return member;
     }
 }

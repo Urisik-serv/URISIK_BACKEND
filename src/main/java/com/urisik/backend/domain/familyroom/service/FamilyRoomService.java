@@ -24,7 +24,7 @@ public class FamilyRoomService {
         validate(req);
 
         // 가족방 엔티티 생성 + 저장
-        FamilyRoom room = FamilyRoom.create(req.familyName().trim());
+        FamilyRoom room = FamilyRoom.create(req.familyName().trim(), req.familyPolicy());
         FamilyRoom saved = familyRoomRepository.save(room);
 
         // 생성자 가족 멤버십 생성 + 저장

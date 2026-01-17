@@ -1,6 +1,5 @@
-package com.urisik.backend.domain.entity;
+package com.urisik.backend.domain.familyroom.entity;
 
-import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,16 +8,16 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "invite")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Invite {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "token", nullable = false, unique = true, length = 255)
+    @Column(name = "token", nullable = false, unique = true)
     private String token;
 
     @Column(name = "created_at", nullable = false)
@@ -30,6 +29,4 @@ public class Invite {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_room_id", nullable = false)
     private FamilyRoom familyRoom;
-
-
 }

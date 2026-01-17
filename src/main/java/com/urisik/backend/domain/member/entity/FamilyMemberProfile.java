@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.member.entity;
 
-import com.urisik.backend.domain.enums.FamilyRole;
+import com.urisik.backend.domain.familyroom.enums.FamilyRole;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
