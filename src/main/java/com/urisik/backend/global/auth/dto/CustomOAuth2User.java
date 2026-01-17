@@ -48,6 +48,11 @@ public class CustomOAuth2User implements OAuth2User {
     public String getUsername() {
 
         //사용자 소셜 이름 얻기
-        return memberDto.getUsername();
+        return memberDto.getCredentialId();
     }
+
+    public Long getId(){
+        return memberDto.getId();
+    }
+
 }

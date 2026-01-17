@@ -1,25 +1,31 @@
 package com.urisik.backend.domain.member.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 
 @Entity
 @Table(name = "member")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Setter
+@NoArgsConstructor(access = AccessLevel.PUBLIC)
 public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    //소셜정보 + " " + 소셜 provider 값
     @Column(name = "member_credential", nullable = false)
-    private String memberCredential;
+    private String credentialId;
 
     @Column(name = "member_name", nullable = false)
-    private String memberName;
+    private String name;
+
+    // 일반 유저: ROLE_USER
+    @Column (name = "member_role", nullable = false)
+    private String role;
 
 
     // ✅ 약관 동의 여부 (필수/선택)
