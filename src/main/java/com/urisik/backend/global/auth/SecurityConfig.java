@@ -3,10 +3,13 @@ package com.urisik.backend.global.auth;
 
 import com.urisik.backend.global.auth.jwt.JwtAuthFilter;
 import com.urisik.backend.global.auth.jwt.JwtUtil;
+import com.urisik.backend.global.auth.oauth2.CustomSuccessHandler;
+import com.urisik.backend.global.auth.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,26 +25,36 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig  {
 
+    //소셜 로그인 회원 인증 만들기 절차
+    private final CustomOAuth2UserService customOAuth2UserService;
+    //JWT 토큰 생성 검증 절차
     private final JwtUtil jwtUtil;
-    //private final CustomUserDetailsService customUserDetailsService;
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+    //JWT 토큰 쿠키에 담기
+    private final CustomSuccessHandler customSuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
+
                 .cors(cors -> {}) // 아래 corsConfigurationSource()랑 연결
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+
                 ) // 🔥 JWT 인증에서는 세션을 절대 사용하지 않게 설정// 🛑 HTML 폼 로그인 / 기본 로그아웃 비활성화
+
                 .formLogin(form -> form.disable())
+
                 .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class)
-                .logout(logout -> logout.disable())
+
+
+                .oauth2Login((oauth2) -> oauth2
+                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
+                                .userService(customOAuth2UserService))
+                        .successHandler(customSuccessHandler)
+                )
 
                 .authorizeHttpRequests(auth -> auth
                         // 1. ✅ 완전 공개 (회원가입/로그인, 문서, 정적 리소스 등)
@@ -78,15 +91,10 @@ public class SecurityConfig  {
         return http.build();
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
 
     @Bean
     public JwtAuthFilter jwtAuthFilter() {
-        return new JwtAuthFilter(jwtUtil/*, customUserDetailsService*/);
+        return new JwtAuthFilter(jwtUtil);
     }
 
 

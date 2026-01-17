@@ -11,17 +11,18 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-   // private final CustomUserDetailsService customUserDetailsService;
 
     @Override
     protected void doFilterInternal(
@@ -38,25 +39,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 return;
             }
+
             // Bearer이면 추출
             token = token.replace("Bearer ", "");
             // AccessToken 검증하기: 올바른 토큰이면
             if (jwtUtil.isValid(token)) {
-                /*
-                // 토큰에서 이메일 추출
-                String username = jwtUtil.g;
-                // 인증 객체 생성: 이메일로 찾아온 뒤, 인증 객체 생성
-                UserDetails user = customUserDetailsService.loadUserByUsername(username);
-                Authentication auth = new UsernamePasswordAuthenticationToken(
-                        user,
-                        null,
-                        user.getAuthorities()
-                );
-                // 인증 완료 후 SecurityContextHolder에 넣기
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                Long memberId = jwtUtil.getMemberId(token); // sub 파싱
 
-                별도의 추가 로직 구현시 재사용
-                 */
+                String role = jwtUtil.getRole(token); // "ROLE_USER" 또는 roles[0]
+
+                var auth = new UsernamePasswordAuthenticationToken(
+                        memberId,                 // principal로 memberId 넣기
+                        null,
+                        List.of(new SimpleGrantedAuthority(role))
+                );
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
             filterChain.doFilter(request, response);
         } catch (Exception e) {
