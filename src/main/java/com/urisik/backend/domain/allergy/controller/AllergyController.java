@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.allergy.controller;
 
-import com.urisik.backend.domain.allergy.dto.AllergyResponseDTO;
+import com.urisik.backend.domain.allergy.dto.res.AllergyResponseDTO;
 import com.urisik.backend.domain.allergy.enums.AllergySuccessCode;
 import com.urisik.backend.domain.allergy.service.AllergyQueryService;
 import com.urisik.backend.global.apiPayload.ApiResponse;

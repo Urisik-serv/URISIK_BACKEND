@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.allergy.dto;
+package com.urisik.backend.domain.allergy.dto.res;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

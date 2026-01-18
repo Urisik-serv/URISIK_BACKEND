@@ -1,7 +1,7 @@
 package com.urisik.backend.domain.allergy.service;
 
 import com.urisik.backend.domain.allergy.converter.AllergyConverter;
-import com.urisik.backend.domain.allergy.dto.AllergyResponseDTO;
+import com.urisik.backend.domain.allergy.dto.res.AllergyResponseDTO;
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import lombok.RequiredArgsConstructor;

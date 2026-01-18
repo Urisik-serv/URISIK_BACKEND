@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.allergy.converter;
 
-import com.urisik.backend.domain.allergy.dto.AllergyResponseDTO;
+import com.urisik.backend.domain.allergy.dto.res.AllergyResponseDTO;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 
 import java.util.List;
