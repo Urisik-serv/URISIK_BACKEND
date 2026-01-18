@@ -1,6 +1,5 @@
 package com.urisik.backend.domain.entity;
 
-import com.urisik.backend.domain.member.entity.MemberAllergy;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -26,7 +25,8 @@ public class Allergy {
     @OneToMany(mappedBy = "allergy", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AllergyAlterFood> alterFoods = new ArrayList<>();
 
+    /*
     @OneToMany(mappedBy = "allergy", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberAllergy> memberAllergyList  = new ArrayList<>();
-
+     */
 }
