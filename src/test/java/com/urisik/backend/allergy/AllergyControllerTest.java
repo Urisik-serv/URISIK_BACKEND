@@ -1,7 +1,7 @@
 package com.urisik.backend.allergy;
 
 import com.urisik.backend.domain.allergy.controller.AllergyController;
-import com.urisik.backend.domain.allergy.dto.AllergyResponseDTO;
+import com.urisik.backend.domain.allergy.dto.res.AllergyResponseDTO;
 import com.urisik.backend.domain.allergy.service.AllergyQueryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
