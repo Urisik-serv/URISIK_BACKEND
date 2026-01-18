@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class InviteController {
 
     private final InviteService inviteService;
+    // 로그인 정책 미정
+    private static final Long TEMP_MEMBER_ID = 1L;
 
     /**
      * 초대 토큰 생성 API
@@ -30,7 +32,7 @@ public class InviteController {
             // @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         // Long memberId = userDetails.getMemberId();
-        Long memberId = 1L;
+        Long memberId = TEMP_MEMBER_ID;
         CreateInviteResDTO result = inviteService.createInvite(familyRoomId, memberId);
 
         return ApiResponse.onSuccess(FamilyRoomSuccessCode.INVITE_CREATED, result);
@@ -57,7 +59,7 @@ public class InviteController {
             // @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         // Long memberId = userDetails.getMemberId();
-        Long memberId = 1L;
+        Long memberId = TEMP_MEMBER_ID;
 
         AcceptInviteResDTO result = inviteService.acceptInvite(token, memberId);
         return ApiResponse.onSuccess(FamilyRoomSuccessCode.FAMILY_JOIN, result);

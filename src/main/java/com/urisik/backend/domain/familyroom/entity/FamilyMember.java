@@ -3,6 +3,7 @@ package com.urisik.backend.domain.familyroom.entity;
 import com.urisik.backend.domain.familyroom.enums.FamilyPolicy;
 import com.urisik.backend.domain.familyroom.enums.FamilyRole;
 import com.urisik.backend.domain.familyroom.enums.FamilyStatus;
+import com.urisik.backend.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,11 +18,13 @@ public class FamilyMember {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "family_room_id", nullable = false)
-    private Long familyRoomId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "family_room_id", nullable = false)
+    private FamilyRoom familyRoom;
 
-    @Column(name = "member_id", nullable = false)
-    private Long memberId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 
     // 프로필 생성 전에는 null 허용
     @Enumerated(EnumType.STRING)
@@ -36,28 +39,36 @@ public class FamilyMember {
     @Column(name = "status", nullable = false)
     private FamilyStatus status;
 
-    private FamilyMember(Long familyRoomId, Long memberId, FamilyPolicy familyPolicy) {
-        this.familyRoomId = familyRoomId;
-        this.memberId = memberId;
+    private FamilyMember(FamilyRoom familyRoom, Member member, FamilyPolicy familyPolicy) {
+        this.familyRoom = familyRoom;
+        this.member = member;
         this.familyPolicy = familyPolicy;
         this.status = FamilyStatus.ACTIVE;
-        this.familyRole = null;
+        this.familyRole = null; // 프로필 생성 전에는 null 허용
     }
 
-    public static FamilyMember createOwner(Long familyRoomId, Long memberId, FamilyPolicy policy) {
-        return new FamilyMember(familyRoomId, memberId, policy);
+    public static FamilyMember createOwner(FamilyRoom familyRoom, Member member, FamilyPolicy policy) {
+        return new FamilyMember(familyRoom, member, policy);
     }
 
     /**
      * 초대 토큰을 통해 가족방에 참여하는 경우 (프로필 미완료 상태)
      */
     public static FamilyMember createInvitedMember(
-            Long familyRoomId,
-            Long memberId,
+            FamilyRoom familyRoom,
+            Member member,
             FamilyPolicy familyPolicy
     ) {
-        FamilyMember member = new FamilyMember(familyRoomId, memberId, familyPolicy);
-        member.familyRole = null; // 역할 미확정
-        return member;
+        FamilyMember fm = new FamilyMember(familyRoom, member, familyPolicy);
+        fm.familyRole = null; // 역할 미확정
+        return fm;
+    }
+
+    public Long getFamilyRoomId() {
+        return familyRoom.getId();
+    }
+
+    public Long getMemberId() {
+        return member.getId();
     }
 }
