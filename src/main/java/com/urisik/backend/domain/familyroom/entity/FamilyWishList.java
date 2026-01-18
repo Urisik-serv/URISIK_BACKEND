@@ -1,6 +1,5 @@
-package com.urisik.backend.domain.entity;
+package com.urisik.backend.domain.familyroom.entity;
 
-import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,6 +24,4 @@ public class FamilyWishList extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_room_id", nullable = false)
     private FamilyRoom familyRoom;
-
-
 }

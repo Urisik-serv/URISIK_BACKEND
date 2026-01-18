@@ -11,6 +11,8 @@ import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomErrorCode;
 import com.urisik.backend.domain.familyroom.repository.FamilyMemberRepository;
 import com.urisik.backend.domain.familyroom.repository.FamilyRoomRepository;
 import com.urisik.backend.domain.familyroom.repository.InviteRepository;
+import com.urisik.backend.domain.member.entity.Member;
+import com.urisik.backend.domain.member.repo.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ public class InviteService {
     private final InviteRepository inviteRepository;
     private final FamilyRoomRepository familyRoomRepository;
     private final FamilyMemberRepository familyMemberRepository;
+    private final MemberRepository memberRepository;
 
     /**
      * 초대 토큰 생성
@@ -37,9 +40,12 @@ public class InviteService {
     public CreateInviteResDTO createInvite(Long familyRoomId, Long memberId) {
 
         FamilyRoom familyRoom = familyRoomRepository.findById(familyRoomId)
-                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM));
+                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM_NOT_FOUND));
 
-        boolean isMember = familyMemberRepository.existsByFamilyRoomIdAndMemberId(familyRoomId, memberId);
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.MEMBER_NOT_FOUND));
+
+        boolean isMember = familyMemberRepository.existsByFamilyRoomAndMember(familyRoom, member);
         if (!isMember) {
             throw new FamilyRoomException(FamilyRoomErrorCode.INVITE_FORBIDDEN);
         }
@@ -47,12 +53,11 @@ public class InviteService {
         String token = generateUniqueToken();
         LocalDateTime now = LocalDateTime.now();
 
-        Invite invite = Invite.builder()
-                .token(token)
-                .createdAt(now)
-                .expiresAt(now.plusDays(DEFAULT_EXPIRE_DAYS))
-                .familyRoom(familyRoom)
-                .build();
+        Invite invite = Invite.create(
+                token,
+                familyRoom,
+                now.plusDays(DEFAULT_EXPIRE_DAYS)
+        );
 
         inviteRepository.save(invite);
 
@@ -62,7 +67,6 @@ public class InviteService {
     }
 
     private String generateUniqueToken() {
-        // 충돌 체크 (최대 3회)
         for (int i = 0; i < 3; i++) {
             String token = UUID.randomUUID().toString().replace("-", "");
             if (!inviteRepository.existsByToken(token)) return token;
@@ -85,7 +89,7 @@ public class InviteService {
 
         FamilyRoom familyRoom = invite.getFamilyRoom();
         if (familyRoom == null) {
-            throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
+            throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM_NOT_FOUND);
         }
 
         return ReadInviteResDTO.builder()
@@ -103,7 +107,6 @@ public class InviteService {
      * - family_role은 프로필 생성 시점에 확정 (수락 시점에는 미확정)
      * - family_policy는 가족방 생성 시 선택된 값을 그대로 사용
      */
-    // 로그인 정책 미정
     public AcceptInviteResDTO acceptInvite(String token, Long memberId) {
 
         Invite invite = inviteRepository.findByToken(token)
@@ -115,26 +118,27 @@ public class InviteService {
 
         FamilyRoom familyRoom = invite.getFamilyRoom();
         if (familyRoom == null) {
-            throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
+            throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM_NOT_FOUND);
         }
 
-        Long familyRoomId = familyRoom.getId();
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.MEMBER_NOT_FOUND));
 
-        boolean alreadyMember = familyMemberRepository.existsByFamilyRoomIdAndMemberId(familyRoomId, memberId);
+        boolean alreadyMember = familyMemberRepository.existsByFamilyRoomAndMember(familyRoom, member);
         if (alreadyMember) {
             throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_MEMBER_ALREADY_JOINED);
         }
 
         FamilyMember familyMember = FamilyMember.createInvitedMember(
-                familyRoomId,
-                memberId,
+                familyRoom,
+                member,
                 familyRoom.getFamilyPolicy()
         );
 
         familyMemberRepository.save(familyMember);
 
         return AcceptInviteResDTO.builder()
-                .familyRoomId(familyRoomId)
+                .familyRoomId(familyRoom.getId())
                 .build();
     }
 }

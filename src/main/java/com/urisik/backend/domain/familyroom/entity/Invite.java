@@ -2,15 +2,14 @@ package com.urisik.backend.domain.familyroom.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "invite")
 @Getter
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class Invite {
 
     @Id
@@ -29,4 +28,17 @@ public class Invite {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_room_id", nullable = false)
     private FamilyRoom familyRoom;
+
+    public static Invite create(
+            String token,
+            FamilyRoom familyRoom,
+            LocalDateTime expiresAt
+    ) {
+        return Invite.builder()
+                .token(token)
+                .familyRoom(familyRoom)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(expiresAt)
+                .build();
+    }
 }

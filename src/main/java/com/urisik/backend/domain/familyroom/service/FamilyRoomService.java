@@ -8,6 +8,8 @@ import com.urisik.backend.domain.familyroom.exception.FamilyRoomException;
 import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomErrorCode;
 import com.urisik.backend.domain.familyroom.repository.FamilyMemberRepository;
 import com.urisik.backend.domain.familyroom.repository.FamilyRoomRepository;
+import com.urisik.backend.domain.member.entity.Member;
+import com.urisik.backend.domain.member.repo.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ public class FamilyRoomService {
 
     private final FamilyRoomRepository familyRoomRepository;
     private final FamilyMemberRepository familyMemberRepository;
+    private final MemberRepository memberRepository;
 
     @Transactional
     public CreateFamilyRoomResDTO createFamilyRoom(Long memberId, CreateFamilyRoomReqDTO req) {
@@ -27,8 +30,11 @@ public class FamilyRoomService {
         FamilyRoom room = FamilyRoom.create(req.familyName().trim(), req.familyPolicy());
         FamilyRoom saved = familyRoomRepository.save(room);
 
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.MEMBER_NOT_FOUND));
+
         // 생성자 가족 멤버십 생성 + 저장
-        FamilyMember owner = FamilyMember.createOwner(saved.getId(), memberId, req.familyPolicy());
+        FamilyMember owner = FamilyMember.createOwner(saved, member, saved.getFamilyPolicy());
         familyMemberRepository.save(owner);
 
         return new CreateFamilyRoomResDTO(saved.getId());
@@ -39,7 +45,6 @@ public class FamilyRoomService {
      * NOTE: hasMother/hasFather와 familyPolicy의 정합성은 최소로만 검증한다.
      * Ex. 방장으로 공동을 선택했는데, 가족 구성원에 엄마아빠 둘 중 한명이라도 없는 경우.
      * Ex. 방장으로 엄마 또는 아빠를 선택했는데, 가족 구성원에 엄마 또는 아빠가 없는 경우.
-     * 실제 권한 판단은 프로필 생성 이후에 profile.role + family_policy에서 처리한다.
      */
     private void validate(CreateFamilyRoomReqDTO req) {
         if (req == null) throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
