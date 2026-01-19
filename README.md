@@ -28,7 +28,8 @@ EC2 서버에서 최신 이미지를 pull 받아 애플리케이션을 실행한
 
 아래 다이어그램은 본 프로젝트의 전체 아키텍처 구조와 요청 흐름을 나타낸다.
 
-<img width="1536" height="1024" alt="ChatGPT Image 2026년 1월 15일 오후 12_42_00" src="https://github.com/user-attachments/assets/3181c346-deaa-415d-92d9-e646ca11213f" />
+<img width="1536" height="1024" alt="ChatGPT Image 2026년 1월 19일 오후 04_39_47" src="https://github.com/user-attachments/assets/9bf8b5d3-3cc3-4427-8ef8-9f247447284b" />
+
 
 
 ---
