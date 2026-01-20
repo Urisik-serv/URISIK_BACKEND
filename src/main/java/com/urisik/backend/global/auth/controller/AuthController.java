@@ -12,6 +12,7 @@ import com.urisik.backend.global.auth.jwt.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -61,8 +62,48 @@ public class AuthController {
 
         return ApiResponse.onSuccess(
                 GeneralSuccessCode.OK,
-                LogoutResponse.builder().success(true).build()
+                LogoutResponse.builder().logoutSuccess(true).deleteSuccess(false).build()
         );
     }
+
+
+    @PostMapping("/delete")
+    public ApiResponse<LogoutResponse> withdraw(HttpServletResponse response) {
+
+        // ✅ JwtAuthFilter에서 principal = memberId 넣어둔 상태라고 가정
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getPrincipal() == null) {
+            throw new GeneralException(GeneralErrorCode.UNAUTHORIZED);
+        }
+
+        Long memberId;
+        try {
+            memberId = (Long) auth.getPrincipal();
+        } catch (ClassCastException e) {
+            throw new GeneralException(GeneralErrorCode.UNAUTHORIZED);
+        }
+
+        // ✅ 회원 조회
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new GeneralException(GeneralErrorCode.VALIDATION_ERROR));
+
+        // ✅ (중요) 연관 데이터 때문에 hard delete 실패할 수 있음
+        // 2) hard delete면 cascade/orphanRemoval / FK on delete cascade 정리가 필요
+        memberRepository.delete(member);
+
+        // ✅ refresh_token 쿠키 삭제 내려주기
+        Cookie cookie = new Cookie("refresh_token", "");
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);       // https 운영이면 true 유지
+        cookie.setPath("/");
+        cookie.setMaxAge(0);          // 삭제
+        response.addCookie(cookie);
+
+        return ApiResponse.onSuccess(
+                GeneralSuccessCode.OK,
+                LogoutResponse.builder().logoutSuccess(true).deleteSuccess(true).build()
+        );
+    }
+
 
 }

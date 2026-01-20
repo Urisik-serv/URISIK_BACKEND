@@ -10,5 +10,6 @@ import lombok.Setter;
 @Setter
 @Builder
 public class LogoutResponse {
-    private boolean success;
+    private boolean logoutSuccess;
+    private boolean deleteSuccess;
 }
