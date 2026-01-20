@@ -3,6 +3,10 @@ package com.urisik.backend.global.auth.jwt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
+import com.urisik.backend.global.auth.exception.AuthenExcetion;
+import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,42 +35,42 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        try {
-            // 토큰 가져오기
-            String token = request.getHeader("Authorization");
-            // token이 없거나 Bearer가 아니면 넘기기
-            if (token == null || !token.startsWith("Bearer ")) {
-                filterChain.doFilter(request, response);
-                return;
-            }
+        String header = request.getHeader("Authorization");
 
-            // Bearer이면 추출
-            token = token.replace("Bearer ", "");
-            // AccessToken 검증하기: 올바른 토큰이면
-            if (jwtUtil.isValid(token)) {
-                Long memberId = jwtUtil.getMemberId(token); // sub 파싱
-
-                String role = jwtUtil.getRole(token); // "ROLE_USER" 또는 roles[0]
-
-                var auth = new UsernamePasswordAuthenticationToken(
-                        memberId,                 // principal로 memberId 넣기
-                        null,
-                        List.of(new SimpleGrantedAuthority(role))
-                );
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            }
+        // ✅ 헤더 없으면 그냥 다음으로 (permitAll API들도 있으니까)
+        if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
-        } catch (Exception e) {
-            response.setContentType("application/json;charset=UTF-8");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
 
-            ApiResponse<Void> errorResponse = ApiResponse.onFailure(
-                    GeneralErrorCode.UNAUTHORIZED,
-                    null
+        String token = header.substring("Bearer ".length());
+
+        try {
+            // ✅ 유효 + access 토큰인지 확인까지 하고 싶으면 isAccess() 추가 추천
+            if (!jwtUtil.isValid(token)) {
+                throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+            }
+
+            Long memberId = jwtUtil.getMemberId(token);
+            String role = jwtUtil.getRole(token);
+
+            if (role == null) {
+                throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+            }
+
+            var auth = new UsernamePasswordAuthenticationToken(
+                    memberId,
+                    null,
+                    List.of(new SimpleGrantedAuthority(role))
             );
+            SecurityContextHolder.getContext().setAuthentication(auth);
 
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.writeValue(response.getOutputStream(), errorResponse);
+            filterChain.doFilter(request, response);
+
+        } catch (ExpiredJwtException e) {
+            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild); // 또는 TOKEN_EXPIRED로 분리 가능
+        } catch (JwtException e) {
+            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
         }
     }
 }
