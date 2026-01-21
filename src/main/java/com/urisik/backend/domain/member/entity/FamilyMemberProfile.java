@@ -56,10 +56,6 @@ public class FamilyMemberProfile extends BaseEntity {
     1:N 연관
     */
 
-    /*
-    @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MemberAllergy> memberAllergyList = new ArrayList<>();
-     */
 
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberWishList> memberWishLists = new ArrayList<>();
