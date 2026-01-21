@@ -30,7 +30,7 @@ public class AllergySubstitutionService {
     ) {
         //사용자 알레르기 조회
         List<Allergen> userAllergens =
-                memberAllergyRepository.findByMemberId(memberId)
+                memberAllergyRepository.findByFamilyMemberProfile_Id(memberId)
                         .stream()
                         .map(MemberAllergy::getAllergen)
                         .toList();

@@ -2,7 +2,10 @@ package com.urisik.backend.domain.allergy.controller;
 
 import com.urisik.backend.domain.allergy.dto.res.AllergyResponseDTO;
 import com.urisik.backend.domain.allergy.enums.AllergySuccessCode;
+import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.allergy.service.AllergyQueryService;
+import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
+import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
