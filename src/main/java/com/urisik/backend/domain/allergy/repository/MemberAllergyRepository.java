@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface MemberAllergyRepository extends JpaRepository<MemberAllergy, Long> {
 
-    List<MemberAllergy> findByMemberId(Long memberId);
+    List<MemberAllergy> findByFamilyMemberProfile_Id(Long memberId);
 
 }

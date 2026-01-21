@@ -63,6 +63,11 @@ public class FamilyMemberProfile extends BaseEntity {
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<DietPreference> dietPreferenceList = new ArrayList<>();
 
+    // 1:1 연관
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member",nullable = false, unique = true)
+    private Member member;
+
 
 
     public void addAllergy(MemberAllergy allergy) {

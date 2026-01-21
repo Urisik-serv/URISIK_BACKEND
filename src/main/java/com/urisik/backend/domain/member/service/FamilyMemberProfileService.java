@@ -12,11 +12,13 @@ import com.urisik.backend.domain.member.dto.req.FamilyMemberProfileRequest;
 import com.urisik.backend.domain.member.dto.res.FamilyMemberProfileResponse;
 import com.urisik.backend.domain.member.entity.DietPreference;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
+import com.urisik.backend.domain.member.entity.Member;
 import com.urisik.backend.domain.member.entity.MemberWishList;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import com.urisik.backend.domain.member.exception.MemberException;
 import com.urisik.backend.domain.member.exception.code.MemberErrorCode;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
+import com.urisik.backend.domain.member.repo.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -31,15 +33,19 @@ public class FamilyMemberProfileService {
     private final FamilyMemberRepository familyMemberRepository;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final FamilyRoomRepository familyRoomRepository;
+    private final MemberRepository memberRepository;
 
     public FamilyMemberProfileResponse.Create create
             (Long familyRoomId, Long memberId, FamilyMemberProfileRequest.Create req)
     {
+        Member member = memberRepository.findWithFamilyRoomById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));
 
         // 1단계  memberId가 가진 가족방 가져와서 안에 해당 가족방이 있는지 확인. 없다면 오류.
-        FamilyRoom familyRoom = familyRoomRepository.findByMembers_Id(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Room));
-
+        FamilyRoom familyRoom = member.getFamilyRoom();
+        if (familyRoom == null) {
+            throw new MemberException(MemberErrorCode.No_Room);
+        }
         if (!familyRoom.getId().equals(familyRoomId)) {
             throw new MemberException(MemberErrorCode.FORBIDDEN_ROOM); // 403 성격 에러코드
         }
@@ -61,6 +67,7 @@ public class FamilyMemberProfileService {
 
         FamilyMemberProfile profile = FamilyMemberProfile.builder()
                 .nickname(req.getNickname())
+                .member(member)
                 .role(req.getRole())
                 .likedIngredients(req.getLikedIngredients())
                 .dislikedIngredients(req.getDislikedIngredients())
