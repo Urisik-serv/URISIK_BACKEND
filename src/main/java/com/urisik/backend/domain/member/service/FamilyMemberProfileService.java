@@ -3,8 +3,11 @@ package com.urisik.backend.domain.member.service;
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.familyroom.entity.FamilyMember;
+import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import com.urisik.backend.domain.familyroom.enums.FamilyStatus;
 import com.urisik.backend.domain.familyroom.repository.FamilyMemberRepository;
+import com.urisik.backend.domain.familyroom.repository.FamilyRoomRepository;
+import com.urisik.backend.domain.member.converter.FamilyMemberProfileConverter;
 import com.urisik.backend.domain.member.dto.req.FamilyMemberProfileRequest;
 import com.urisik.backend.domain.member.dto.res.FamilyMemberProfileResponse;
 import com.urisik.backend.domain.member.entity.DietPreference;
@@ -27,12 +30,19 @@ public class FamilyMemberProfileService {
 
     private final FamilyMemberRepository familyMemberRepository;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
+    private final FamilyRoomRepository familyRoomRepository;
 
     public FamilyMemberProfileResponse.Create create
             (Long familyRoomId, Long memberId, FamilyMemberProfileRequest.Create req)
     {
 
-        // 1단계  memberId가 가진 가족방List를 가져와서 안에 해당 가족방이 있는지 확인. 없다면 오류.
+        // 1단계  memberId가 가진 가족방 가져와서 안에 해당 가족방이 있는지 확인. 없다면 오류.
+        FamilyRoom familyRoom = familyRoomRepository.findByMembers_Id(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Room));
+
+        if (!familyRoom.getId().equals(familyRoomId)) {
+            throw new MemberException(MemberErrorCode.FORBIDDEN_ROOM); // 403 성격 에러코드
+        }
 
 
         // 2단계 familyRoom에서 가족 템플릿 List가져오고, 그중 엄마, 아빠가 사용중 x 확인후 배정.
@@ -54,7 +64,7 @@ public class FamilyMemberProfileService {
                 .role(req.getRole())
                 .likedIngredients(req.getLikedIngredients())
                 .dislikedIngredients(req.getDislikedIngredients())
-                .familyRoom(familyRoomId)
+                .familyRoom(familyRoom)
                 .build();
 
 
@@ -81,7 +91,7 @@ public class FamilyMemberProfileService {
 
 
         //4단계 프론트에서 성공응답과 함꼐 저장한 정보 전달.
-        return null;
+        return FamilyMemberProfileConverter.toCreate(saved);
     }
 
     public FamilyMemberProfileResponse.Update update(
