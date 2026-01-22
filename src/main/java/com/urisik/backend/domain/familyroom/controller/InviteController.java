@@ -6,7 +6,10 @@ import com.urisik.backend.domain.familyroom.dto.res.ReadInviteResDTO;
 import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomSuccessCode;
 import com.urisik.backend.domain.familyroom.service.InviteService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
+import com.urisik.backend.global.auth.exception.AuthenExcetion;
+import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,27 +22,25 @@ import org.springframework.web.bind.annotation.RestController;
 public class InviteController {
 
     private final InviteService inviteService;
-    // 로그인 정책 미정
-    private static final Long TEMP_MEMBER_ID = 1L;
 
     /**
      * 초대 토큰 생성 API
-      */
+     */
     @PostMapping("/family-rooms/{familyRoomId}/invites")
     public ApiResponse<CreateInviteResDTO> createInvite(
-            @PathVariable Long familyRoomId
-            // 로그인 정책 미정
-            // @AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable Long familyRoomId,
+            @AuthenticationPrincipal Long memberId
     ) {
-        // Long memberId = userDetails.getMemberId();
-        Long memberId = TEMP_MEMBER_ID;
-        CreateInviteResDTO result = inviteService.createInvite(familyRoomId, memberId);
+        if (memberId == null) {
+            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+        }
 
+        CreateInviteResDTO result = inviteService.createInvite(familyRoomId, memberId);
         return ApiResponse.onSuccess(FamilyRoomSuccessCode.INVITE_CREATED, result);
     }
 
     /**
-     * 초대 토큰 조회 API
+     * 초대 토큰 조회 API (비로그인 허용)
      */
     @GetMapping("/invites/{token}")
     public ApiResponse<ReadInviteResDTO> readInvite(
@@ -54,12 +55,12 @@ public class InviteController {
      */
     @PostMapping("/invites/{token}/accept")
     public ApiResponse<AcceptInviteResDTO> acceptInvite(
-            @PathVariable String token
-            // 로그인 정책 미정
-            // @AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable String token,
+            @AuthenticationPrincipal Long memberId
     ) {
-        // Long memberId = userDetails.getMemberId();
-        Long memberId = TEMP_MEMBER_ID;
+        if (memberId == null) {
+            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+        }
 
         AcceptInviteResDTO result = inviteService.acceptInvite(token, memberId);
         return ApiResponse.onSuccess(FamilyRoomSuccessCode.FAMILY_JOIN, result);

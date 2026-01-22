@@ -11,7 +11,9 @@ import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomErrorCode;
 import com.urisik.backend.domain.familyroom.repository.FamilyMemberRepository;
 import com.urisik.backend.domain.familyroom.repository.FamilyRoomRepository;
 import com.urisik.backend.domain.familyroom.repository.InviteRepository;
+import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.entity.Member;
+import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,10 +34,12 @@ public class InviteService {
     private final FamilyRoomRepository familyRoomRepository;
     private final FamilyMemberRepository familyMemberRepository;
     private final MemberRepository memberRepository;
+    private final FamilyMemberProfileRepository familyMemberProfileRepository;
 
     /**
      * 초대 토큰 생성
      * - 가족방 멤버라면 누구나 생성 가능
+     * - Invite에는 inviterMemberId만 저장
      */
     public CreateInviteResDTO createInvite(Long familyRoomId, Long memberId) {
 
@@ -56,6 +60,7 @@ public class InviteService {
         Invite invite = Invite.create(
                 token,
                 familyRoom,
+                memberId, // inviterMemberId 저장
                 now.plusDays(DEFAULT_EXPIRE_DAYS)
         );
 
@@ -76,6 +81,8 @@ public class InviteService {
 
     /**
      * 초대 토큰 조회 (미리보기)
+     * - inviterName은 실시간 계산:
+     *   profile.nickname(있으면) 우선, 없으면 member.member_name
      */
     @Transactional(readOnly = true)
     public ReadInviteResDTO readInvite(String token) {
@@ -92,9 +99,22 @@ public class InviteService {
             throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM_NOT_FOUND);
         }
 
+        Long inviterMemberId = invite.getInviterMemberId();
+        if (inviterMemberId == null) {
+            throw new IllegalStateException("Invite.inviterMemberId is null");
+        }
+
+        Member inviterMember = memberRepository.findById(inviterMemberId)
+                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.MEMBER_NOT_FOUND));
+
+        String inviterName = familyMemberProfileRepository.findByMember_Id(inviterMemberId)
+                .map(FamilyMemberProfile::getNickname)
+                .filter(nick -> nick != null && !nick.isBlank())
+                .orElse(inviterMember.getName()); // member_name
+
         return ReadInviteResDTO.builder()
                 .familyRoomId(familyRoom.getId())
-                .familyName(familyRoom.getFamilyName())
+                .inviterName(inviterName)
                 .expiresAt(invite.getExpiresAt())
                 .isExpired(false)
                 .build();

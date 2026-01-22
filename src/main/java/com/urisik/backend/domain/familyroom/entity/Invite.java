@@ -19,6 +19,9 @@ public class Invite {
     @Column(name = "token", nullable = false, unique = true)
     private String token;
 
+    @Column(name = "inviter_member_id", nullable = false)
+    private Long inviterMemberId;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -32,11 +35,13 @@ public class Invite {
     public static Invite create(
             String token,
             FamilyRoom familyRoom,
+            Long inviterMemberId,
             LocalDateTime expiresAt
     ) {
         return Invite.builder()
                 .token(token)
                 .familyRoom(familyRoom)
+                .inviterMemberId(inviterMemberId)
                 .createdAt(LocalDateTime.now())
                 .expiresAt(expiresAt)
                 .build();

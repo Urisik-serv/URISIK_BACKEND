@@ -30,10 +30,6 @@ public enum FamilyRoomErrorCode implements BaseErrorCode {
             "INVITE_404",
             "유효하지 않은 초대 링크입니다."),
 
-    FAMILY_NAME_DUPLICATED(HttpStatus.CONFLICT,
-            "FAMILY_ROOM_409",
-            "이미 있는 가족명입니다."),
-
     FAMILY_MEMBER_ALREADY_JOINED(HttpStatus.CONFLICT,
             "FAMILY_JOIN_409",
             "이미 가족방에 참여한 사용자입니다."),

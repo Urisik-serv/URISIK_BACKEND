@@ -10,12 +10,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(
-        name = "family_room",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_family_room_family_name", columnNames = "family_name")
-        }
-)
+@Table(name = "family_room")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class FamilyRoom {
@@ -23,9 +18,6 @@ public class FamilyRoom {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "family_name", length = 50, nullable = false)
-    private String familyName;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "family_policy", nullable = false)
@@ -47,18 +39,14 @@ public class FamilyRoom {
     @OneToMany(mappedBy = "familyRoom", fetch = FetchType.LAZY)
     private final List<Member> members  = new ArrayList<>();
 
-
-
-
-    private FamilyRoom(String familyName, FamilyPolicy familyPolicy) {
-        this.familyName = familyName;
+    private FamilyRoom(FamilyPolicy familyPolicy) {
         this.familyPolicy = familyPolicy;
     }
 
     /**
      * 가족방 생성 (필수값 지정)
      */
-    public static FamilyRoom create(String familyName, FamilyPolicy familyPolicy) {
-        return new FamilyRoom(familyName, familyPolicy);
+    public static FamilyRoom create(FamilyPolicy familyPolicy) {
+        return new FamilyRoom(familyPolicy);
     }
 }
