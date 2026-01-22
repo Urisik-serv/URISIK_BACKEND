@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 public class ReadInviteResDTO {
 
     private Long familyRoomId;
-    private String familyName;
+    private String inviterName;
     private LocalDateTime expiresAt;
     private boolean isExpired;
 }

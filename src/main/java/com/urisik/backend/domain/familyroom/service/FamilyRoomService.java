@@ -27,36 +27,21 @@ public class FamilyRoomService {
         validate(req);
 
         // 가족방 엔티티 생성 + 저장
-        FamilyRoom room = FamilyRoom.create(req.familyName().trim(), req.familyPolicy());
+        FamilyRoom room = FamilyRoom.create(req.familyPolicy());
         FamilyRoom saved = familyRoomRepository.save(room);
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.MEMBER_NOT_FOUND));
 
-        // 생성자 가족 멤버십 생성 + 저장
-        FamilyMember owner = FamilyMember.createOwner(saved, member, saved.getFamilyPolicy());
-        familyMemberRepository.save(owner);
+        // 생성자는 자동 참여
+        FamilyMember creatorMember = FamilyMember.createMember(saved, member, saved.getFamilyPolicy());
+        familyMemberRepository.save(creatorMember);
 
         return new CreateFamilyRoomResDTO(saved.getId());
     }
 
-    /**
-     * 요청 검증
-     * NOTE: hasMother/hasFather와 familyPolicy의 정합성은 최소로만 검증한다.
-     * Ex. 방장으로 공동을 선택했는데, 가족 구성원에 엄마아빠 둘 중 한명이라도 없는 경우.
-     * Ex. 방장으로 엄마 또는 아빠를 선택했는데, 가족 구성원에 엄마 또는 아빠가 없는 경우.
-     */
     private void validate(CreateFamilyRoomReqDTO req) {
         if (req == null) throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
-
-        // familyName
-        if (req.familyName() == null || req.familyName().isBlank()) {
-            throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
-        }
-        String familyName = req.familyName().trim();
-        if (familyName.length() > 50) { // 스키마 기준
-            throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
-        }
 
         // familyPolicy
         if (req.familyPolicy() == null) {
@@ -71,31 +56,18 @@ public class FamilyRoomService {
             throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
         }
 
-        // policy ↔ composition 정합성 (UI 입력 기반 최소 검증)
+        // 엄마/아빠 중 하나는 반드시 존재
         boolean hasMother = req.familyComposition().hasMother();
         boolean hasFather = req.familyComposition().hasFather();
 
         switch (req.familyPolicy()) {
-            case BOTH_PARENTS -> {
-                if (!hasMother || !hasFather) {
-                    throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
-                }
-            }
             case MOTHER_ONLY -> {
-                if (!hasMother) {
-                    throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
-                }
+                if (!hasMother) throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
             }
             case FATHER_ONLY -> {
-                if (!hasFather) {
-                    throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
-                }
+                if (!hasFather) throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
             }
-        }
-
-        // 가족명 중복 체크
-        if (familyRoomRepository.existsByFamilyName(familyName)) {
-            throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_NAME_DUPLICATED);
+            default -> throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
         }
     }
 }

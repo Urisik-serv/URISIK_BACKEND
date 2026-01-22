@@ -47,7 +47,7 @@ public class FamilyMember {
         this.familyRole = null; // 프로필 생성 전에는 null 허용
     }
 
-    public static FamilyMember createOwner(FamilyRoom familyRoom, Member member, FamilyPolicy policy) {
+    public static FamilyMember createMember(FamilyRoom familyRoom, Member member, FamilyPolicy policy) {
         return new FamilyMember(familyRoom, member, policy);
     }
 
