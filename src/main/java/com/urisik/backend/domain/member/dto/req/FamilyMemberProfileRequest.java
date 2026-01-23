@@ -1,7 +1,7 @@
 package com.urisik.backend.domain.member.dto.req;
 
 import com.urisik.backend.domain.allergy.enums.Allergen;
-import com.urisik.backend.domain.familyroom.enums.FamilyRole;
+import com.urisik.backend.domain.member.enums.FamilyRole;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;

@@ -2,11 +2,8 @@ package com.urisik.backend.domain.member.service;
 
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
-import com.urisik.backend.domain.familyroom.entity.FamilyMember;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
-import com.urisik.backend.domain.familyroom.enums.FamilyRole;
-import com.urisik.backend.domain.familyroom.enums.FamilyStatus;
-import com.urisik.backend.domain.familyroom.repository.FamilyMemberRepository;
+import com.urisik.backend.domain.member.enums.FamilyRole;
 import com.urisik.backend.domain.familyroom.repository.FamilyRoomRepository;
 import com.urisik.backend.domain.member.converter.FamilyMemberProfileConverter;
 import com.urisik.backend.domain.member.dto.req.FamilyMemberProfileRequest;
@@ -25,13 +22,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.urisik.backend.domain.familyroom.entity.QFamilyRoom.familyRoom;
-
 @Service
 @RequiredArgsConstructor
 public class FamilyMemberProfileService {
 
-    private final FamilyMemberRepository familyMemberRepository;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final FamilyRoomRepository familyRoomRepository;
     private final MemberRepository memberRepository;
@@ -62,7 +56,7 @@ public class FamilyMemberProfileService {
         if (requestedRole == FamilyRole.MOM || requestedRole == FamilyRole.DAD) {
 
             boolean alreadyExists = familyMemberProfiles.stream()
-                    .anyMatch(p -> p.getRole() == requestedRole);
+                    .anyMatch(p -> p.getFamilyRole() == requestedRole);
 
             if (alreadyExists) {
                 throw new MemberException(MemberErrorCode.Already_Exists);
@@ -72,7 +66,7 @@ public class FamilyMemberProfileService {
         FamilyMemberProfile profile = FamilyMemberProfile.builder()
                 .nickname(req.getNickname())
                 .member(member)
-                .role(req.getRole())
+                .familyRole(req.getRole())
                 .likedIngredients(req.getLikedIngredients())
                 .dislikedIngredients(req.getDislikedIngredients())
                 .familyRoom(familyRoom)

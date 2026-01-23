@@ -2,11 +2,9 @@ package com.urisik.backend.domain.familyroom.service;
 
 import com.urisik.backend.domain.familyroom.dto.req.CreateFamilyRoomReqDTO;
 import com.urisik.backend.domain.familyroom.dto.res.CreateFamilyRoomResDTO;
-import com.urisik.backend.domain.familyroom.entity.FamilyMember;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import com.urisik.backend.domain.familyroom.exception.FamilyRoomException;
 import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomErrorCode;
-import com.urisik.backend.domain.familyroom.repository.FamilyMemberRepository;
 import com.urisik.backend.domain.familyroom.repository.FamilyRoomRepository;
 import com.urisik.backend.domain.member.entity.Member;
 import com.urisik.backend.domain.member.repo.MemberRepository;
@@ -19,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class FamilyRoomService {
 
     private final FamilyRoomRepository familyRoomRepository;
-    private final FamilyMemberRepository familyMemberRepository;
     private final MemberRepository memberRepository;
 
     @Transactional
@@ -34,8 +31,8 @@ public class FamilyRoomService {
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.MEMBER_NOT_FOUND));
 
         // 생성자는 자동 참여
-        FamilyMember creatorMember = FamilyMember.createMember(saved, member, saved.getFamilyPolicy());
-        familyMemberRepository.save(creatorMember);
+        member.setFamilyRoom(saved);
+        memberRepository.save(member);
 
         return new CreateFamilyRoomResDTO(saved.getId());
     }

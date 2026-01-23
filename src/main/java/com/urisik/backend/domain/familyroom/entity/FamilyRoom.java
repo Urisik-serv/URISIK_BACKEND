@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.urisik.backend.domain.familyroom.enums.FamilyPolicy;
 import com.urisik.backend.domain.mealplan.entity.MealPlan;
+import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,9 +26,6 @@ public class FamilyRoom {
 
     // 연관관계 매핑 1:N
     @OneToMany(mappedBy = "familyRoom", fetch = FetchType.LAZY)
-    private final List<FamilyMember> familyMembers = new ArrayList<>();
-
-    @OneToMany(mappedBy = "familyRoom", fetch = FetchType.LAZY)
     private final List<FamilyWishList> familyWishLists = new ArrayList<>();
 
     @OneToMany(mappedBy = "familyRoom", fetch = FetchType.LAZY)
@@ -38,6 +36,9 @@ public class FamilyRoom {
 
     @OneToMany(mappedBy = "familyRoom", fetch = FetchType.LAZY)
     private final List<Member> members  = new ArrayList<>();
+
+    @OneToMany(mappedBy = "familyRoom", fetch = FetchType.LAZY)
+    private final List<FamilyMemberProfile> familyMemberProfiles  = new ArrayList<>();
 
     private FamilyRoom(FamilyPolicy familyPolicy) {
         this.familyPolicy = familyPolicy;
