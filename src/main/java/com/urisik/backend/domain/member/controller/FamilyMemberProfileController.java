@@ -28,7 +28,6 @@ public class FamilyMemberProfileController {
             @RequestBody @Valid FamilyMemberProfileRequest.Create req
     ) {
         Long memberId = (Long) principal;
-
         FamilyMemberProfileResponse.Create res= familyMemberProfileService.create(familyRoomId, memberId,req);
 
 

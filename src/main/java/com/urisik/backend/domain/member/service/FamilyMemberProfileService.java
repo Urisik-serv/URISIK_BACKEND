@@ -4,6 +4,7 @@ import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.familyroom.entity.FamilyMember;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
+import com.urisik.backend.domain.familyroom.enums.FamilyRole;
 import com.urisik.backend.domain.familyroom.enums.FamilyStatus;
 import com.urisik.backend.domain.familyroom.repository.FamilyMemberRepository;
 import com.urisik.backend.domain.familyroom.repository.FamilyRoomRepository;
@@ -51,20 +52,23 @@ public class FamilyMemberProfileService {
         }
 
 
-        // 2단계 familyRoom에서 가족 템플릿 List가져오고, 그중 엄마, 아빠가 사용중 x 확인후 배정.
-        //요청의 역할이 가족방내에서 역할이 존재(ACTIVE)인지 확인하고 가져오기
-        List<FamilyMember> candidates =
-                familyMemberRepository.findAllByFamilyRoom_IdAndFamilyRoleAndStatus(
-                        familyRoomId,
-                        req.getRole(),
-                        FamilyStatus.ACTIVE
-                );
-        if (candidates.isEmpty()) {
-            throw new MemberException(MemberErrorCode.No_Roles);
+        // 2단계 familyRoom에 속한 FamilyMemberProfile의 리스트를 가져온다. 프로필들중 Mom, Father역할을 식별한다
+        //Mom과 father 은 한명밖에 없으니 요청과 현재 부모상태 체크하고 통과되면 프로필을 등록한다.
+
+        List<FamilyMemberProfile> familyMemberProfiles = familyMemberProfileRepository.findAllByFamilyRoom_Id(familyRoom.getId());
+        FamilyRole requestedRole = req.getRole();
+
+        // 엄마/아빠만 중복 제한
+        if (requestedRole == FamilyRole.MOM || requestedRole == FamilyRole.DAD) {
+
+            boolean alreadyExists = familyMemberProfiles.stream()
+                    .anyMatch(p -> p.getRole() == requestedRole);
+
+            if (alreadyExists) {
+                throw new MemberException(MemberErrorCode.Already_Exists);
+            }
         }
-
         //3단계 req 정보 저장 FamilyMemberProfile에 저장
-
         FamilyMemberProfile profile = FamilyMemberProfile.builder()
                 .nickname(req.getNickname())
                 .member(member)
