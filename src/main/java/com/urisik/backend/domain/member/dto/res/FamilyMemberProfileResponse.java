@@ -54,4 +54,24 @@ public class FamilyMemberProfileResponse {
         private List<String> wishItems;
         private List<DietPreferenceList> dietPreferences;
     }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Detail {
+        
+        private Boolean isSuccess;
+        private String nickname;
+        private FamilyRole role;
+
+        private String likedIngredients;
+        private String dislikedIngredients;
+
+        private List<Allergen> allergy;
+        private List<String> wishItems;
+        private List<DietPreferenceList> dietPreferences;
+    }
+
+
 }

@@ -4,6 +4,7 @@ package com.urisik.backend.domain.member.controller;
 import com.urisik.backend.domain.member.dto.req.FamilyMemberProfileRequest;
 import com.urisik.backend.domain.member.dto.res.FamilyMemberProfileResponse;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
+import com.urisik.backend.domain.member.exception.code.MemberSuccessCode;
 import com.urisik.backend.domain.member.service.FamilyMemberProfileService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.apiPayload.code.GeneralSuccessCode;
@@ -29,10 +30,24 @@ public class FamilyMemberProfileController {
     ) {
         Long memberId = (Long) principal;
 
-        FamilyMemberProfileResponse.Create res= familyMemberProfileService.create(familyRoomId, memberId,req);
 
-
-        return ApiResponse.onSuccess(GeneralSuccessCode.OK, res);
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MemberProfile_Create,
+                familyMemberProfileService.create(familyRoomId, memberId,req));
     }
+
+
+    @GetMapping("/{familyRoomId}/profiles")
+    public ApiResponse<FamilyMemberProfileResponse.Detail> getMyProfile(
+            @PathVariable Long familyRoomId,
+            @AuthenticationPrincipal Long loginMemberId
+    ) {
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MemberProfile_Get,
+                familyMemberProfileService.getMyProfile(familyRoomId, loginMemberId)
+        );
+    }
+    
+
 
 }

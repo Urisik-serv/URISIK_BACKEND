@@ -20,7 +20,14 @@ public enum MemberSuccessCode implements BaseSuccessCode {
             "로그아웃 성공했습니다."),
     Auth_delete_Suc(HttpStatus.GONE,
             "Auth_200_2",
-            "계정이 성공적으로 삭제 되었습니다.")
+            "계정이 성공적으로 삭제 되었습니다."),
+    MemberProfile_Get(HttpStatus.GONE,
+            "Auth_200_2",
+            "프로필 요청 성공했습니다."),
+    MemberProfile_Create(HttpStatus.GONE,
+            "Auth_200_2",
+            "프로필 생성 성공했습니다.")
+
 
     ;
 
