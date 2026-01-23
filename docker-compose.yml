@@ -15,6 +15,7 @@ services:
       # JWT 설정
       - JWT_TOKEN_SECRETKEY=${JWT_KEY}
       - JWT_TOKEN_EXPIRATION_ACCESS=14400000
+      - JWT_TOKEN_EXPIRATION_REFRESH=604800000
 
 
     restart: always
