@@ -9,7 +9,11 @@ jobs:
 
     steps:
       # 소스 체크아웃
-      - uses: actions/checkout@v4
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.SUBMODULE_TOKEN }}
 
       # Docker Hub 로그인
       - name: Login to Docker Hub
