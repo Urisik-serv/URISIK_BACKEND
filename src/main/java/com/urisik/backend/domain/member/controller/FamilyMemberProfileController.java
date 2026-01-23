@@ -3,16 +3,13 @@ package com.urisik.backend.domain.member.controller;
 
 import com.urisik.backend.domain.member.dto.req.FamilyMemberProfileRequest;
 import com.urisik.backend.domain.member.dto.res.FamilyMemberProfileResponse;
-import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.exception.code.MemberSuccessCode;
 import com.urisik.backend.domain.member.service.FamilyMemberProfileService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.apiPayload.code.GeneralSuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -47,7 +44,23 @@ public class FamilyMemberProfileController {
                 familyMemberProfileService.getMyProfile(familyRoomId, loginMemberId)
         );
     }
-    
+    @PatchMapping("/{familyRoomId}/profiles")
+    public ApiResponse<FamilyMemberProfileResponse.Update> updateMyProfile(
+            @PathVariable Long familyRoomId,
+            @AuthenticationPrincipal Long loginUserId,
+            @RequestBody @Valid FamilyMemberProfileRequest.Update req
+    ) {
+
+
+        FamilyMemberProfileResponse.Update result =
+                familyMemberProfileService.update(familyRoomId, loginUserId, req);
+
+        return ApiResponse.onSuccess(GeneralSuccessCode.OK,result);
+    }
+
+
+
+
 
 
 }

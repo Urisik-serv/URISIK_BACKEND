@@ -1,8 +1,10 @@
 package com.urisik.backend.domain.member.entity;
 
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
+import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.familyroom.enums.FamilyRole;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
+import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,6 +17,7 @@ import java.util.List;
 @Table(name = "family_member_profile")
 @Getter
 @Builder
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class FamilyMemberProfile extends BaseEntity {
@@ -55,12 +58,15 @@ public class FamilyMemberProfile extends BaseEntity {
 
 
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<MemberAllergy> memberAllergyList= new ArrayList<>();
 
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<MemberWishList> memberWishLists = new ArrayList<>();
 
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<DietPreference> dietPreferenceList = new ArrayList<>();
 
     // 1:1 연관
@@ -69,6 +75,7 @@ public class FamilyMemberProfile extends BaseEntity {
     private Member member;
 
 
+    // 함수들
 
     public void addAllergy(MemberAllergy allergy) {
         memberAllergyList.add(allergy);
@@ -84,5 +91,34 @@ public class FamilyMemberProfile extends BaseEntity {
         dietPreferenceList.add(dietPreference);
         dietPreference.setFamilyMemberProfile(this);
     }
+
+
+    public void replaceAllergies(List<Allergen> allergens) {
+        this.memberAllergyList.clear();   // 기존 전부 삭제(orphanRemoval)
+        if (allergens == null) return;
+
+        for (Allergen a : allergens) {
+            this.addAllergy(MemberAllergy.of(a)); // ✅ addAllergy가 profile 세팅함
+        }
+    }
+
+    public void replaceWishItems(List<String> items) {
+        this.memberWishLists.clear();
+        if (items == null) return;
+
+        for (String item : items) {
+            this.addWish(MemberWishList.of(item));
+        }
+    }
+
+    public void replaceDietPreferences(List<DietPreferenceList> diets) {
+        this.dietPreferenceList.clear();
+        if (diets == null) return;
+
+        for (DietPreferenceList d : diets) {
+            this.addDietPreference(DietPreference.of(d));
+        }
+    }
+
 }
 

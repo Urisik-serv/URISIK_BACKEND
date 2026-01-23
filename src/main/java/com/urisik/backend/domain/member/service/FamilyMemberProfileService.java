@@ -65,7 +65,7 @@ public class FamilyMemberProfileService {
                     .anyMatch(p -> p.getRole() == requestedRole);
 
             if (alreadyExists) {
-                throw new MemberException(MemberErrorCode.Already_Exists);
+                throw new MemberException(MemberErrorCode.Already_Exist_Role);
             }
         }
         //3단계 req 정보 저장 FamilyMemberProfile에 저장
@@ -109,10 +109,65 @@ public class FamilyMemberProfileService {
     -----------------------------------------------------------
      */
     public FamilyMemberProfileResponse.Update update(
-            Long familyRoomId, Long memberId, FamilyMemberProfileRequest.Update req){
+            Long familyRoomId,
+            Long memberId,
+            FamilyMemberProfileRequest.Update req
+    ) {
+        // 1) 프로필 조회 (memberId + familyRoomId 조건으로 찾는 걸 추천)
+        FamilyMemberProfile profile = familyMemberProfileRepository
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
+        // 2) 단일 필드 부분 수정 (null이면 유지)
+        if (req.getNickname() != null) {
+            profile.setNickname(req.getNickname());
+        }
+        if (req.getRole() != null) {
+            // MOM/DAD 중복 체크 로직 여기서 수행
+            FamilyRole newRole = req.getRole(); //바꾸려는 값
 
-        return null;
+            // MOM / DAD만 중복 체크
+            if (newRole == FamilyRole.MOM || newRole == FamilyRole.DAD) {
+
+                boolean alreadyExists =
+                        familyMemberProfileRepository
+                                .existsByFamilyRoom_IdAndRoleAndIdNot(
+                                        familyRoomId,
+                                        newRole,
+                                        profile.getId()
+                                );
+
+                if (alreadyExists) {
+                    throw new MemberException(
+                            MemberErrorCode.Already_Exist_Role);
+                }
+            }
+
+            profile.setRole(newRole);
+
+        }
+        if (req.getLikedIngredients() != null) {
+            profile.setLikedIngredients(req.getLikedIngredients());
+        }
+        if (req.getDislikedIngredients() != null) {
+            profile.setDislikedIngredients(req.getDislikedIngredients());
+        }
+
+        // 3) 리스트 필드 전체 교체 (null이면 변경 안 함)
+        if (req.getAllergy() != null) {
+            profile.replaceAllergies(req.getAllergy());
+        }
+        if (req.getWishItems() != null) {
+            profile.replaceWishItems(req.getWishItems());
+        }
+        if (req.getDietPreferences() != null) {
+            profile.replaceDietPreferences(req.getDietPreferences());
+        }
+
+        // 4) save 호출은 선택 (영속 상태면 flush 시점에 반영)
+        // familyMemberProfileRepository.save(profile);
+
+        return FamilyMemberProfileConverter.toUpdate(profile);
     }
 
     /*
@@ -127,11 +182,11 @@ public class FamilyMemberProfileService {
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
-
-
         return FamilyMemberProfileConverter.toDetail(profile);
 
     }
+
+
 
 
 
