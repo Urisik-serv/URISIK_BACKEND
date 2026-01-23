@@ -1,0 +1,3 @@
+spring:
+  config:
+    import: optional:file:URISIK_BACKEND_PRIVATE/application.yml
