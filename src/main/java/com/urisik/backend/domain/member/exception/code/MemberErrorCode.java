@@ -27,6 +27,9 @@ public enum MemberErrorCode implements BaseErrorCode {
     Already_Exists(HttpStatus.GONE,
             "Auth_200",
             "해당 역할은 이미 등록되어 있습니다."),
+    No_Profile_In_Family(HttpStatus.GONE,
+            "Auth_200",
+            "가족방 안의 유저의 프로필이 없습니다."),
 
     No_Member(HttpStatus.GONE,
             "Auth_200",

@@ -105,11 +105,32 @@ public class FamilyMemberProfileService {
         return FamilyMemberProfileConverter.toCreate(saved);
     }
 
+    /*
+    -----------------------------------------------------------
+     */
     public FamilyMemberProfileResponse.Update update(
             Long familyRoomId, Long memberId, FamilyMemberProfileRequest.Update req){
 
 
         return null;
+    }
+
+    /*
+    --------------------------------------------------------------------
+     */
+
+    public FamilyMemberProfileResponse.Detail getMyProfile
+            (Long familyRoomId, Long memberId) {
+
+        // 방안에 있는 맴버 찾기.
+        FamilyMemberProfile profile = familyMemberProfileRepository
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+
+
+
+        return FamilyMemberProfileConverter.toDetail(profile);
+
     }
 
 
