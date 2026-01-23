@@ -2,6 +2,7 @@ package com.urisik.backend.domain.familyroom.controller;
 
 import com.urisik.backend.domain.familyroom.dto.req.CreateFamilyRoomReqDTO;
 import com.urisik.backend.domain.familyroom.dto.res.CreateFamilyRoomResDTO;
+import com.urisik.backend.domain.familyroom.dto.res.ReadFamilyRoomContextResDTO;
 import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomSuccessCode;
 import com.urisik.backend.domain.familyroom.service.FamilyRoomService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
@@ -30,5 +31,17 @@ public class FamilyRoomController {
 
         CreateFamilyRoomResDTO result = familyRoomService.createFamilyRoom(memberId, request);
         return ApiResponse.onSuccess(FamilyRoomSuccessCode.FAMILY_ROOM, result);
+    }
+
+    @GetMapping("/family-rooms/me")
+    public ApiResponse<ReadFamilyRoomContextResDTO> readMyFamilyRoomContext(
+            @AuthenticationPrincipal Long memberId
+    ) {
+        if (memberId == null) {
+            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+        }
+
+        ReadFamilyRoomContextResDTO result = familyRoomService.readMyFamilyRoomContext(memberId);
+        return ApiResponse.onSuccess(FamilyRoomSuccessCode.FAMILY_ROOM_CONTEXT, result);
     }
 }
