@@ -37,7 +37,7 @@ public class S3Uploader {
         // 입력 받는 이미지 파일이 빈 파일인지 검증
         if (file == null || file.isEmpty()) {
             log.error("S3Uploader : File is null or empty");
-            throw new S3Exception(S3ErrorCode.EMPTY_FILE.getMessage());
+            throw new S3Exception(S3ErrorCode.EMPTY_FILE);
         }
 
         // 파일 이름 생성 및 인코딩
@@ -61,7 +61,7 @@ public class S3Uploader {
             log.info("S3Uploader: Upload successful. URL={}, bucket={}", fileName, bucket);
         } catch (IOException e) {
             log.error("S3Uploader: Upload failed due to IO error  ", e);
-            throw new S3Exception(S3ErrorCode.S3_UPLOAD_FAIL.getMessage());
+            throw new S3Exception(S3ErrorCode.S3_UPLOAD_FAIL);
         }
 
         // 업로드 된 URL 반환

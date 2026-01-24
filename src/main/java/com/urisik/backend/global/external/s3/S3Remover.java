@@ -46,7 +46,7 @@ public class S3Remover {
             key = (rawPath.charAt(0) == '/') ? rawPath.substring(1) : rawPath;
         } catch (Exception e) {
             log.error("S3Remover: URL parse failed. url={}", fileUrl, e);
-            throw new S3Exception(S3ErrorCode.S3_REMOVE_FAIL.getMessage());
+            throw new S3Exception(S3ErrorCode.S3_REMOVE_FAIL);
         }
 
         // 실제 S3 객체 삭제
@@ -55,7 +55,7 @@ public class S3Remover {
             log.info("S3Remover: Delete successful. bucket={}, key={}", bucket, key);
         } catch (SdkClientException e) {
             log.error("S3Remover: Delete failed. bucket={}, key={}", bucket, key, e);
-            throw new S3Exception(S3ErrorCode.S3_REMOVE_FAIL.getMessage());
+            throw new S3Exception(S3ErrorCode.S3_REMOVE_FAIL);
         }
     }
 }
