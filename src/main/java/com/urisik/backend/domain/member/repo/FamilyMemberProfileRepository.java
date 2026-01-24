@@ -1,7 +1,7 @@
 package com.urisik.backend.domain.member.repo;
 
-import com.urisik.backend.domain.familyroom.enums.FamilyRole;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
+import com.urisik.backend.domain.member.enums.FamilyRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public interface FamilyMemberProfileRepository extends JpaRepository<FamilyMembe
     Optional<FamilyMemberProfile> findByFamilyRoom_IdAndMember_Id(Long familyRoomId, Long memberId);
 
 
-    boolean existsByFamilyRoom_IdAndRoleAndIdNot(
+    boolean existsByFamilyRoom_IdAndFamilyRoleAndIdNot(
             Long familyRoomId,
             FamilyRole role,
             Long excludeProfileId

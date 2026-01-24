@@ -94,7 +94,7 @@ public class FamilyMemberProfileConverter {
         return FamilyMemberProfileResponse.Update.builder()
                 .isSuccess(true)
                 .nickname(profile.getNickname())
-                .role(profile.getRole())
+                .role(profile.getFamilyRole())
                 .likedIngredients(profile.getLikedIngredients())
                 .dislikedIngredients(profile.getDislikedIngredients())
                 .allergy(allergies)
