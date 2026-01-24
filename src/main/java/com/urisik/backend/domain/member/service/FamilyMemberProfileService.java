@@ -125,7 +125,7 @@ public class FamilyMemberProfileService {
 
                 boolean alreadyExists =
                         familyMemberProfileRepository
-                                .existsByFamilyRoom_IdAndRoleAndIdNot(
+                                .existsByFamilyRoom_IdAndFamilyRoleAndIdNot(
                                         familyRoomId,
                                         newRole,
                                         profile.getId()
@@ -137,7 +137,7 @@ public class FamilyMemberProfileService {
                 }
             }
 
-            profile.setRole(newRole);
+            profile.setFamilyRole(newRole);
 
         }
         if (req.getLikedIngredients() != null) {
