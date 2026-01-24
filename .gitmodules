@@ -1,3 +1,4 @@
 [submodule "URISIK_BACKEND_PRIVATE"]
 	path = URISIK_BACKEND_PRIVATE
 	url = https://github.com/Urisik-serv/URISIK_BACKEND_PRIVATE.git
+	branch = main

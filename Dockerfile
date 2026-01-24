@@ -5,6 +5,7 @@ COPY build.gradle settings.gradle ./
 COPY gradle gradle
 RUN gradle --no-daemon dependencies
 
+
 COPY . .
 RUN gradle --no-daemon clean bootJar
 
@@ -15,7 +16,6 @@ ENV DB_PASSWORD=${DB_PASSWORD}
 
 ARG JAR_FILE=/workspace/build/libs/*.jar
 COPY --from=builder ${JAR_FILE} /app/app.jar
-COPY URISIK_BACKEND_PRIVATE/application.yml /app/application.yml
 
 EXPOSE 8080
 
