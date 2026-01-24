@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.familyroom.enums;
+package com.urisik.backend.domain.member.enums;
 
 public enum FamilyRole {
     MOM("엄마"),
