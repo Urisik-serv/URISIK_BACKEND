@@ -1,7 +1,7 @@
 package com.urisik.backend.domain.member.entity;
 
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
-import com.urisik.backend.domain.member.enums.FamilyRole;
+import com.urisik.backend.domain.familyroom.enums.FamilyRole;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
@@ -26,7 +26,7 @@ public class FamilyMemberProfile extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private FamilyRole familyRole;
+    private FamilyRole role;
 
     @Lob
     @Column(name = "liked_ingredients")
