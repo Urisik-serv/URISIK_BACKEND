@@ -28,5 +28,15 @@ public class SwaggerConfig {
                 .build();
     }
 
+    // 아래 부분 지우고 각자 도메인에 맞게 변경하면 됨!!
+    @Bean
+    public GroupedOpenApi allApi() {
+        return GroupedOpenApi.builder()
+                .group("0. ALL")
+                .displayName("전체 API")
+                .pathsToMatch("/**") // 모든 경로 포함
+                .build();
+    }
+
 
 }
