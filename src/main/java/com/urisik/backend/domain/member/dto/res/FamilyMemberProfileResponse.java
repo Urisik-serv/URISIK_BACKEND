@@ -1,6 +1,7 @@
 package com.urisik.backend.domain.member.dto.res;
 
 import com.urisik.backend.domain.allergy.enums.Allergen;
+import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.enums.FamilyRole;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import lombok.AllArgsConstructor;
@@ -65,10 +66,20 @@ public class FamilyMemberProfileResponse {
 
         private String likedIngredients;
         private String dislikedIngredients;
+        private AlarmPolicy alarmPolicy;
+        private String profilePicUrl;
 
         private List<Allergen> allergy;
         private List<String> wishItems;
         private List<DietPreferenceList> dietPreferences;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Delete{
+        private Boolean isSuccess;
     }
 
 

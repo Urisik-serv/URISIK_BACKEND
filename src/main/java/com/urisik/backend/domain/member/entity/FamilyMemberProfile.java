@@ -3,6 +3,7 @@ package com.urisik.backend.domain.member.entity;
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
+import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import com.urisik.backend.domain.member.enums.FamilyRole;
 import com.urisik.backend.global.BaseEntity;
@@ -30,6 +31,11 @@ public class FamilyMemberProfile extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FamilyRole familyRole;
+
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AlarmPolicy alarmPolicy;
 
     @Lob
     @Column(name = "liked_ingredients")

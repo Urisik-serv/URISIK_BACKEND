@@ -27,7 +27,9 @@ public class FamilyMemberProfileRequest {
         private String dislikedIngredients;
         @NotEmpty(message = "알러지는 최소 1개 이상 선택해야 합니다")
         private List<Allergen> allergy;
+
         private List<String> wishItems;
+
         @NotEmpty(message = "식단 선호도는 최소 1개 이상 선택해야 합니다")
         private List<DietPreferenceList> dietPreferences;
     }

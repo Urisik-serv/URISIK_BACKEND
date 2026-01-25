@@ -3,8 +3,8 @@ package com.urisik.backend.domain.member.service;
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
+import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.enums.FamilyRole;
-import com.urisik.backend.domain.familyroom.repository.FamilyRoomRepository;
 import com.urisik.backend.domain.member.converter.FamilyMemberProfileConverter;
 import com.urisik.backend.domain.member.dto.req.FamilyMemberProfileRequest;
 import com.urisik.backend.domain.member.dto.res.FamilyMemberProfileResponse;
@@ -27,7 +27,6 @@ import java.util.List;
 public class FamilyMemberProfileService {
 
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
-    private final FamilyRoomRepository familyRoomRepository;
     private final MemberRepository memberRepository;
 
     public FamilyMemberProfileResponse.Create create
@@ -65,13 +64,14 @@ public class FamilyMemberProfileService {
         //3단계 req 정보 저장 FamilyMemberProfile에 저장
         FamilyMemberProfile profile = FamilyMemberProfile.builder()
                 .nickname(req.getNickname())
+                .alarmPolicy(AlarmPolicy.DISAGREE)
                 .member(member)
                 .familyRole(req.getRole())
+                .profilePicUrl(null)
                 .likedIngredients(req.getLikedIngredients())
                 .dislikedIngredients(req.getDislikedIngredients())
                 .familyRoom(familyRoom)
                 .build();
-
 
         if (req.getAllergy() != null) {
             for (Allergen allergen : req.getAllergy()) {
@@ -177,6 +177,39 @@ public class FamilyMemberProfileService {
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
         return FamilyMemberProfileConverter.toDetail(profile);
+
+    }
+    /*
+    --------------------------------------------------------------------
+     */
+
+    public FamilyMemberProfileResponse.Delete quitFamilyRoom(Long familyRoomId, Long profileId , Long memberId) {
+
+        FamilyMemberProfile targetProfile = familyMemberProfileRepository
+                .findByFamilyRoom_IdAndId(familyRoomId, profileId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+
+        FamilyMemberProfile requesterProfile = familyMemberProfileRepository
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+
+
+        //자기 프로필이 거나, 권한이 있을때 삭제
+        boolean isSelf = targetProfile.getMember().getId().equals(memberId);
+
+        // 4) 리더 권한 여부 (FamilyPolicy 기준)
+        boolean isLeader = requesterProfile.getFamilyRoom()
+                .getFamilyPolicy()
+                .isLeaderRole(requesterProfile.getFamilyRole());
+
+        // 5) 본인이거나 리더면 삭제 가능
+        if (!isSelf && !isLeader) {
+            throw new MemberException(MemberErrorCode.FORBIDDEN_Member);
+        }
+
+        familyMemberProfileRepository.delete(targetProfile);
+
+        return FamilyMemberProfileResponse.Delete.builder().isSuccess(true).build();
 
     }
 

@@ -55,7 +55,17 @@ public class FamilyMemberProfileController {
         FamilyMemberProfileResponse.Update result =
                 familyMemberProfileService.update(familyRoomId, loginUserId, req);
 
-        return ApiResponse.onSuccess(GeneralSuccessCode.OK,result);
+        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Update,result);
+    }
+    public ApiResponse<FamilyMemberProfileResponse.Delete> deleteFamilyMemberProfile(
+            @PathVariable Long familyRoomId,
+            @PathVariable Long profileId,
+            @AuthenticationPrincipal Long loginUserId
+    ) {
+
+
+        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Delete,
+                familyMemberProfileService.quitFamilyRoom(familyRoomId,profileId,loginUserId));
     }
 
 
