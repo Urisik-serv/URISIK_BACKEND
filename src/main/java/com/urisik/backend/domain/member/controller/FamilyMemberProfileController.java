@@ -57,6 +57,25 @@ public class FamilyMemberProfileController {
 
         return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Update,result);
     }
+
+
+    @PatchMapping("/{familyRoomId}/profile-pic")
+    public ApiResponse<FamilyMemberProfileResponse.UpdatePic> updateMyProfilePicture(
+            @PathVariable Long familyRoomId,
+            @AuthenticationPrincipal Long loginUserId,
+            @RequestBody @Valid FamilyMemberProfileRequest.UpdatePic req
+    ){
+
+        FamilyMemberProfileResponse.UpdatePic result =
+                familyMemberProfileService.updatePic(familyRoomId, loginUserId, req);
+
+        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Update,result);
+
+    }
+
+
+
+    @DeleteMapping("/{familyRoomId}/family-member{profileId}")
     public ApiResponse<FamilyMemberProfileResponse.Delete> deleteFamilyMemberProfile(
             @PathVariable Long familyRoomId,
             @PathVariable Long profileId,

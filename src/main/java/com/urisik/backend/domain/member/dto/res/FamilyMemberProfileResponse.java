@@ -54,6 +54,17 @@ public class FamilyMemberProfileResponse {
         private List<DietPreferenceList> dietPreferences;
     }
 
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class UpdatePic {
+
+        private Boolean isSuccess;
+        private String profilePicUrl;
+    }
+
     @Getter
     @Builder
     @AllArgsConstructor
@@ -81,6 +92,8 @@ public class FamilyMemberProfileResponse {
     public static class Delete{
         private Boolean isSuccess;
     }
+
+
 
 
 }

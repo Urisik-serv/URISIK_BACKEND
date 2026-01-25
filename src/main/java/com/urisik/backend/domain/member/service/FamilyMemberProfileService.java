@@ -19,6 +19,7 @@ import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -29,6 +30,10 @@ public class FamilyMemberProfileService {
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final MemberRepository memberRepository;
 
+    //
+
+    //post
+    @Transactional
     public FamilyMemberProfileResponse.Create create
             (Long familyRoomId, Long memberId, FamilyMemberProfileRequest.Create req)
     {
@@ -101,7 +106,10 @@ public class FamilyMemberProfileService {
 
     /*
     -----------------------------------------------------------
+    patch
      */
+
+    @Transactional
     public FamilyMemberProfileResponse.Update update(
             Long familyRoomId,
             Long memberId,
@@ -164,9 +172,32 @@ public class FamilyMemberProfileService {
         return FamilyMemberProfileConverter.toUpdate(profile);
     }
 
+
+    @Transactional
+    public FamilyMemberProfileResponse.UpdatePic updatePic(
+            Long familyRoomId,
+            Long memberId,
+            FamilyMemberProfileRequest.UpdatePic req
+    ) {
+        // 1) 프로필 조회 (memberId + familyRoomId 조건으로 찾는 걸 추천)
+        FamilyMemberProfile profile = familyMemberProfileRepository
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+
+        profile.setProfilePicUrl(req.getProfilePicUrl());
+
+
+        return FamilyMemberProfileResponse.UpdatePic.builder()
+                .isSuccess(true)
+                .profilePicUrl(profile.getProfilePicUrl())
+                .build();
+    }
+
     /*
     --------------------------------------------------------------------
+    get
      */
+
 
     public FamilyMemberProfileResponse.Detail getMyProfile
             (Long familyRoomId, Long memberId) {
@@ -181,8 +212,11 @@ public class FamilyMemberProfileService {
     }
     /*
     --------------------------------------------------------------------
+    delete
      */
 
+
+    @Transactional
     public FamilyMemberProfileResponse.Delete quitFamilyRoom(Long familyRoomId, Long profileId , Long memberId) {
 
         FamilyMemberProfile targetProfile = familyMemberProfileRepository

@@ -53,4 +53,11 @@ public class FamilyMemberProfileRequest {
         @NotEmpty(message = "식단 선호도는 최소 1개 이상 선택해야 합니다")
         private List<DietPreferenceList> dietPreferences;
     }
+
+    @Getter
+    @NoArgsConstructor
+    public static class UpdatePic {
+        @NotBlank
+        private String profilePicUrl;
+    }
 }
