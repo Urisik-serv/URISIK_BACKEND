@@ -56,8 +56,7 @@ public class S3Uploader {
 
         // 이미지 업로드 로직
         try (InputStream inputStream = file.getInputStream()) {
-            amazonS3.putObject(new PutObjectRequest(bucket, fileName, inputStream, metadata)
-                    .withCannedAcl(CannedAccessControlList.PublicRead));
+            amazonS3.putObject(new PutObjectRequest(bucket, fileName, inputStream, metadata));
             log.info("S3Uploader: Upload successful. URL={}, bucket={}", fileName, bucket);
         } catch (IOException e) {
             log.error("S3Uploader: Upload failed due to IO error  ", e);

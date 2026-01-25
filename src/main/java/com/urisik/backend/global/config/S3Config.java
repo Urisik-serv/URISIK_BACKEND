@@ -1,4 +1,4 @@
-package com.urisik.backend.global.external.s3;
+package com.urisik.backend.global.config;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
