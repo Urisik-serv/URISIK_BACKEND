@@ -23,7 +23,7 @@ public class FamilyMemberProfileResponse {
         private String dislikedIngredients;
 
         private List<Allergen> allergy;
-        private List<String> wishItems;
+
         private List<DietPreferenceList> dietPreferences;
     }
 
@@ -43,7 +43,7 @@ public class FamilyMemberProfileResponse {
         private String dislikedIngredients;
 
         private List<Allergen> allergy;
-        private List<String> wishItems;
+
         private List<DietPreferenceList> dietPreferences;
     }
 
@@ -70,7 +70,7 @@ public class FamilyMemberProfileResponse {
         private String profilePicUrl;
 
         private List<Allergen> allergy;
-        private List<String> wishItems;
+
         private List<DietPreferenceList> dietPreferences;
     }
 

@@ -24,8 +24,6 @@ public class MemberWishList extends BaseEntity {
     @JoinColumn(name = "recipe_id", nullable = false)
     private Recipe recipe;
 
-    @Column
-    private String foodName;
 
 
     /*
@@ -34,9 +32,9 @@ public class MemberWishList extends BaseEntity {
     private NewFood newFood;
     */
 
-    public static MemberWishList of(String foodName) {
+    public static MemberWishList of(Recipe recipe) {
         MemberWishList w = new MemberWishList();
-        w.foodName = foodName;
+        w.recipe = recipe;
         return w;
     }
 

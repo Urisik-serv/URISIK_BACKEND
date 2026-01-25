@@ -13,7 +13,6 @@ public class WishListResponse {
     @Builder
     public static class PostWishes {
         private Boolean isSuccess;
-        private List<String> wishItems; // foodName 리스트
     }
 
 
@@ -22,9 +21,17 @@ public class WishListResponse {
     public static class GetWishes {
 
         private Boolean isSuccess;
-        private List<MemberWishList> items;
+        private List<WishItem> items;
         private Long nextCursor;   // 다음 요청에 넣을 cursor(마지막 아이템 id)
         private Boolean hasNext;
+    }
+
+    @Getter
+    @Builder
+    public static class WishItem {
+        private Long wishId;       // (선택) wish 자체 삭제/페이징에 필요하면 포함
+        private Long recipeId;
+        private String recipeName;
     }
 
 }

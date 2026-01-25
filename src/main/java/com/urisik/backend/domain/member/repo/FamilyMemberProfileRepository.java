@@ -12,7 +12,6 @@ public interface FamilyMemberProfileRepository extends JpaRepository<FamilyMembe
 
 
     @EntityGraph(attributePaths = {
-            "memberWishLists",
             "memberAllergyList",
             "dietPreferenceList"
     })
@@ -23,7 +22,6 @@ public interface FamilyMemberProfileRepository extends JpaRepository<FamilyMembe
 
 
     @EntityGraph(attributePaths = {
-            "memberWishLists",
             "memberAllergyList",
             "dietPreferenceList"
     })

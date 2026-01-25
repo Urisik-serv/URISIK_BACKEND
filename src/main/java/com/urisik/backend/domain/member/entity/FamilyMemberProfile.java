@@ -6,6 +6,7 @@ import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import com.urisik.backend.domain.member.enums.FamilyRole;
+import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -103,12 +104,12 @@ public class FamilyMemberProfile extends BaseEntity {
         }
     }
 
-    public void replaceWishItems(List<String> items) {
+    public void replaceWishItems(List<Recipe> recipes) {
         this.memberWishLists.clear();
-        if (items == null) return;
+        if (recipes == null) return;
 
-        for (String item : items) {
-            this.addWish(MemberWishList.of(item));
+        for (Recipe recipe : recipes) {
+            this.addWish(MemberWishList.of(recipe));
         }
     }
 

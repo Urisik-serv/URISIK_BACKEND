@@ -14,8 +14,9 @@ public class WishListRequest {
     public static class PostWishes {
         @NotNull
         @NotEmpty
-        private List<@NotEmpty String> wishItems; // foodName 리스트
+        private List<@NotEmpty Long> recipeId; // foodName 리스트
     }
+
     @Getter
     @NoArgsConstructor
     public static class GetWishes {

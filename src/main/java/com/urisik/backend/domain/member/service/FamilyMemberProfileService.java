@@ -86,11 +86,6 @@ public class FamilyMemberProfileService {
             }
         }
 
-        if (req.getWishItems() != null) {
-            for (String item : req.getWishItems()) {
-                profile.addWish(MemberWishList.of(item));
-            }
-        }
 
         if (req.getDietPreferences() != null) {
             for (DietPreferenceList diet : req.getDietPreferences()) { // ✅ DTO도 Enum이면 이렇게
@@ -162,9 +157,6 @@ public class FamilyMemberProfileService {
         // 3) 리스트 필드 전체 교체 (null이면 변경 안 함)
         if (req.getAllergy() != null) {
             profile.replaceAllergies(req.getAllergy());
-        }
-        if (req.getWishItems() != null) {
-            profile.replaceWishItems(req.getWishItems());
         }
         if (req.getDietPreferences() != null) {
             profile.replaceDietPreferences(req.getDietPreferences());
