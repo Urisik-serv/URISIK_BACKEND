@@ -4,6 +4,7 @@ import com.urisik.backend.domain.familyroom.dto.req.CreateFamilyRoomReqDTO;
 import com.urisik.backend.domain.familyroom.dto.res.CreateFamilyRoomResDTO;
 import com.urisik.backend.domain.familyroom.dto.res.ReadFamilyRoomContextResDTO;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
+import com.urisik.backend.domain.familyroom.enums.FamilyPolicy;
 import com.urisik.backend.domain.familyroom.exception.FamilyRoomException;
 import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomErrorCode;
 import com.urisik.backend.domain.familyroom.repository.FamilyRoomRepository;
@@ -127,5 +128,36 @@ public class FamilyRoomService {
             }
             default -> throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
         }
+    }
+
+    /**
+     * 가족방 FamilyPolicy 조회
+     * - FamilyWishList에서 정책만 필요할 때가 있어 메서드로 제공
+     */
+    @Transactional(readOnly = true)
+    public FamilyPolicy getFamilyPolicy(Long familyRoomId) {
+        FamilyRoom familyRoom = familyRoomRepository.findById(familyRoomId)
+                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM_NOT_FOUND));
+        return familyRoom.getFamilyPolicy();
+    }
+
+    /**
+     * 특정 가족방에서 현재 사용자의 FamilyRole 조회
+     * - 가족방컨텍스트 API의 me.familyRole과 동일한 값
+     * - 방장 판단은 FamilyPolicy.isLeaderRole(role)로 계산
+     */
+    @Transactional(readOnly = true)
+    public FamilyRole getMyFamilyRole(Long memberId, Long familyRoomId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.MEMBER_NOT_FOUND));
+
+        if (member.getFamilyRoom() == null || !member.getFamilyRoom().getId().equals(familyRoomId)) {
+            throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM_NOT_FOUND);
+        }
+
+        FamilyMemberProfile profile = familyMemberProfileRepository.findByMember_Id(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+
+        return profile.getFamilyRole();
     }
 }

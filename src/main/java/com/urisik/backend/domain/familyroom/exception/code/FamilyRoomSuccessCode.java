@@ -44,7 +44,15 @@ public enum FamilyRoomSuccessCode implements BaseSuccessCode {
 
     FAMILY_ROOM_CONTEXT(HttpStatus.OK,
             "FAMILY_ROOM_CONTEXT_200",
-            "가족방 컨텍스트 조회 성공");
+            "가족방 컨텍스트 조회 성공"),
+
+    FAMILY_WISHLIST(HttpStatus.OK,
+            "FAMILY_WISHLIST_200",
+            "가족 위시리스트 조회 성공"),
+
+    FAMILY_WISHLIST_DELETE(HttpStatus.OK,
+            "FAMILY_WISHLEST_DELETE_200",
+            "가족 위시리스트 항목 삭제 성공");
 
     private final HttpStatus httpStatus;
     private final String code;
