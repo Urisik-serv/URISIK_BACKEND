@@ -12,6 +12,7 @@ import com.urisik.backend.global.auth.exception.AuthenExcetion;
 import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
 import com.urisik.backend.global.auth.exception.code.AuthSuccessCode;
 import com.urisik.backend.global.auth.jwt.JwtUtil;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
+@Tag(name = "Auth", description = "인증 관련 API")
 public class AuthController {
 
     private final JwtUtil jwtUtil;
