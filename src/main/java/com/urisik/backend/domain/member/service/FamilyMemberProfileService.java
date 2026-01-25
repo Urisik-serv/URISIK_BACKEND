@@ -3,6 +3,8 @@ package com.urisik.backend.domain.member.service;
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
+import com.urisik.backend.domain.member.dto.req.WishListRequest;
+import com.urisik.backend.domain.member.dto.res.WishListResponse;
 import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.enums.FamilyRole;
 import com.urisik.backend.domain.member.converter.FamilyMemberProfileConverter;
@@ -103,31 +105,6 @@ public class FamilyMemberProfileService {
         //4단계 프론트에서 성공응답과 함꼐 저장한 정보 전달.
         return FamilyMemberProfileConverter.toCreate(saved);
     }
-
-    public FamilyMemberProfileResponse.PostWishes addWishItems
-            (Long loginUserId,FamilyMemberProfileRequest.PostWishes req) {
-
-
-        FamilyMemberProfile profile = familyMemberProfileRepository
-                .findByMember_Id(loginUserId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));
-
-        // ✅ 추가: 기존 것은 유지하고, 요청으로 들어온 것들을 append
-        for (String foodName : req.getWishItems()) {
-            profile.addWish(MemberWishList.of(foodName));
-        }
-
-        // 응답용: 현재 wish 목록 문자열로 반환
-        List<String> wishItems = profile.getMemberWishLists().stream()
-                .map(MemberWishList::getFoodName)
-                .toList();
-
-        return FamilyMemberProfileResponse.PostWishes.builder()
-                .isSuccess(true)
-                .wishItems(wishItems)
-                .build();
-    }
-
 
 
 

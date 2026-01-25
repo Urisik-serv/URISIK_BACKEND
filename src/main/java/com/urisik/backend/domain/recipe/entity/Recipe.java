@@ -1,10 +1,12 @@
 package com.urisik.backend.domain.recipe.entity;
 
+import com.urisik.backend.domain.member.entity.MemberWishList;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -26,6 +28,11 @@ public class Recipe {
     @CollectionTable(name = "recipe_ingredient", joinColumns = @JoinColumn(name = "recipe_id"))
     @Column(name = "ingredient", nullable = false)
     private List<String> ingredients;
+
+
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<MemberWishList> memberWishLists = new ArrayList<>();
+
 
     public Recipe(String name, List<String> ingredients) {
         this.name = name;

@@ -81,12 +81,7 @@ public class FamilyMemberProfileResponse {
     }
 
 
-    @Getter
-    @Builder
-    public static class PostWishes {
-        private Boolean isSuccess;
-        private List<String> wishItems; // foodName 리스트
-    }
+
 
 
 
