@@ -60,4 +60,13 @@ public class FamilyMemberProfileRequest {
         @NotBlank
         private String profilePicUrl;
     }
+    @Getter
+    @NoArgsConstructor
+    public static class PostWishes {
+        @NotNull
+        @NotEmpty
+        private List<@NotEmpty String> wishItems; // foodName 리스트
+    }
+
+
 }

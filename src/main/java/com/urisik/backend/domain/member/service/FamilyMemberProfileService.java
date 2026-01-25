@@ -104,6 +104,33 @@ public class FamilyMemberProfileService {
         return FamilyMemberProfileConverter.toCreate(saved);
     }
 
+    public FamilyMemberProfileResponse.PostWishes addWishItems
+            (Long loginUserId,FamilyMemberProfileRequest.PostWishes req) {
+
+
+        FamilyMemberProfile profile = familyMemberProfileRepository
+                .findByMember_Id(loginUserId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));
+
+        // ✅ 추가: 기존 것은 유지하고, 요청으로 들어온 것들을 append
+        for (String foodName : req.getWishItems()) {
+            profile.addWish(MemberWishList.of(foodName));
+        }
+
+        // 응답용: 현재 wish 목록 문자열로 반환
+        List<String> wishItems = profile.getMemberWishLists().stream()
+                .map(MemberWishList::getFoodName)
+                .toList();
+
+        return FamilyMemberProfileResponse.PostWishes.builder()
+                .isSuccess(true)
+                .wishItems(wishItems)
+                .build();
+    }
+
+
+
+
     /*
     -----------------------------------------------------------
     patch
@@ -117,7 +144,7 @@ public class FamilyMemberProfileService {
     ) {
         // 1) 프로필 조회 (memberId + familyRoomId 조건으로 찾는 걸 추천)
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .findWithDetailsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
         // 2) 단일 필드 부분 수정 (null이면 유지)
@@ -204,8 +231,9 @@ public class FamilyMemberProfileService {
 
         // 방안에 있는 맴버 찾기.
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .findWithDetailsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+
 
         return FamilyMemberProfileConverter.toDetail(profile);
 

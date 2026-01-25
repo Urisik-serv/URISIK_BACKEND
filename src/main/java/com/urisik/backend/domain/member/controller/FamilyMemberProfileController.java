@@ -34,6 +34,17 @@ public class FamilyMemberProfileController {
     }
 
 
+    @PostMapping("/profile-wish")
+    public ApiResponse<FamilyMemberProfileResponse.PostWishes> addWishItems(
+            @AuthenticationPrincipal Long loginUserId,
+            @RequestBody @Valid FamilyMemberProfileRequest.PostWishes req
+    ) {
+        FamilyMemberProfileResponse.PostWishes result = familyMemberProfileService.addWishItems(loginUserId, req);
+
+        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Create,result);
+    }
+
+
     @GetMapping("/{familyRoomId}/profiles")
     public ApiResponse<FamilyMemberProfileResponse.Detail> getMyProfile(
             @PathVariable Long familyRoomId,
