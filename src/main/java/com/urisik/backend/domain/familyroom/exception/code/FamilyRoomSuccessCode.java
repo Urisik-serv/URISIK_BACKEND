@@ -51,7 +51,7 @@ public enum FamilyRoomSuccessCode implements BaseSuccessCode {
             "가족 위시리스트 조회 성공"),
 
     FAMILY_WISHLIST_DELETE(HttpStatus.OK,
-            "FAMILY_WISHLEST_DELETE_200",
+            "FAMILY_WISHLIST_DELETE_200",
             "가족 위시리스트 항목 삭제 성공");
 
     private final HttpStatus httpStatus;

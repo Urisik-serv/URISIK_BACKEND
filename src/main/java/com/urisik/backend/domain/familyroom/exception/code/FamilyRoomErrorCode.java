@@ -27,7 +27,7 @@ public enum FamilyRoomErrorCode implements BaseErrorCode {
             "가족방을 찾을 수 없습니다."),
 
     FAMILY_WISHLIST_NOT_FOUND(HttpStatus.NOT_FOUND,
-            "FAMILY_ROOM_404",
+            "FAMILY_WISHLIST_404",
             "가족 위시리스트 항목을 찾을 수 없습니다."),
 
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND,
