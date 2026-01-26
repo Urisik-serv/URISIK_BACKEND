@@ -26,4 +26,7 @@ public interface MemberWishListRepository extends JpaRepository<MemberWishList, 
 """)
     List<MemberWishList> findNextPage(Long profileId, Long cursor, Pageable pageable);
 
+
+    long deleteByFamilyMemberProfile_IdAndRecipe_IdIn(Long profileId, List<Long> recipeIds);
+
 }

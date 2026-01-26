@@ -119,7 +119,15 @@ public class FamilyMemberProfileController {
 
         return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Get, result);
     }
+    @DeleteMapping("/profile-wishes")
+    public ApiResponse<WishListResponse.DeleteWishes> deleteWishItems(
+            @AuthenticationPrincipal Long loginUserId,
+            @RequestBody @Valid WishListRequest.DeleteWishes req
+    ) {
+        WishListResponse.DeleteWishes result = memberWishListService.deleteWishItems(loginUserId, req);
 
+        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Create,result);
+    }
 
 
 }

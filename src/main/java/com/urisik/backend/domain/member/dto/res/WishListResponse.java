@@ -14,6 +14,12 @@ public class WishListResponse {
     public static class PostWishes {
         private Boolean isSuccess;
     }
+    @Getter
+    @Builder
+    public static class DeleteWishes {
+        private Boolean isSuccess;
+        private long deletedNum;
+    }
 
 
     @Getter

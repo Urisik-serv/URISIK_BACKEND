@@ -11,7 +11,6 @@ import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberWishListRepository;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
-import com.urisik.backend.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -50,6 +49,35 @@ public class MemberWishListService {
                 .isSuccess(true)
                 .build();
     }
+
+
+    @Transactional
+    public WishListResponse.DeleteWishes deleteWishItems
+            (Long loginUserId, WishListRequest.DeleteWishes req) {
+
+        FamilyMemberProfile profile = familyMemberProfileRepository
+                .findByMember_Id(loginUserId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));
+
+        // req.getRecipeId()가 null/empty면 바로 성공 처리(정책에 따라 에러로 바꿔도 됨)
+        if (req.getRecipeId() == null || req.getRecipeId().isEmpty()) {
+            return WishListResponse.DeleteWishes.builder()
+                    .isSuccess(true)
+                    .build();
+        }
+
+        long deleted =
+                memberWishListRepository.deleteByFamilyMemberProfile_IdAndRecipe_IdIn(
+                profile.getId(),
+                req.getRecipeId()
+        );
+
+        return WishListResponse.DeleteWishes.builder()
+                .isSuccess(true)
+                .deletedNum(deleted)
+                .build();
+    }
+
 
     public WishListResponse.GetWishes getMyWishes(Long familyRoomId, Long memberId, Long cursor, int size) {
 

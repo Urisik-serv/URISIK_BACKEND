@@ -16,6 +16,13 @@ public class WishListRequest {
         @NotEmpty
         private List<@NotEmpty Long> recipeId; // foodName 리스트
     }
+    @Getter
+    @NoArgsConstructor
+    public static class DeleteWishes {
+        @NotNull
+        @NotEmpty
+        private List<@NotEmpty Long> recipeId; // foodName 리스트
+    }
 
     @Getter
     @NoArgsConstructor
