@@ -26,12 +26,6 @@ public class MemberWishList extends BaseEntity {
 
 
 
-    /*
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "newfood_id", nullable = false)
-    private NewFood newFood;
-    */
-
     public static MemberWishList of(Recipe recipe) {
         MemberWishList w = new MemberWishList();
         w.recipe = recipe;

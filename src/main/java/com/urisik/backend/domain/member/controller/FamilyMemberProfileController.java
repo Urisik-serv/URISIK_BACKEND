@@ -9,7 +9,6 @@ import com.urisik.backend.domain.member.exception.code.MemberSuccessCode;
 import com.urisik.backend.domain.member.service.FamilyMemberProfileService;
 import com.urisik.backend.domain.member.service.MemberWishListService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
-import com.urisik.backend.global.apiPayload.code.GeneralSuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -80,7 +79,7 @@ public class FamilyMemberProfileController {
 
 
 
-    @DeleteMapping("/{familyRoomId}/family-member{profileId}")
+    @DeleteMapping("/{familyRoomId}/profiles/{profileId}")
     public ApiResponse<FamilyMemberProfileResponse.Delete> deleteFamilyMemberProfile(
             @PathVariable Long familyRoomId,
             @PathVariable Long profileId,

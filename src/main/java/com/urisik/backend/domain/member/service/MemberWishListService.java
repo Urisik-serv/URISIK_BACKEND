@@ -38,9 +38,9 @@ public class MemberWishListService {
         // ✅ 추가: 기존 것은 유지하고, 요청으로 들어온 것들을 append
         for (Long recipeId : req.getRecipeId()) {
             Recipe recipe= recipeRepository.findById(recipeId)
-                    .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));//수정
+                    .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));//수정 요청 음식 없음
 
-            profile.addWish(MemberWishList.of(recipe));
+            profile.addWish(MemberWishList.of(recipe));// 추후에 recipe와 memberWishList 매핑 로직 구현. 현재 recipe가 없음.
         }
 
 
