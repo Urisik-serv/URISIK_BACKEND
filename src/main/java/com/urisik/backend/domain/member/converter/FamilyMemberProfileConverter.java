@@ -4,7 +4,6 @@ import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.member.entity.DietPreference;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
-import com.urisik.backend.domain.member.entity.MemberWishList;
 import com.urisik.backend.domain.member.dto.res.FamilyMemberProfileResponse;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import lombok.NoArgsConstructor;
@@ -21,9 +20,6 @@ public class FamilyMemberProfileConverter {
                 .map(MemberAllergy::getAllergen)
                 .toList();
 
-        List<String> wishItems = profile.getMemberWishLists().stream()
-                .map(MemberWishList::getFoodName)
-                .toList();
 
         // enum을 무엇으로 내려줄지 선택:
         // 1) diet.getDietPreference().name()  -> "KOREAN"
@@ -39,7 +35,6 @@ public class FamilyMemberProfileConverter {
                 .likedIngredients(profile.getLikedIngredients())
                 .dislikedIngredients(profile.getDislikedIngredients())
                 .allergy(allergies)
-                .wishItems(wishItems)
                 .dietPreferences(dietPreferences)
                 .build();
     }
@@ -50,9 +45,7 @@ public class FamilyMemberProfileConverter {
                 .map(MemberAllergy::getAllergen)
                 .toList();
 
-        List<String> wishItems = profile.getMemberWishLists().stream()
-                .map(MemberWishList::getFoodName)
-                .toList();
+
 
         // enum을 무엇으로 내려줄지 선택:
         // 1) diet.getDietPreference().name()  -> "KOREAN"
@@ -64,11 +57,12 @@ public class FamilyMemberProfileConverter {
         return FamilyMemberProfileResponse.Detail.builder()
                 .isSuccess(true)
                 .nickname(profile.getNickname())
+                .profilePicUrl(profile.getProfilePicUrl())
+                .alarmPolicy(profile.getAlarmPolicy())
                 .role(profile.getFamilyRole())
                 .likedIngredients(profile.getLikedIngredients())
                 .dislikedIngredients(profile.getDislikedIngredients())
                 .allergy(allergies)
-                .wishItems(wishItems)
                 .dietPreferences(dietPreferences)
                 .build();
 
@@ -80,9 +74,7 @@ public class FamilyMemberProfileConverter {
                 .map(MemberAllergy::getAllergen)
                 .toList();
 
-        List<String> wishItems = profile.getMemberWishLists().stream()
-                .map(MemberWishList::getFoodName)
-                .toList();
+
 
         // enum을 무엇으로 내려줄지 선택:
         // 1) diet.getDietPreference().name()  -> "KOREAN"
@@ -98,7 +90,6 @@ public class FamilyMemberProfileConverter {
                 .likedIngredients(profile.getLikedIngredients())
                 .dislikedIngredients(profile.getDislikedIngredients())
                 .allergy(allergies)
-                .wishItems(wishItems)
                 .dietPreferences(dietPreferences)
                 .build();
     }

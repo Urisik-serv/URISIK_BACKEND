@@ -1,21 +1,17 @@
 package com.urisik.backend.domain.member.dto.res;
 
 import com.urisik.backend.domain.allergy.enums.Allergen;
+import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.enums.FamilyRole;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.util.List;
 
 public class FamilyMemberProfileResponse {
 
     @Getter
     @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
     public static class Create {
 
         private Boolean isSuccess;
@@ -27,15 +23,13 @@ public class FamilyMemberProfileResponse {
         private String dislikedIngredients;
 
         private List<Allergen> allergy;
-        private List<String> wishItems;
+
         private List<DietPreferenceList> dietPreferences;
     }
 
 
     @Getter
     @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
     public static class Update {
 
         // Update는 보통 부분수정(PATCH) 고려해서 NotBlank/NotNull을 빼는 게 일반적
@@ -49,14 +43,21 @@ public class FamilyMemberProfileResponse {
         private String dislikedIngredients;
 
         private List<Allergen> allergy;
-        private List<String> wishItems;
+
         private List<DietPreferenceList> dietPreferences;
+    }
+
+
+    @Getter
+    @Builder
+    public static class UpdatePic {
+
+        private Boolean isSuccess;
+        private String profilePicUrl;
     }
 
     @Getter
     @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
     public static class Detail {
         
         private Boolean isSuccess;
@@ -65,11 +66,25 @@ public class FamilyMemberProfileResponse {
 
         private String likedIngredients;
         private String dislikedIngredients;
+        private AlarmPolicy alarmPolicy;
+        private String profilePicUrl;
 
         private List<Allergen> allergy;
-        private List<String> wishItems;
+
         private List<DietPreferenceList> dietPreferences;
     }
+
+    @Getter
+    @Builder
+    public static class Delete{
+        private Boolean isSuccess;
+    }
+
+
+
+
+
+
 
 
 }

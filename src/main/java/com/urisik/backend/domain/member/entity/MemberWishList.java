@@ -1,4 +1,5 @@
 package com.urisik.backend.domain.member.entity;
+import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -19,17 +20,21 @@ public class MemberWishList extends BaseEntity {
     @JoinColumn(name = "family_member_profile_id", nullable = false)
     private FamilyMemberProfile familyMemberProfile;
 
-    @Column
-    private String foodName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recipe_id", nullable = false)
+    private Recipe recipe;
+
+
+
     /*
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "newfood_id", nullable = false)
     private NewFood newFood;
     */
 
-    public static MemberWishList of(String foodName) {
+    public static MemberWishList of(Recipe recipe) {
         MemberWishList w = new MemberWishList();
-        w.foodName = foodName;
+        w.recipe = recipe;
         return w;
     }
 

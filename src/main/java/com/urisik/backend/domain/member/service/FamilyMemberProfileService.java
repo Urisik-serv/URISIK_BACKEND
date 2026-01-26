@@ -3,8 +3,10 @@ package com.urisik.backend.domain.member.service;
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
+import com.urisik.backend.domain.member.dto.req.WishListRequest;
+import com.urisik.backend.domain.member.dto.res.WishListResponse;
+import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.enums.FamilyRole;
-import com.urisik.backend.domain.familyroom.repository.FamilyRoomRepository;
 import com.urisik.backend.domain.member.converter.FamilyMemberProfileConverter;
 import com.urisik.backend.domain.member.dto.req.FamilyMemberProfileRequest;
 import com.urisik.backend.domain.member.dto.res.FamilyMemberProfileResponse;
@@ -19,6 +21,7 @@ import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -27,9 +30,12 @@ import java.util.List;
 public class FamilyMemberProfileService {
 
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
-    private final FamilyRoomRepository familyRoomRepository;
     private final MemberRepository memberRepository;
 
+    //
+
+    //post
+    @Transactional
     public FamilyMemberProfileResponse.Create create
             (Long familyRoomId, Long memberId, FamilyMemberProfileRequest.Create req)
     {
@@ -65,13 +71,14 @@ public class FamilyMemberProfileService {
         //3단계 req 정보 저장 FamilyMemberProfile에 저장
         FamilyMemberProfile profile = FamilyMemberProfile.builder()
                 .nickname(req.getNickname())
+                .alarmPolicy(AlarmPolicy.DISAGREE)
                 .member(member)
                 .familyRole(req.getRole())
+                .profilePicUrl(null)
                 .likedIngredients(req.getLikedIngredients())
                 .dislikedIngredients(req.getDislikedIngredients())
                 .familyRoom(familyRoom)
                 .build();
-
 
         if (req.getAllergy() != null) {
             for (Allergen allergen : req.getAllergy()) {
@@ -79,11 +86,6 @@ public class FamilyMemberProfileService {
             }
         }
 
-        if (req.getWishItems() != null) {
-            for (String item : req.getWishItems()) {
-                profile.addWish(MemberWishList.of(item));
-            }
-        }
 
         if (req.getDietPreferences() != null) {
             for (DietPreferenceList diet : req.getDietPreferences()) { // ✅ DTO도 Enum이면 이렇게
@@ -99,9 +101,14 @@ public class FamilyMemberProfileService {
         return FamilyMemberProfileConverter.toCreate(saved);
     }
 
+
+
     /*
     -----------------------------------------------------------
+    patch
      */
+
+    @Transactional
     public FamilyMemberProfileResponse.Update update(
             Long familyRoomId,
             Long memberId,
@@ -109,7 +116,7 @@ public class FamilyMemberProfileService {
     ) {
         // 1) 프로필 조회 (memberId + familyRoomId 조건으로 찾는 걸 추천)
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .findWithDetailsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
         // 2) 단일 필드 부분 수정 (null이면 유지)
@@ -151,9 +158,6 @@ public class FamilyMemberProfileService {
         if (req.getAllergy() != null) {
             profile.replaceAllergies(req.getAllergy());
         }
-        if (req.getWishItems() != null) {
-            profile.replaceWishItems(req.getWishItems());
-        }
         if (req.getDietPreferences() != null) {
             profile.replaceDietPreferences(req.getDietPreferences());
         }
@@ -164,19 +168,79 @@ public class FamilyMemberProfileService {
         return FamilyMemberProfileConverter.toUpdate(profile);
     }
 
+
+    @Transactional
+    public FamilyMemberProfileResponse.UpdatePic updatePic(
+            Long familyRoomId,
+            Long memberId,
+            FamilyMemberProfileRequest.UpdatePic req
+    ) {
+        // 1) 프로필 조회 (memberId + familyRoomId 조건으로 찾는 걸 추천)
+        FamilyMemberProfile profile = familyMemberProfileRepository
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+
+        profile.setProfilePicUrl(req.getProfilePicUrl());
+
+
+        return FamilyMemberProfileResponse.UpdatePic.builder()
+                .isSuccess(true)
+                .profilePicUrl(profile.getProfilePicUrl())
+                .build();
+    }
+
     /*
     --------------------------------------------------------------------
+    get
      */
+
 
     public FamilyMemberProfileResponse.Detail getMyProfile
             (Long familyRoomId, Long memberId) {
 
         // 방안에 있는 맴버 찾기.
         FamilyMemberProfile profile = familyMemberProfileRepository
+                .findWithDetailsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+
+
+        return FamilyMemberProfileConverter.toDetail(profile);
+
+    }
+    /*
+    --------------------------------------------------------------------
+    delete
+     */
+
+
+    @Transactional
+    public FamilyMemberProfileResponse.Delete quitFamilyRoom(Long familyRoomId, Long profileId , Long memberId) {
+
+        FamilyMemberProfile targetProfile = familyMemberProfileRepository
+                .findByFamilyRoom_IdAndId(familyRoomId, profileId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+
+        FamilyMemberProfile requesterProfile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
-        return FamilyMemberProfileConverter.toDetail(profile);
+
+        //자기 프로필이 거나, 권한이 있을때 삭제
+        boolean isSelf = targetProfile.getMember().getId().equals(memberId);
+
+        // 4) 리더 권한 여부 (FamilyPolicy 기준)
+        boolean isLeader = requesterProfile.getFamilyRoom()
+                .getFamilyPolicy()
+                .isLeaderRole(requesterProfile.getFamilyRole());
+
+        // 5) 본인이거나 리더면 삭제 가능
+        if (!isSelf && !isLeader) {
+            throw new MemberException(MemberErrorCode.FORBIDDEN_Member);
+        }
+
+        familyMemberProfileRepository.delete(targetProfile);
+
+        return FamilyMemberProfileResponse.Delete.builder().isSuccess(true).build();
 
     }
 

@@ -26,7 +26,13 @@ public enum MemberSuccessCode implements BaseSuccessCode {
             "프로필 요청 성공했습니다."),
     MemberProfile_Create(HttpStatus.GONE,
             "Auth_200_2",
-            "프로필 생성 성공했습니다.")
+            "프로필 생성 성공했습니다."),
+    MemberProfile_Update(HttpStatus.GONE,
+            "Auth_200_2",
+            "프로필 수정 성공했습니다."),
+    MemberProfile_Delete(HttpStatus.GONE,
+            "Auth_200_2",
+            "가족방 탈퇴 성공했습니다.")
 
 
     ;
