@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface DietPreferenceRepository extends JpaRepository<DietPreference, Long> {
     List<DietPreference> findAllByFamilyMemberProfile_Id(Long profileId);
+    void deleteAllByFamilyMemberProfile_Id(Long profileId);
 }

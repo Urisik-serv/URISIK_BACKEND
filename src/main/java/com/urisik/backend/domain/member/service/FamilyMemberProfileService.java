@@ -118,58 +118,72 @@ public class FamilyMemberProfileService {
             Long memberId,
             FamilyMemberProfileRequest.Update req
     ) {
-        // 1) 프로필 조회 (memberId + familyRoomId 조건으로 찾는 걸 추천)
+        // 1) "프로필"만 조회 (컬렉션 fetch 금지)
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findWithDetailsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
-        // 2) 단일 필드 부분 수정 (null이면 유지)
+        Long profileId = profile.getId();
+
+        // 2) 단일 필드 수정
         if (req.getNickname() != null) {
             profile.setNickname(req.getNickname());
         }
-        if (req.getRole() != null) {
-            // MOM/DAD 중복 체크 로직 여기서 수행
-            FamilyRole newRole = req.getRole(); //바꾸려는 값
 
-            // MOM / DAD만 중복 체크
-            if (newRole == FamilyRole.MOM || newRole == FamilyRole.DAD) {
-
-                boolean alreadyExists =
-                        familyMemberProfileRepository
-                                .existsByFamilyRoom_IdAndFamilyRoleAndIdNot(
-                                        familyRoomId,
-                                        newRole,
-                                        profile.getId()
-                                );
-
-                if (alreadyExists) {
-                    throw new MemberException(
-                            MemberErrorCode.Already_Exist_Role);
-                }
-            }
-
-            profile.setFamilyRole(newRole);
-
-        }
         if (req.getLikedIngredients() != null) {
             profile.setLikedIngredients(req.getLikedIngredients());
         }
+
         if (req.getDislikedIngredients() != null) {
             profile.setDislikedIngredients(req.getDislikedIngredients());
         }
 
-        // 3) 리스트 필드 전체 교체 (null이면 변경 안 함)
+        // 3) role 변경 + (MOM/DAD) 중복 체크
+        if (req.getRole() != null) {
+            FamilyRole newRole = req.getRole();
+
+            if (newRole == FamilyRole.MOM || newRole == FamilyRole.DAD) {
+                boolean alreadyExists = familyMemberProfileRepository
+                        .existsByFamilyRoom_IdAndFamilyRoleAndIdNot(
+                                familyRoomId,
+                                newRole,
+                                profileId
+                        );
+                if (alreadyExists) {
+                    throw new MemberException(MemberErrorCode.Already_Exist_Role);
+                }
+            }
+
+            profile.setFamilyRole(newRole);
+        }
+
+        // 4) allergy 전체 교체 (요청이 null이면 유지)
         if (req.getAllergy() != null) {
-            profile.replaceAllergies(req.getAllergy());
+            memberAllergyRepository.deleteAllByFamilyMemberProfile_Id(profileId);
+
+            for (Allergen a : req.getAllergy()) {
+                MemberAllergy entity = MemberAllergy.of(a);
+                entity.setFamilyMemberProfile(profile); // FK 세팅
+                memberAllergyRepository.save(entity);
+            }
         }
+
+        // 5) dietPreferences 전체 교체 (요청이 null이면 유지)
         if (req.getDietPreferences() != null) {
-            profile.replaceDietPreferences(req.getDietPreferences());
+            dietPreferenceRepository.deleteAllByFamilyMemberProfile_Id(profileId);
+
+            for (DietPreferenceList d : req.getDietPreferences()) {
+                DietPreference entity = DietPreference.of(d);
+                entity.setFamilyMemberProfile(profile);
+                dietPreferenceRepository.save(entity);
+            }
         }
 
-        // 4) save 호출은 선택 (영속 상태면 flush 시점에 반영)
-        // familyMemberProfileRepository.save(profile);
+        // 6) 응답 조립을 위해 "컬렉션 2번" 조회 (총 3번 조회)
+        List<MemberAllergy> allergies = memberAllergyRepository.findByFamilyMemberProfile_Id(profileId);
+        List<DietPreference> diets = dietPreferenceRepository.findAllByFamilyMemberProfile_Id(profileId);
 
-        return FamilyMemberProfileConverter.toUpdate(profile);
+        return FamilyMemberProfileConverter.toUpdate(profile, allergies, diets);
     }
 
 

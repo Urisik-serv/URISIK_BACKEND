@@ -65,19 +65,17 @@ public class FamilyMemberProfileConverter {
                 .build();
     }
 
-    public static FamilyMemberProfileResponse.Update toUpdate(FamilyMemberProfile profile) {
-
-        List<Allergen> allergies = profile.getMemberAllergyList().stream()
+    public static FamilyMemberProfileResponse.Update toUpdate(
+            FamilyMemberProfile profile,
+            List<MemberAllergy> allergies,
+            List<DietPreference> diets
+    ) {
+        List<Allergen> allergyEnums = allergies.stream()
                 .map(MemberAllergy::getAllergen)
                 .toList();
 
-
-
-        // enum을 무엇으로 내려줄지 선택:
-        // 1) diet.getDietPreference().name()  -> "KOREAN"
-        // 2) diet.getDietPreference().getDisplayName() -> "한식"
-        List<DietPreferenceList> dietPreferences = profile.getDietPreferenceList().stream()
-                .map(DietPreference::getDietPreference) // ✅ enum
+        List<DietPreferenceList> dietEnums = diets.stream()
+                .map(DietPreference::getDietPreference)
                 .toList();
 
         return FamilyMemberProfileResponse.Update.builder()
@@ -86,8 +84,8 @@ public class FamilyMemberProfileConverter {
                 .role(profile.getFamilyRole())
                 .likedIngredients(profile.getLikedIngredients())
                 .dislikedIngredients(profile.getDislikedIngredients())
-                .allergy(allergies)
-                .dietPreferences(dietPreferences)
+                .allergy(allergyEnums)
+                .dietPreferences(dietEnums)
                 .build();
     }
 }
