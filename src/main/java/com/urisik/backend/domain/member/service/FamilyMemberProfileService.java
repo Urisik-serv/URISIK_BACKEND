@@ -2,6 +2,7 @@ package com.urisik.backend.domain.member.service;
 
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
+import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import com.urisik.backend.domain.member.dto.req.WishListRequest;
 import com.urisik.backend.domain.member.dto.res.WishListResponse;
@@ -17,6 +18,7 @@ import com.urisik.backend.domain.member.entity.MemberWishList;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import com.urisik.backend.domain.member.exception.MemberException;
 import com.urisik.backend.domain.member.exception.code.MemberErrorCode;
+import com.urisik.backend.domain.member.repo.DietPreferenceRepository;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,8 @@ public class FamilyMemberProfileService {
 
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final MemberRepository memberRepository;
+    private final MemberAllergyRepository memberAllergyRepository;
+    private final DietPreferenceRepository dietPreferenceRepository;
 
     //
 
@@ -200,11 +204,19 @@ public class FamilyMemberProfileService {
 
         // 방안에 있는 맴버 찾기.
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findWithDetailsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
+        Long profileId = profile.getId();
 
-        return FamilyMemberProfileConverter.toDetail(profile);
+        // 2) 알러지 목록 조회
+        List<MemberAllergy> allergies = memberAllergyRepository.findByFamilyMemberProfile_Id(profileId);
+
+        // 3) 식단선호 목록 조회
+        List<DietPreference> diets = dietPreferenceRepository.findAllByFamilyMemberProfile_Id(profileId);
+
+
+        return FamilyMemberProfileConverter.toDetail(profile,allergies,diets);
 
     }
     /*
