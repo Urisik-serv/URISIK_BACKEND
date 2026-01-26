@@ -2,6 +2,7 @@ package com.urisik.backend.domain.recipe.converter;
 
 import com.urisik.backend.domain.allergy.converter.AllergySubstitutionConverter;
 import com.urisik.backend.domain.allergy.dto.res.AllergySubstitutionResponseDTO;
+import com.urisik.backend.domain.allergy.entity.AllergenAlternative;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.recipe.dto.RecipeDetailDTO;
 import com.urisik.backend.domain.recipe.dto.RecipeSummaryDTO;
@@ -14,8 +15,13 @@ import java.util.Map;
 @Component
 public class RecipeConverter {
 
-    public RecipeSummaryDTO toSummary(RecipeContent content, Map<Allergen, List<String>> subsMap) {
-        List<AllergySubstitutionResponseDTO> subsDto = AllergySubstitutionConverter.toDtoList(subsMap);
+    public RecipeSummaryDTO toSummary(
+            RecipeContent content,
+            Map<Allergen, List<AllergenAlternative>> subsMap
+    ) {
+        List<AllergySubstitutionResponseDTO> subsDto =
+                AllergySubstitutionConverter.toDtoList(subsMap);
+
         return new RecipeSummaryDTO(
                 content.getRecipeKey(),
                 content.getTitle(),
@@ -26,8 +32,13 @@ public class RecipeConverter {
         );
     }
 
-    public RecipeDetailDTO toDetail(RecipeContent content, Map<Allergen, List<String>> subsMap) {
-        List<AllergySubstitutionResponseDTO> subsDto = AllergySubstitutionConverter.toDtoList(subsMap);
+    public RecipeDetailDTO toDetail(
+            RecipeContent content,
+            Map<Allergen, List<AllergenAlternative>> subsMap
+    ) {
+        List<AllergySubstitutionResponseDTO> subsDto =
+                AllergySubstitutionConverter.toDtoList(subsMap);
+
         return new RecipeDetailDTO(
                 content.getRecipeKey(),
                 content.getTitle(),

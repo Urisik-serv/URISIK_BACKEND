@@ -24,9 +24,17 @@ public class AllergenAlternative {
     @JoinColumn(name = "ingredient_id", nullable = false)
     private AlternativeIngredient ingredient;
 
-    public AllergenAlternative(Allergen allergen, AlternativeIngredient ingredient) {
+    @Column(nullable = false)
+    private String reason;
+
+    public AllergenAlternative(
+            Allergen allergen,
+            AlternativeIngredient ingredient,
+            String reason
+    ) {
         this.allergen = allergen;
         this.ingredient = ingredient;
+        this.reason = reason;
     }
 
 }

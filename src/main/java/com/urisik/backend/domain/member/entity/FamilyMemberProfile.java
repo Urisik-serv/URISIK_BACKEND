@@ -12,7 +12,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Entity
@@ -65,13 +67,13 @@ public class FamilyMemberProfile extends BaseEntity {
 
 
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<MemberAllergy> memberAllergyList= new ArrayList<>();
+    private Set<MemberAllergy> memberAllergyList= new HashSet<>();
 
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<MemberWishList> memberWishLists = new ArrayList<>();
 
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<DietPreference> dietPreferenceList = new ArrayList<>();
+    private Set<DietPreference> dietPreferenceList = new HashSet<>();
 
     // 1:1 연관
     @OneToOne(fetch = FetchType.LAZY)

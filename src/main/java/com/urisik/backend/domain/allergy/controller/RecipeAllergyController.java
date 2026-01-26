@@ -3,6 +3,7 @@ package com.urisik.backend.domain.allergy.controller;
 import com.urisik.backend.domain.allergy.converter.AllergySubstitutionConverter;
 import com.urisik.backend.domain.allergy.dto.req.RecipeAllergyCheckRequestDTO;
 import com.urisik.backend.domain.allergy.dto.res.AllergySubstitutionResponseDTO;
+import com.urisik.backend.domain.allergy.entity.AllergenAlternative;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.enums.AllergySuccessCode;
 import com.urisik.backend.domain.allergy.service.AllergySubstitutionService;
@@ -27,11 +28,11 @@ public class RecipeAllergyController {
     @PostMapping("/allergy-check")
     public ApiResponse<List<AllergySubstitutionResponseDTO>> checkRecipeAllergy(
             @RequestBody RecipeAllergyCheckRequestDTO request,
-            @AuthenticationPrincipal(expression = "username") String userId
+            @AuthenticationPrincipal(expression = "userName") String userId
     ) {
         Long loginUserId = Long.parseLong(userId);
 
-        Map<Allergen, List<String>> result =
+        Map<Allergen, List<AllergenAlternative>> result =
                 allergySubstitutionService.checkAndMapSubstitutions(
                         loginUserId,
                         request.getIngredients()
