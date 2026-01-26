@@ -26,10 +26,10 @@ public class FamilyMemberProfileController {
     @PostMapping("/{familyRoomId}/profiles")
     public ApiResponse<FamilyMemberProfileResponse.Create> createProfile(
             @PathVariable Long familyRoomId,
-            @AuthenticationPrincipal Object principal,
+            @AuthenticationPrincipal Long memberId,
             @RequestBody @Valid FamilyMemberProfileRequest.Create req
     ) {
-        Long memberId = (Long) principal;
+
 
 
         return ApiResponse.onSuccess(

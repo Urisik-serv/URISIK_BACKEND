@@ -65,13 +65,15 @@ public class FamilyMemberProfile extends BaseEntity {
     1:N 연관
     */
 
-
+    @Builder.Default
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<MemberAllergy> memberAllergyList= new HashSet<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<MemberWishList> memberWishLists = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<DietPreference> dietPreferenceList = new HashSet<>();
 
