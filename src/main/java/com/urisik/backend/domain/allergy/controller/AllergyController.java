@@ -20,18 +20,18 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/users")
+@RequestMapping("/api/members")
 public class AllergyController {
 
     private final AllergyQueryService allergyQueryService;
 
-    @GetMapping("/{userId}/allergies")
+    @GetMapping("/{memberId}/allergies")
     public ApiResponse<List<AllergyResponseDTO>> getUserAllergies(
-            @PathVariable Long userId,
+            @PathVariable Long memberId,
             @AuthenticationPrincipal Long loginUserId
     ) {
 
-        if (!loginUserId.equals(userId)) {
+        if (!loginUserId.equals(memberId)) {
             throw new GeneralException(
                     GeneralErrorCode.FORBIDDEN,
                     "다른 사용자의 알레르기 정보에 접근할 수 없습니다."
@@ -39,7 +39,7 @@ public class AllergyController {
         }
 
         List<AllergyResponseDTO> result =
-                allergyQueryService.getMyAllergies(userId);
+                allergyQueryService.getMyAllergies(memberId);
 
         return ApiResponse.onSuccess(
                 AllergySuccessCode.ALLERGY_LIST_OK,

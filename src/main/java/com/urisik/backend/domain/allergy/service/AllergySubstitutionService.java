@@ -21,14 +21,11 @@ public class AllergySubstitutionService {
     private final AllergenAlternativeRepository allergenAlternativeRepository;
     private final IngredientNormalizer ingredientNormalizer;
 
-    /**
-     * 사용자 알레르기 + 레시피 재료 → 대체 식재료 매핑
-     */
-    public Map<Allergen, List<String>> checkAndMapSubstitutions(
+    public Map<Allergen, List<AllergenAlternative>> checkAndMapSubstitutions(
             Long memberId,
             List<String> recipeIngredients
     ) {
-        //사용자 알레르기 조회
+        // 사용자 알레르기 조회
         List<Allergen> userAllergens =
                 memberAllergyRepository.findByFamilyMemberProfile_Id(memberId)
                         .stream()
@@ -39,13 +36,13 @@ public class AllergySubstitutionService {
             return Map.of();
         }
 
-        //재료 정규화
+        // 재료 정규화
         List<String> normalizedIngredients =
                 recipeIngredients.stream()
                         .map(ingredientNormalizer::normalize)
                         .toList();
 
-        //실제 레시피에 포함된 알레르기만 추출
+        // 실제 레시피에 포함된 알레르기만 추출
         List<Allergen> matchedAllergens =
                 userAllergens.stream()
                         .filter(allergen ->
@@ -60,19 +57,16 @@ public class AllergySubstitutionService {
             return Map.of();
         }
 
-        //알레르기 → 대체 식재료 조회
+        // 알레르기 → 대체 식재료 + 이유 조회
         List<AllergenAlternative> alternatives =
                 allergenAlternativeRepository.findByAllergenIn(matchedAllergens);
 
-        //Map 변환
+        // Map 변환
         return alternatives.stream()
                 .collect(Collectors.groupingBy(
-                        AllergenAlternative::getAllergen,
-                        Collectors.mapping(
-                                aa -> aa.getIngredient().getName(),
-                                Collectors.toList()
-                        )
+                        AllergenAlternative::getAllergen
                 ));
     }
 
 }
+

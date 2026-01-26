@@ -1,5 +1,6 @@
 package com.urisik.backend.domain.recipe.service;
 
+import com.urisik.backend.domain.allergy.entity.AllergenAlternative;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.service.AllergySubstitutionService;
 import com.urisik.backend.domain.recipe.enums.RecipeErrorCode;
@@ -52,22 +53,33 @@ public class RecipeDetailService {
                     .hashtags(List.of())
                     .build();
 
-            Map<Allergen, List<String>> subs =
-                    allergySubstitutionService.checkAndMapSubstitutions(memberId, content.getIngredients());
+            //타입 변경
+            Map<Allergen, List<AllergenAlternative>> subs =
+                    allergySubstitutionService.checkAndMapSubstitutions(
+                            memberId,
+                            content.getIngredients()
+                    );
 
             return recipeConverter.toDetail(content, subs);
         }
 
         // 2) EXTERNAL
         if (parsed.source().equals("EXT")) {
-            ExternalRecipeRaw raw = foodSafetyRecipeClient.findByRcpSeq(parsed.id());
-            if (raw == null) throw new GeneralException(RecipeErrorCode.RECIPE_NOT_FOUND);
+            ExternalRecipeRaw raw =
+                    foodSafetyRecipeClient.findByRcpSeq(parsed.id());
 
-            // 상세는 MAIN + MK (includeLargeImage=true)
+            if (raw == null) {
+                throw new GeneralException(RecipeErrorCode.RECIPE_NOT_FOUND);
+            }
+
             RecipeContent content = externalRecipeMapper.toContent(raw, true);
 
-            Map<Allergen, List<String>> subs =
-                    allergySubstitutionService.checkAndMapSubstitutions(memberId, content.getIngredients());
+            //타입 변경
+            Map<Allergen, List<AllergenAlternative>> subs =
+                    allergySubstitutionService.checkAndMapSubstitutions(
+                            memberId,
+                            content.getIngredients()
+                    );
 
             return recipeConverter.toDetail(content, subs);
         }

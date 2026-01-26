@@ -1,5 +1,6 @@
 package com.urisik.backend.domain.recipe.service;
 
+import com.urisik.backend.domain.allergy.entity.AllergenAlternative;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.service.AllergySubstitutionService;
 import com.urisik.backend.domain.recipe.enums.RecipeErrorCode;
@@ -33,32 +34,40 @@ public class RecipeSearchService {
 
     public RecipeSearchResponseDTO search(String name, Long memberId, int limit) {
         if (name == null || name.isBlank()) {
-            throw new GeneralException(RecipeErrorCode.RECIPE_NOT_FOUND, "검색어가 비어있습니다.");
+            throw new GeneralException(
+                    RecipeErrorCode.RECIPE_NOT_FOUND,
+                    "검색어가 비어있습니다."
+            );
         }
 
-        // 1) 내부 DB 우선 (Case 1)
+        // 1) 내부 DB (Case 1)
         List<Recipe> dbRecipes = recipeRepository.findByNameContaining(name);
         if (!dbRecipes.isEmpty()) {
             List<RecipeSummaryDTO> out = new ArrayList<>();
+
             for (Recipe r : dbRecipes) {
                 RecipeContent content = RecipeContent.builder()
                         .recipeKey("DB-" + r.getId())
                         .title(r.getName())
                         .ingredients(r.getIngredients())
-                        // DB엔 이미지/steps/nutrition이 없으니 null로 둠 (필요하면 확장)
                         .build();
 
-                Map<Allergen, List<String>> subs =
-                        allergySubstitutionService.checkAndMapSubstitutions(memberId, content.getIngredients());
+                // 타입 변경
+                Map<Allergen, List<AllergenAlternative>> subs =
+                        allergySubstitutionService.checkAndMapSubstitutions(
+                                memberId,
+                                content.getIngredients()
+                        );
 
                 out.add(recipeConverter.toSummary(content, subs));
             }
+
             return new RecipeSearchResponseDTO("INTERNAL_DB", out);
         }
 
         // 2) 외부 API (Case 2)
-        // MVP: start=1, end=limit
-        List<ExternalRecipeRaw> raws = foodSafetyRecipeClient.searchByName(name, 1, Math.min(limit, 50));
+        List<ExternalRecipeRaw> raws =
+                foodSafetyRecipeClient.searchByName(name, 1, Math.min(limit, 50));
 
         if (raws.isEmpty()) {
             throw new GeneralException(RecipeErrorCode.RECIPE_NOT_FOUND);
@@ -66,17 +75,20 @@ public class RecipeSearchService {
 
         List<RecipeSummaryDTO> out = new ArrayList<>();
         for (ExternalRecipeRaw raw : raws) {
-            // 검색은 MAIN만 (includeLargeImage=false)
             RecipeContent content = externalRecipeMapper.toContent(raw, false);
 
-            Map<Allergen, List<String>> subs =
-                    allergySubstitutionService.checkAndMapSubstitutions(memberId, content.getIngredients());
+            // 타입 변경
+            Map<Allergen, List<AllergenAlternative>> subs =
+                    allergySubstitutionService.checkAndMapSubstitutions(
+                            memberId,
+                            content.getIngredients()
+                    );
 
             out.add(recipeConverter.toSummary(content, subs));
         }
 
         return new RecipeSearchResponseDTO("EXTERNAL_API", out);
     }
-
 }
+
 

@@ -10,6 +10,5 @@ import java.util.List;
 public class AllergySubstitutionResponseDTO {
 
     private String allergen;              // 알레르기 이름 (한글)
-    private List<String> alternatives;    // 대체 식재료 목록
-
+    private List<AlternativeIngredientResponseDTO> alternatives;
 }
