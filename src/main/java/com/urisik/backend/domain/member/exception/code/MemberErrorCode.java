@@ -11,6 +11,13 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum MemberErrorCode implements BaseErrorCode {
 
+    INVALID_FILE(HttpStatus.GONE,
+            "Auth_200",
+                    "파일이 비어있습니다."),
+
+    INVALID_FILE_TYPE(HttpStatus.GONE,
+            "Auth_200",
+            "image파일이 아닙니다."),
 
     No_Roles(HttpStatus.GONE,
             "Auth_200",

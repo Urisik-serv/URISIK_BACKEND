@@ -66,7 +66,6 @@ public class FamilyMemberProfileResponse {
 
         private String likedIngredients;
         private String dislikedIngredients;
-        private AlarmPolicy alarmPolicy;
         private String profilePicUrl;
 
         private List<Allergen> allergy;

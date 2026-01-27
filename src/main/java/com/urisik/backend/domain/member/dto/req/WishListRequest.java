@@ -12,9 +12,10 @@ public class WishListRequest {
     @Getter
     @NoArgsConstructor
     public static class PostWishes {
-        @NotNull
+
         @NotEmpty
-        private List<@NotEmpty Long> recipeId; // foodName 리스트
+        private List<@NotNull(message = "recipeId 안에는 null이 올 수 없습니다.") Long> recipeId; // foodName 리스트
+
     }
     @Getter
     @NoArgsConstructor
