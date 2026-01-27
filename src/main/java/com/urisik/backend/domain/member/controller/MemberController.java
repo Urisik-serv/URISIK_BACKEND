@@ -2,13 +2,14 @@ package com.urisik.backend.domain.member.controller;
 
 
 import com.urisik.backend.domain.member.dto.req.MemberRequest;
+import com.urisik.backend.domain.member.dto.res.MemberResponse;
+import com.urisik.backend.domain.member.service.MemberService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.apiPayload.code.GeneralSuccessCode;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,14 +17,37 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
 
 
-    @PatchMapping("/agree")
-    public ApiResponse<MemberRequest.PatchAgree> agreeMent(
 
+    private final MemberService memberService;
+
+    @PatchMapping("/agree")
+    public ApiResponse<MemberResponse.PatchAgree> agree(
+            @AuthenticationPrincipal Long memberId,
+            @RequestBody @Valid MemberRequest.PatchAgree req
+    ) {
+        MemberResponse.PatchAgree res = memberService.patchAgree(memberId, req);
+        return ApiResponse.onSuccess(GeneralSuccessCode.OK, res);
+    }
+
+    @GetMapping("/alarm")
+    public ApiResponse<MemberResponse.alarmInfo> alarmInfo(
+            @AuthenticationPrincipal Long memberId
     ){
 
-        MemberRequest.PatchAgree req = new MemberRequest.PatchAgree();
 
-        return ApiResponse.onSuccess(GeneralSuccessCode.OK,req);
+
+
+    }
+
+    @PatchMapping("/alarm")
+    public ApiResponse<MemberResponse.alarmInfo> alarmUpdateInfo(
+            @AuthenticationPrincipal Long memberId,
+            @RequestBody @Valid MemberRequest.PatchAgree req
+    ){
+
+
+
+
     }
 
 
