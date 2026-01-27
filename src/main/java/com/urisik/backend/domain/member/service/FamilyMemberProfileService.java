@@ -2,9 +2,8 @@ package com.urisik.backend.domain.member.service;
 
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
+import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
-import com.urisik.backend.domain.member.dto.req.WishListRequest;
-import com.urisik.backend.domain.member.dto.res.WishListResponse;
 import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.enums.FamilyRole;
 import com.urisik.backend.domain.member.converter.FamilyMemberProfileConverter;
@@ -13,15 +12,18 @@ import com.urisik.backend.domain.member.dto.res.FamilyMemberProfileResponse;
 import com.urisik.backend.domain.member.entity.DietPreference;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.entity.Member;
-import com.urisik.backend.domain.member.entity.MemberWishList;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import com.urisik.backend.domain.member.exception.MemberException;
 import com.urisik.backend.domain.member.exception.code.MemberErrorCode;
+import com.urisik.backend.domain.member.repo.DietPreferenceRepository;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberRepository;
+import com.urisik.backend.global.external.s3.S3Remover;
+import com.urisik.backend.global.external.s3.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -31,7 +33,10 @@ public class FamilyMemberProfileService {
 
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final MemberRepository memberRepository;
-
+    private final MemberAllergyRepository memberAllergyRepository;
+    private final DietPreferenceRepository dietPreferenceRepository;
+    private final S3Uploader s3Uploader;
+    private final S3Remover s3Remover;
     //
 
     //post
@@ -71,7 +76,6 @@ public class FamilyMemberProfileService {
         //3단계 req 정보 저장 FamilyMemberProfile에 저장
         FamilyMemberProfile profile = FamilyMemberProfile.builder()
                 .nickname(req.getNickname())
-                .alarmPolicy(AlarmPolicy.DISAGREE)
                 .member(member)
                 .familyRole(req.getRole())
                 .profilePicUrl(null)
@@ -114,78 +118,114 @@ public class FamilyMemberProfileService {
             Long memberId,
             FamilyMemberProfileRequest.Update req
     ) {
-        // 1) 프로필 조회 (memberId + familyRoomId 조건으로 찾는 걸 추천)
+        // 1) "프로필"만 조회 (컬렉션 fetch 금지)
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findWithDetailsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
-        // 2) 단일 필드 부분 수정 (null이면 유지)
+        Long profileId = profile.getId();
+
+        // 2) 단일 필드 수정
         if (req.getNickname() != null) {
             profile.setNickname(req.getNickname());
         }
-        if (req.getRole() != null) {
-            // MOM/DAD 중복 체크 로직 여기서 수행
-            FamilyRole newRole = req.getRole(); //바꾸려는 값
 
-            // MOM / DAD만 중복 체크
-            if (newRole == FamilyRole.MOM || newRole == FamilyRole.DAD) {
-
-                boolean alreadyExists =
-                        familyMemberProfileRepository
-                                .existsByFamilyRoom_IdAndFamilyRoleAndIdNot(
-                                        familyRoomId,
-                                        newRole,
-                                        profile.getId()
-                                );
-
-                if (alreadyExists) {
-                    throw new MemberException(
-                            MemberErrorCode.Already_Exist_Role);
-                }
-            }
-
-            profile.setFamilyRole(newRole);
-
-        }
         if (req.getLikedIngredients() != null) {
             profile.setLikedIngredients(req.getLikedIngredients());
         }
+
         if (req.getDislikedIngredients() != null) {
             profile.setDislikedIngredients(req.getDislikedIngredients());
         }
 
-        // 3) 리스트 필드 전체 교체 (null이면 변경 안 함)
+        // 3) role 변경 + (MOM/DAD) 중복 체크
+        if (req.getRole() != null) {
+            FamilyRole newRole = req.getRole();
+
+            if (newRole == FamilyRole.MOM || newRole == FamilyRole.DAD) {
+                boolean alreadyExists = familyMemberProfileRepository
+                        .existsByFamilyRoom_IdAndFamilyRoleAndIdNot(
+                                familyRoomId,
+                                newRole,
+                                profileId
+                        );
+                if (alreadyExists) {
+                    throw new MemberException(MemberErrorCode.Already_Exist_Role);
+                }
+            }
+
+            profile.setFamilyRole(newRole);
+        }
+
+        // 4) allergy 전체 교체 (요청이 null이면 유지)
         if (req.getAllergy() != null) {
-            profile.replaceAllergies(req.getAllergy());
+            memberAllergyRepository.deleteAllByFamilyMemberProfile_Id(profileId);
+
+            for (Allergen a : req.getAllergy()) {
+                MemberAllergy entity = MemberAllergy.of(a);
+                entity.setFamilyMemberProfile(profile); // FK 세팅
+                memberAllergyRepository.save(entity);
+            }
         }
+
+        // 5) dietPreferences 전체 교체 (요청이 null이면 유지)
         if (req.getDietPreferences() != null) {
-            profile.replaceDietPreferences(req.getDietPreferences());
+            dietPreferenceRepository.deleteAllByFamilyMemberProfile_Id(profileId);
+
+            for (DietPreferenceList d : req.getDietPreferences()) {
+                DietPreference entity = DietPreference.of(d);
+                entity.setFamilyMemberProfile(profile);
+                dietPreferenceRepository.save(entity);
+            }
         }
 
-        // 4) save 호출은 선택 (영속 상태면 flush 시점에 반영)
-        // familyMemberProfileRepository.save(profile);
+        // 6) 응답 조립을 위해 "컬렉션 2번" 조회 (총 3번 조회)
+        List<MemberAllergy> allergies = memberAllergyRepository.findByFamilyMemberProfile_Id(profileId);
+        List<DietPreference> diets = dietPreferenceRepository.findAllByFamilyMemberProfile_Id(profileId);
 
-        return FamilyMemberProfileConverter.toUpdate(profile);
+        return FamilyMemberProfileConverter.toUpdate(profile, allergies, diets);
     }
 
 
+
+    /*
+    프론트는 multipart/form-data로:
+    key: file
+    value: 이미지 파일
+     */
     @Transactional
     public FamilyMemberProfileResponse.UpdatePic updatePic(
             Long familyRoomId,
             Long memberId,
-            FamilyMemberProfileRequest.UpdatePic req
+            MultipartFile file
     ) {
         // 1) 프로필 조회 (memberId + familyRoomId 조건으로 찾는 걸 추천)
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
-        profile.setProfilePicUrl(req.getProfilePicUrl());
 
+        if (file == null || file.isEmpty()) {
+            throw new MemberException(MemberErrorCode.INVALID_FILE);
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new MemberException(MemberErrorCode.INVALID_FILE_TYPE);
+        }
+
+        String oldUrl = profile.getProfilePicUrl();
+
+        String newUrl = s3Uploader.upload(file, "family_member_profile"); // 폴더명 추천
+        profile.setProfilePicUrl(newUrl);
+
+        if (oldUrl != null && !oldUrl.isBlank()) {
+            s3Remover.remove(oldUrl);
+        }
 
         return FamilyMemberProfileResponse.UpdatePic.builder()
                 .isSuccess(true)
-                .profilePicUrl(profile.getProfilePicUrl())
+                .profilePicUrl(newUrl)
                 .build();
     }
 
@@ -200,11 +240,19 @@ public class FamilyMemberProfileService {
 
         // 방안에 있는 맴버 찾기.
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findWithDetailsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
+        Long profileId = profile.getId();
 
-        return FamilyMemberProfileConverter.toDetail(profile);
+        // 2) 알러지 목록 조회
+        List<MemberAllergy> allergies = memberAllergyRepository.findByFamilyMemberProfile_Id(profileId);
+
+        // 3) 식단선호 목록 조회
+        List<DietPreference> diets = dietPreferenceRepository.findAllByFamilyMemberProfile_Id(profileId);
+
+
+        return FamilyMemberProfileConverter.toDetail(profile,allergies,diets);
 
     }
     /*

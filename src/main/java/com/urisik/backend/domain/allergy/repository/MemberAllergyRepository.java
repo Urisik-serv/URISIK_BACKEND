@@ -8,5 +8,5 @@ import java.util.List;
 public interface MemberAllergyRepository extends JpaRepository<MemberAllergy, Long> {
 
     List<MemberAllergy> findByFamilyMemberProfile_Id(Long memberId);
-
+    void deleteAllByFamilyMemberProfile_Id(Long profileId);
 }

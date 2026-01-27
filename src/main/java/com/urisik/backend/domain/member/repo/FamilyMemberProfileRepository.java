@@ -11,21 +11,10 @@ import java.util.Optional;
 public interface FamilyMemberProfileRepository extends JpaRepository<FamilyMemberProfile, Long> {
 
 
-    @EntityGraph(attributePaths = {
-            "memberAllergyList",
-            "dietPreferenceList"
-    })
     Optional<FamilyMemberProfile> findByMember_Id(Long memberId);
 
     List<FamilyMemberProfile> findAllByFamilyRoom_Id(Long FamilyRoomId);
 
-
-
-    @EntityGraph(attributePaths = {
-            "memberAllergyList",
-            "dietPreferenceList"
-    })
-    Optional<FamilyMemberProfile> findWithDetailsByFamilyRoom_IdAndMember_Id(Long familyRoomId, Long memberId);
 
 
     @EntityGraph(attributePaths = {"familyRoom"})

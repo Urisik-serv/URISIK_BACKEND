@@ -9,11 +9,12 @@ import com.urisik.backend.domain.member.exception.code.MemberSuccessCode;
 import com.urisik.backend.domain.member.service.FamilyMemberProfileService;
 import com.urisik.backend.domain.member.service.MemberWishListService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
-import com.urisik.backend.global.apiPayload.code.GeneralSuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,10 +27,10 @@ public class FamilyMemberProfileController {
     @PostMapping("/{familyRoomId}/profiles")
     public ApiResponse<FamilyMemberProfileResponse.Create> createProfile(
             @PathVariable Long familyRoomId,
-            @AuthenticationPrincipal Object principal,
+            @AuthenticationPrincipal Long memberId,
             @RequestBody @Valid FamilyMemberProfileRequest.Create req
     ) {
-        Long memberId = (Long) principal;
+
 
 
         return ApiResponse.onSuccess(
@@ -42,54 +43,49 @@ public class FamilyMemberProfileController {
     @GetMapping("/{familyRoomId}/profiles")
     public ApiResponse<FamilyMemberProfileResponse.Detail> getMyProfile(
             @PathVariable Long familyRoomId,
-            @AuthenticationPrincipal Long loginMemberId
+            @AuthenticationPrincipal Long memberId
     ) {
         return ApiResponse.onSuccess(
                 MemberSuccessCode.MemberProfile_Get,
-                familyMemberProfileService.getMyProfile(familyRoomId, loginMemberId)
+                familyMemberProfileService.getMyProfile(familyRoomId, memberId)
         );
     }
     @PatchMapping("/{familyRoomId}/profiles")
     public ApiResponse<FamilyMemberProfileResponse.Update> updateMyProfile(
             @PathVariable Long familyRoomId,
-            @AuthenticationPrincipal Long loginUserId,
+            @AuthenticationPrincipal Long memberId,
             @RequestBody @Valid FamilyMemberProfileRequest.Update req
     ) {
 
 
         FamilyMemberProfileResponse.Update result =
-                familyMemberProfileService.update(familyRoomId, loginUserId, req);
+                familyMemberProfileService.update(familyRoomId, memberId, req);
 
         return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Update,result);
     }
 
 
-    @PatchMapping("/{familyRoomId}/profile-pic")
+    @PatchMapping(value = "/{familyRoomId}/profile-pic", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<FamilyMemberProfileResponse.UpdatePic> updateMyProfilePicture(
             @PathVariable Long familyRoomId,
-            @AuthenticationPrincipal Long loginUserId,
-            @RequestBody @Valid FamilyMemberProfileRequest.UpdatePic req
+            @AuthenticationPrincipal Long memberId,
+            @RequestPart("file") MultipartFile file
     ){
-
-        FamilyMemberProfileResponse.UpdatePic result =
-                familyMemberProfileService.updatePic(familyRoomId, loginUserId, req);
-
-        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Update,result);
-
+        var result = familyMemberProfileService.updatePic(familyRoomId, memberId, file);
+        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Update, result);
     }
 
 
-
-    @DeleteMapping("/{familyRoomId}/family-member{profileId}")
+    @DeleteMapping("/{familyRoomId}/profiles/{profileId}")
     public ApiResponse<FamilyMemberProfileResponse.Delete> deleteFamilyMemberProfile(
             @PathVariable Long familyRoomId,
             @PathVariable Long profileId,
-            @AuthenticationPrincipal Long loginUserId
+            @AuthenticationPrincipal Long memberId
     ) {
 
 
         return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Delete,
-                familyMemberProfileService.quitFamilyRoom(familyRoomId,profileId,loginUserId));
+                familyMemberProfileService.quitFamilyRoom(familyRoomId,profileId,memberId));
     }
 
 /*
@@ -97,34 +93,36 @@ public class FamilyMemberProfileController {
     wishlist
  */
 
-    @PostMapping("/profile-wishes")
+    @PostMapping("/{familyRoomId}/profile-wishes")
     public ApiResponse<WishListResponse.PostWishes> addWishItems(
-            @AuthenticationPrincipal Long loginUserId,
+            @PathVariable Long familyRoomId,
+            @AuthenticationPrincipal Long memberId,
             @RequestBody @Valid WishListRequest.PostWishes req
     ) {
-        WishListResponse.PostWishes result = memberWishListService.addWishItems(loginUserId, req);
+        WishListResponse.PostWishes result = memberWishListService.addWishItems(memberId,familyRoomId, req);
 
         return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Create,result);
     }
 
-    @GetMapping("/profile-wishes")
+    @GetMapping("/{familyRoomId}/profile-wishes")
     public ApiResponse<WishListResponse.GetWishes> getMyWishes(
             @PathVariable Long familyRoomId,
-            @AuthenticationPrincipal Long loginUserId,
+            @AuthenticationPrincipal Long memberId,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size
     ) {
         WishListResponse.GetWishes result =
-                memberWishListService.getMyWishes(familyRoomId, loginUserId, cursor, size);
+                memberWishListService.getMyWishes(familyRoomId, memberId, cursor, size);
 
         return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Get, result);
     }
-    @DeleteMapping("/profile-wishes")
+    @DeleteMapping("/{familyRoomId}/profile-wishes")
     public ApiResponse<WishListResponse.DeleteWishes> deleteWishItems(
-            @AuthenticationPrincipal Long loginUserId,
+            @PathVariable Long familyRoomId,
+            @AuthenticationPrincipal Long memberId,
             @RequestBody @Valid WishListRequest.DeleteWishes req
     ) {
-        WishListResponse.DeleteWishes result = memberWishListService.deleteWishItems(loginUserId, req);
+        WishListResponse.DeleteWishes result = memberWishListService.deleteWishItems(memberId,familyRoomId, req);
 
         return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Create,result);
     }

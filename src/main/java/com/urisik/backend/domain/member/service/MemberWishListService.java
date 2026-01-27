@@ -23,26 +23,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MemberWishListService {
 
-    RecipeRepository recipeRepository;
-    MemberWishListRepository memberWishListRepository;
-    FamilyMemberProfileRepository familyMemberProfileRepository;
+    private final RecipeRepository recipeRepository;
+    private final MemberWishListRepository memberWishListRepository;
+    private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final FamilyWishListExclusionRepository familyWishListExclusionRepository;
 
     @Transactional
     public WishListResponse.PostWishes addWishItems
-            (Long loginUserId, WishListRequest.PostWishes req) {
-
+            (Long memberId, Long familyRoomId, WishListRequest.PostWishes req) {
 
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findByMember_Id(loginUserId)
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));
 
         // ✅ 추가: 기존 것은 유지하고, 요청으로 들어온 것들을 append
         for (Long recipeId : req.getRecipeId()) {
             Recipe recipe= recipeRepository.findById(recipeId)
-                    .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));//수정
+                    .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));//수정 요청 음식 없음
 
-            profile.addWish(MemberWishList.of(recipe));
+            profile.addWish(MemberWishList.of(recipe));// 추후에 recipe와 memberWishList 매핑 로직 구현. 현재 recipe가 없음.
 
             familyWishListExclusionRepository.deleteByFamilyRoom_IdAndRecipeId(
                     profile.getFamilyRoom().getId(),
@@ -60,10 +59,10 @@ public class MemberWishListService {
 
     @Transactional
     public WishListResponse.DeleteWishes deleteWishItems
-            (Long loginUserId, WishListRequest.DeleteWishes req) {
+            (Long memberId,Long familyRoomId, WishListRequest.DeleteWishes req) {
 
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findByMember_Id(loginUserId)
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));
 
         // req.getRecipeId()가 null/empty면 바로 성공 처리(정책에 따라 에러로 바꿔도 됨)
@@ -86,7 +85,8 @@ public class MemberWishListService {
     }
 
 
-    public WishListResponse.GetWishes getMyWishes(Long familyRoomId, Long memberId, Long cursor, int size) {
+    public WishListResponse.GetWishes getMyWishes
+            (Long familyRoomId, Long memberId, Long cursor, int size) {
 
         // 1) 토큰 memberId로 해당 familyRoom 안의 내 프로필 찾기
         FamilyMemberProfile profile = familyMemberProfileRepository

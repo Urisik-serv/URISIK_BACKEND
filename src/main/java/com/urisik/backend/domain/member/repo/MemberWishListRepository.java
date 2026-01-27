@@ -4,6 +4,8 @@ import com.urisik.backend.domain.member.entity.MemberWishList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.util.List;
 
 public interface MemberWishListRepository extends JpaRepository<MemberWishList, Long> {
@@ -15,7 +17,7 @@ public interface MemberWishListRepository extends JpaRepository<MemberWishList, 
     where w.familyMemberProfile.id = :profileId
     order by w.id desc
 """)
-    List<MemberWishList> findFirstPage(Long profileId, Pageable pageable);
+    List<MemberWishList> findFirstPage(@Param("profileId") Long profileId, Pageable pageable);
 
     @Query("""
     select w from MemberWishList w
@@ -24,7 +26,9 @@ public interface MemberWishListRepository extends JpaRepository<MemberWishList, 
       and w.id < :cursor
     order by w.id desc
 """)
-    List<MemberWishList> findNextPage(Long profileId, Long cursor, Pageable pageable);
+    List<MemberWishList> findNextPage(@Param("profileId") Long profileId,
+                                      @Param("cursor") Long cursor,
+                                      Pageable pageable);
 
     @Query("""
     select w from MemberWishList w
