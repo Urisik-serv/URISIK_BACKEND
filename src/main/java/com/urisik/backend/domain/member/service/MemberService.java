@@ -36,4 +36,27 @@ public class MemberService {
 
         return MemberConverter.toPatchAgreeResponse(member);
     }
+
+    // ✅ 알람 정책 조회 GET
+    public MemberResponse.alarmInfo getAlarmInfo(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.No_Member));
+
+        return MemberResponse.alarmInfo.builder()
+                .alarmPolicy(member.getAlarmPolicy())
+                .build();
+    }
+
+    // ✅ 알람 정책 변경 PATCH
+    @Transactional
+    public MemberResponse.alarmInfo updateAlarmInfo(Long memberId, MemberRequest.AlarmUpdateInfo req) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.No_Member));
+
+        member.setAlarmPolicy(req.getAlarmPolicy());
+
+        return MemberResponse.alarmInfo.builder()
+                .alarmPolicy(member.getAlarmPolicy())
+                .build();
+    }
 }
