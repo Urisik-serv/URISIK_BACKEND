@@ -4,7 +4,6 @@ package com.urisik.backend.domain.familyroom.repository;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import com.urisik.backend.domain.familyroom.entity.FamilyWishListExclusion;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +16,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class FamilyWishListExclusionRepositoryImpl implements FamilyWishListExclusionRepositoryCustom {
 
-    @PersistenceContext
     private final EntityManager em;
 
     @Override
@@ -28,6 +26,10 @@ public class FamilyWishListExclusionRepositoryImpl implements FamilyWishListExcl
             return;
         }
 
+        // 요청 자체의 중복 제거 (같은 recipeId가 여러 번 들어오면 중복 persist 시도 위험)
+        Set<Long> uniqueRecipeIdSet = new HashSet<>(recipeIds);
+        List<Long> uniqueRecipeIds = uniqueRecipeIdSet.stream().toList();
+
         // 이미 exclusion에 있는 recipeId들 조회 (중복 삽입 방지)
         List<Long> existing = em.createQuery("""
                 select e.recipeId
@@ -36,7 +38,7 @@ public class FamilyWishListExclusionRepositoryImpl implements FamilyWishListExcl
                   and e.recipeId in :recipeIds
             """, Long.class)
                 .setParameter("familyRoomId", familyRoomId)
-                .setParameter("recipeIds", recipeIds)
+                .setParameter("recipeIds", uniqueRecipeIds)
                 .getResultList();
 
         Set<Long> existingSet = new HashSet<>(existing);
@@ -44,7 +46,7 @@ public class FamilyWishListExclusionRepositoryImpl implements FamilyWishListExcl
         // 없는 것만 insert
         FamilyRoom familyRoomRef = em.getReference(FamilyRoom.class, familyRoomId);
 
-        for (Long recipeId : recipeIds) {
+        for (Long recipeId : uniqueRecipeIds) {
             if (existingSet.contains(recipeId)) continue;
 
             em.persist(FamilyWishListExclusion.of(familyRoomRef, recipeId));
