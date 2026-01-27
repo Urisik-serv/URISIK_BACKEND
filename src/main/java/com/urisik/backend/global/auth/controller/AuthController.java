@@ -38,7 +38,6 @@ public class AuthController {
             @CookieValue(value = "refresh_token" , required = false) String refreshToken) {
 
 
-
         // 비어있거나, 유효하거나 , 리프레시 토큰(어쎄스로 속일수도) 이어야함
         if (refreshToken == null) {
             throw new AuthenExcetion(AuthErrorCode.No_Token);
@@ -51,14 +50,45 @@ public class AuthController {
 
         }
 
+
+
+
         Long memberId = jwtUtil.getMemberId(refreshToken);
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.No_Member));
 
+        boolean needAgreement =
+                !member.isServiceTermsAgreed()
+                        || !member.isPrivacyPolicyAgreed()
+                        || !member.isFamilyInfoAgreed()
+                        || !member.isAiNoticeAgreed();
+
+
+
         String accessToken = jwtUtil.createAccessToken(memberId, member.getRole());
 
-        return ApiResponse.onSuccess(AuthSuccessCode.Login_Access_Token, new AccessTokenDto(accessToken));
+        AccessTokenDto.builder()
+                .accessToken(accessToken)
+                .needAgreement(needAgreement)
+                .serviceTermsAgreed(member.isServiceTermsAgreed())
+                .privacyPolicyAgreed(member.isPrivacyPolicyAgreed())
+                .familyInfoAgreed(member.isFamilyInfoAgreed())
+                .aiNoticeAgreed(member.isAiNoticeAgreed())
+                .marketingOptIn(member.isMarketingOptIn())
+                .build();
+
+        return ApiResponse.onSuccess(AuthSuccessCode.Login_Access_Token,
+                AccessTokenDto.builder()
+                        .accessToken(accessToken)
+                        .needAgreement(needAgreement)
+                        .serviceTermsAgreed(member.isServiceTermsAgreed())
+                        .privacyPolicyAgreed(member.isPrivacyPolicyAgreed())
+                        .familyInfoAgreed(member.isFamilyInfoAgreed())
+                        .aiNoticeAgreed(member.isAiNoticeAgreed())
+                        .marketingOptIn(member.isMarketingOptIn())
+                        .build()
+                        );
     }
     @PostMapping("/logout")
     public ApiResponse<LogoutResponse> logout(HttpServletResponse response) {

@@ -1,4 +1,14 @@
 package com.urisik.backend.global.auth.dto;
 
-public record AccessTokenDto(String accessToken) {
+import lombok.Builder;
+
+@Builder
+public record AccessTokenDto(String accessToken,
+                             boolean needAgreement,
+
+                             boolean serviceTermsAgreed,
+                             boolean privacyPolicyAgreed,
+                             boolean familyInfoAgreed,
+                             boolean aiNoticeAgreed,
+                             boolean marketingOptIn) {
 }
