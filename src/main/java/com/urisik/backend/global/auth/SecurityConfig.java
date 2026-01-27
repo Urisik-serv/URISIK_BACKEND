@@ -53,6 +53,7 @@ public class SecurityConfig  {
                 .authorizeHttpRequests(auth -> auth
                         // 1. ✅ 완전 공개 (회원가입/로그인, 문서, 정적 리소스 등)
                         .requestMatchers(
+                                "/oauth2/authorize/**",
                                 "/auth/**",
                                 "/api/**",
                                 "/auth/signup",

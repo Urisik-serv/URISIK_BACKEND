@@ -44,6 +44,6 @@ public class MemberController {
         MemberResponse.alarmInfo res = memberService.updateAlarmInfo(memberId, req);
         return ApiResponse.onSuccess(MemberSuccessCode.AlARM_UPDATE, res);
     }
-    
+
 
 }
