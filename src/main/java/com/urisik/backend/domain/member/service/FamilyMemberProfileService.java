@@ -4,8 +4,6 @@ import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
-import com.urisik.backend.domain.member.dto.req.WishListRequest;
-import com.urisik.backend.domain.member.dto.res.WishListResponse;
 import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.enums.FamilyRole;
 import com.urisik.backend.domain.member.converter.FamilyMemberProfileConverter;
@@ -14,16 +12,18 @@ import com.urisik.backend.domain.member.dto.res.FamilyMemberProfileResponse;
 import com.urisik.backend.domain.member.entity.DietPreference;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.entity.Member;
-import com.urisik.backend.domain.member.entity.MemberWishList;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import com.urisik.backend.domain.member.exception.MemberException;
 import com.urisik.backend.domain.member.exception.code.MemberErrorCode;
 import com.urisik.backend.domain.member.repo.DietPreferenceRepository;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberRepository;
+import com.urisik.backend.global.external.s3.S3Remover;
+import com.urisik.backend.global.external.s3.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -35,7 +35,8 @@ public class FamilyMemberProfileService {
     private final MemberRepository memberRepository;
     private final MemberAllergyRepository memberAllergyRepository;
     private final DietPreferenceRepository dietPreferenceRepository;
-
+    private final S3Uploader s3Uploader;
+    private final S3Remover s3Remover;
     //
 
     //post
@@ -187,23 +188,45 @@ public class FamilyMemberProfileService {
     }
 
 
+
+    /*
+    프론트는 multipart/form-data로:
+    key: file
+    value: 이미지 파일
+     */
     @Transactional
     public FamilyMemberProfileResponse.UpdatePic updatePic(
             Long familyRoomId,
             Long memberId,
-            FamilyMemberProfileRequest.UpdatePic req
+            MultipartFile file
     ) {
         // 1) 프로필 조회 (memberId + familyRoomId 조건으로 찾는 걸 추천)
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
 
-        profile.setProfilePicUrl(req.getProfilePicUrl());
 
+        if (file == null || file.isEmpty()) {
+            throw new MemberException(MemberErrorCode.INVALID_FILE);
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new MemberException(MemberErrorCode.INVALID_FILE_TYPE);
+        }
+
+        String oldUrl = profile.getProfilePicUrl();
+
+        String newUrl = s3Uploader.upload(file, "family_member_profile"); // 폴더명 추천
+        profile.setProfilePicUrl(newUrl);
+
+        if (oldUrl != null && !oldUrl.isBlank()) {
+            s3Remover.remove(oldUrl);
+        }
 
         return FamilyMemberProfileResponse.UpdatePic.builder()
                 .isSuccess(true)
-                .profilePicUrl(profile.getProfilePicUrl())
+                .profilePicUrl(newUrl)
                 .build();
     }
 
