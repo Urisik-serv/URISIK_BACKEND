@@ -1,6 +1,7 @@
 package com.urisik.backend.domain.member.entity;
 
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
+import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -44,6 +45,10 @@ public class Member {
 
     @Column(name = "marketing_opt_in", nullable = false)
     private boolean marketingOptIn;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AlarmPolicy alarmPolicy;
 
     //연관 N:1
     @ManyToOne(fetch = FetchType.LAZY)

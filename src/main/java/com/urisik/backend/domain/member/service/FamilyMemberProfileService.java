@@ -76,7 +76,6 @@ public class FamilyMemberProfileService {
         //3단계 req 정보 저장 FamilyMemberProfile에 저장
         FamilyMemberProfile profile = FamilyMemberProfile.builder()
                 .nickname(req.getNickname())
-                .alarmPolicy(AlarmPolicy.DISAGREE)
                 .member(member)
                 .familyRole(req.getRole())
                 .profilePicUrl(null)

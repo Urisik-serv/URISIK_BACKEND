@@ -36,9 +36,6 @@ public class FamilyMemberProfile extends BaseEntity {
     private FamilyRole familyRole;
 
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AlarmPolicy alarmPolicy;
 
     @Lob
     @Column(name = "liked_ingredients")

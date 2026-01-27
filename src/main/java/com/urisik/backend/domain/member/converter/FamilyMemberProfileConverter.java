@@ -57,6 +57,7 @@ public class FamilyMemberProfileConverter {
                 .nickname(profile.getNickname())
                 .profilePicUrl(profile.getProfilePicUrl())
                 .alarmPolicy(profile.getAlarmPolicy())
+                .profilePicUrl(profile.getProfilePicUrl())
                 .role(profile.getFamilyRole())
                 .likedIngredients(profile.getLikedIngredients())
                 .dislikedIngredients(profile.getDislikedIngredients())

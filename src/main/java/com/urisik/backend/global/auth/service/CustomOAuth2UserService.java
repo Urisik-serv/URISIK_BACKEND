@@ -1,6 +1,7 @@
 package com.urisik.backend.global.auth.service;
 
 import com.urisik.backend.domain.member.entity.Member;
+import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.repo.MemberRepository;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
@@ -58,6 +59,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .marketingOptIn(false)
                     .privacyPolicyAgreed(false)
                     .serviceTermsAgreed(false)
+                    .alarmPolicy(AlarmPolicy.DISAGREE)
                     .build();
 
 
