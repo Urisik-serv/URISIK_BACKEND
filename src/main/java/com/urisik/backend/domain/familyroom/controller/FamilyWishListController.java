@@ -7,6 +7,7 @@ import com.urisik.backend.domain.familyroom.service.FamilyWishListQueryService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.auth.exception.AuthenExcetion;
 import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,6 +18,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
+@Tag(name = "FamilyWishList", description = "가족 위시리스트 관련 API")
 public class FamilyWishListController {
 
     private final FamilyWishListQueryService familyWishListQueryService;
@@ -39,7 +41,7 @@ public class FamilyWishListController {
 
     /**
      * 가족 위시리스트 항목 삭제 (방장만 가능)
-     * - FamilyWishList(물리화 테이블)에서만 제거한다. (개인 위시리스트 X)
+     * - 가족 위시리스트 제외 기록(FamilyWishListExclusion)에 등록하여 조회에서만 제외한다.
      */
     @DeleteMapping("/family-rooms/{familyRoomId}/family-wishlist/items")
     public ApiResponse<Void> deleteFamilyWishListItems(
@@ -50,8 +52,7 @@ public class FamilyWishListController {
         if (memberId == null) {
             throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
         }
-
-        familyWishListQueryService.deleteFamilyWishListItems(memberId, familyRoomId, request.newFoodIds());
-        return ApiResponse.onSuccess(FamilyRoomSuccessCode.FAMILY_WISHLIST, null);
+        familyWishListQueryService.deleteFamilyWishListItems(memberId, familyRoomId, request.recipeIds());
+        return ApiResponse.onSuccess(FamilyRoomSuccessCode.FAMILY_WISHLIST_DELETE, null);
     }
 }

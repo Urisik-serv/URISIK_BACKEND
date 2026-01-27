@@ -1,6 +1,7 @@
 package com.urisik.backend.domain.member.service;
 
 
+import com.urisik.backend.domain.familyroom.repository.FamilyWishListExclusionRepository;
 import com.urisik.backend.domain.member.dto.req.WishListRequest;
 import com.urisik.backend.domain.member.dto.res.WishListResponse;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
@@ -25,6 +26,7 @@ public class MemberWishListService {
     private final RecipeRepository recipeRepository;
     private final MemberWishListRepository memberWishListRepository;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
+    private final FamilyWishListExclusionRepository familyWishListExclusionRepository;
 
     @Transactional
     public WishListResponse.PostWishes addWishItems
@@ -40,6 +42,11 @@ public class MemberWishListService {
                     .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));//수정 요청 음식 없음
 
             profile.addWish(MemberWishList.of(recipe));// 추후에 recipe와 memberWishList 매핑 로직 구현. 현재 recipe가 없음.
+
+            familyWishListExclusionRepository.deleteByFamilyRoom_IdAndRecipeId(
+                    profile.getFamilyRoom().getId(),
+                    recipeId
+            );
         }
 
 

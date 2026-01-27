@@ -43,6 +43,35 @@ public class SwaggerConfig {
                 .build();
     }
 
+    @Bean
+    public GroupedOpenApi familyRoomApi() {
+        return GroupedOpenApi.builder()
+                .group("familyRoom")
+                .displayName("3. 가족방 API")
+                .pathsToMatch("/api/family-rooms/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi inviteApi() {
+        return GroupedOpenApi.builder()
+                .group("invites")
+                .displayName("4. 초대 API")
+                .pathsToMatch(
+                        "/api/family-rooms/{familyRoomId}/invites",
+                        "/api/invites/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi familyWishListApi() {
+        return GroupedOpenApi.builder()
+                .group("familyWishList")
+                .displayName("5. 가족 위시리스트 API")
+                .pathsToMatch("/api/family-rooms/{familyRoomId}/family-wishlist/**")
+                .build();
+    }
+
     // 아래 부분 지우고 각자 도메인에 맞게 변경하면 됨!!
     @Bean
     public GroupedOpenApi allApi() {
