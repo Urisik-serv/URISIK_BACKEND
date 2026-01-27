@@ -47,15 +47,13 @@ public class Member {
     private boolean marketingOptIn;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private AlarmPolicy alarmPolicy;
 
     //연관 N:1
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_room")
     private FamilyRoom familyRoom;
-
-
 
 
 

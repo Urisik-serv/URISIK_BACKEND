@@ -6,5 +6,5 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum AlarmPolicy {
-    AGREE,DISAGREE
+    ALARM_AGREED,ALARM_DISAGREE,FIRST
 }

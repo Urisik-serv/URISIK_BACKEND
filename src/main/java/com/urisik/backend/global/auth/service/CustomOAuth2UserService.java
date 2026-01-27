@@ -59,7 +59,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .marketingOptIn(false)
                     .privacyPolicyAgreed(false)
                     .serviceTermsAgreed(false)
-                    .alarmPolicy(AlarmPolicy.DISAGREE)
+                    .alarmPolicy(AlarmPolicy.FIRST)
                     .build();
 
 

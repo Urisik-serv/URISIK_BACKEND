@@ -32,7 +32,16 @@ public enum MemberSuccessCode implements BaseSuccessCode {
             "프로필 수정 성공했습니다."),
     MemberProfile_Delete(HttpStatus.GONE,
             "Auth_200_2",
-            "가족방 탈퇴 성공했습니다.")
+            "가족방 탈퇴 성공했습니다."),
+    AlARM_GET(HttpStatus.GONE,
+            "Auth_200_2",
+            "알람 동의 여부 조회 성공."),
+    AlARM_UPDATE(HttpStatus.GONE,
+            "Auth_200_2",
+            "알람 동의 여부 변경 성공."),
+    AGREEMENT_UPDATE(HttpStatus.GONE,
+            "Auth_200_2",
+            "사용자 약관 동의 여부 갱신 성공")
 
 
     ;
