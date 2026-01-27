@@ -5,6 +5,6 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 public record DeleteFamilyWishListReqDTO(
-        @NotEmpty List<Long> newFoodIds
+        @NotEmpty List<Long> recipeIds
 ) {
 }

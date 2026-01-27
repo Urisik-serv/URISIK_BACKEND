@@ -26,6 +26,14 @@ public interface MemberWishListRepository extends JpaRepository<MemberWishList, 
 """)
     List<MemberWishList> findNextPage(Long profileId, Long cursor, Pageable pageable);
 
+    @Query("""
+    select w from MemberWishList w
+    join fetch w.recipe r
+    join fetch w.familyMemberProfile p
+    where p.familyRoom.id = :familyRoomId
+    order by w.id desc
+""")
+    List<MemberWishList> findAllByFamilyRoomIdWithRecipe(Long familyRoomId);
 
     long deleteByFamilyMemberProfile_IdAndRecipe_IdIn(Long profileId, List<Long> recipeIds);
 
