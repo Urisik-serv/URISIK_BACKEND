@@ -38,8 +38,8 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi authApi() {
         return GroupedOpenApi.builder()
-                .group("1. auth")
-                .displayName("1. 인증 API")     // UI 드롭다운에 보일 이름
+                .group("01. auth")
+                .displayName("01. 인증 API")     // UI 드롭다운에 보일 이름
                 .pathsToMatch("/api/auth/**") // 이 그룹에 포함될 API의 URL 패턴
                 .build();
     }
@@ -47,8 +47,8 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi memberApi() {
         return GroupedOpenApi.builder()
-                .group("2. member")
-                .displayName("2. 사용자 동의여부 API")     // UI 드롭다운에 보일 이름
+                .group("02. member")
+                .displayName("02. 사용자 동의여부 API")     // UI 드롭다운에 보일 이름
                 .pathsToMatch("/api/member/**") // 이 그룹에 포함될 API의 URL 패턴
                 .build();
     }
@@ -56,8 +56,8 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi recipeApi() {
         return GroupedOpenApi.builder()
-                .group("3. recipe")
-                .displayName("3. 레시피 API")
+                .group("03. recipe")
+                .displayName("03. 레시피 API")
                 .pathsToMatch("/api/recipes/**")
                 .build();
     }
@@ -65,8 +65,8 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi familyMemberProfileApi() {
         return GroupedOpenApi.builder()
-                .group("4. profile")
-                .displayName("4. 프로필 API")     // UI 드롭다운에 보일 이름
+                .group("04. profile")
+                .displayName("04. 프로필 API")     // UI 드롭다운에 보일 이름
                 .pathsToMatch("/api/family-rooms/*/profiles/**",
                         "/api/family-rooms/*/profile-pic") // 이 그룹에 포함될 API의 URL 패턴
                 .build();
@@ -75,8 +75,8 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi familyRoomApi() {
         return GroupedOpenApi.builder()
-                .group("5. familyRoom")
-                .displayName("5. 가족방 API")
+                .group("05. familyRoom")
+                .displayName("05. 가족방 API")
                 .pathsToMatch("/api/family-rooms",
                         "/api/family-rooms/me")
                 .build();
@@ -85,8 +85,8 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi wishListApi() {
         return GroupedOpenApi.builder()
-                .group("6. wishList")
-                .displayName("6. 개인 위시리스트 API")     // UI 드롭다운에 보일 이름
+                .group("06. wishList")
+                .displayName("06. 개인 위시리스트 API")     // UI 드롭다운에 보일 이름
                 .pathsToMatch("/api/family-rooms/*/profile-wishes") // 이 그룹에 포함될 API의 URL 패턴
                 .build();
     }
@@ -94,8 +94,8 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi inviteApi() {
         return GroupedOpenApi.builder()
-                .group("7. invites")
-                .displayName("7. 초대 API")
+                .group("07. invites")
+                .displayName("07. 초대 API")
                 .pathsToMatch("/api/family-rooms/{familyRoomId}/invites",
                         "/api/invites/**")
                 .build();
@@ -104,8 +104,8 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi familyWishListApi() {
         return GroupedOpenApi.builder()
-                .group("8. familyWishList")
-                .displayName("8. 가족 위시리스트 API")
+                .group("08. familyWishList")
+                .displayName("08. 가족 위시리스트 API")
                 .pathsToMatch("/api/family-rooms/{familyRoomId}/family-wishlist/**")
                 .build();
     }
@@ -113,8 +113,8 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi MealPlanApi() {
         return GroupedOpenApi.builder()
-                .group("9. mealPlan")
-                .displayName("9. 식단 API")
+                .group("09. mealPlan")
+                .displayName("09. 식단 API")
                 .pathsToMatch("/api/family-rooms/{familyRoomId}/meal-plans/**")
                 .build();
     }
@@ -133,8 +133,8 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi allApi() {
         return GroupedOpenApi.builder()
-                .group("0. ALL")
-                .displayName("0. 전체 API")
+                .group("00. ALL")
+                .displayName("00. 전체 API")
                 .pathsToMatch("/**") // 모든 경로 포함
                 .build();
     }
