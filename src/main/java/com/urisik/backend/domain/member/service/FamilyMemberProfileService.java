@@ -45,12 +45,12 @@ public class FamilyMemberProfileService {
             (Long familyRoomId, Long memberId, FamilyMemberProfileRequest.Create req)
     {
         Member member = memberRepository.findWithFamilyRoomById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_MEMBER));
 
         // 1단계  memberId가 가진 가족방 가져와서 안에 해당 가족방이 있는지 확인. 없다면 오류.
         FamilyRoom familyRoom = member.getFamilyRoom();
         if (familyRoom == null) {
-            throw new MemberException(MemberErrorCode.No_Room);
+            throw new MemberException(MemberErrorCode.NO_ROOM);
         }
         if (!familyRoom.getId().equals(familyRoomId)) {
             throw new MemberException(MemberErrorCode.FORBIDDEN_ROOM); // 403 성격 에러코드
@@ -70,7 +70,7 @@ public class FamilyMemberProfileService {
                     .anyMatch(p -> p.getFamilyRole() == requestedRole);
 
             if (alreadyExists) {
-                throw new MemberException(MemberErrorCode.Already_Exist_Role);
+                throw new MemberException(MemberErrorCode.ALREADY_EXIST_ROLE);
             }
         }
         //3단계 req 정보 저장 FamilyMemberProfile에 저장
@@ -121,7 +121,7 @@ public class FamilyMemberProfileService {
         // 1) "프로필"만 조회 (컬렉션 fetch 금지)
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
         Long profileId = profile.getId();
 
@@ -150,7 +150,7 @@ public class FamilyMemberProfileService {
                                 profileId
                         );
                 if (alreadyExists) {
-                    throw new MemberException(MemberErrorCode.Already_Exist_Role);
+                    throw new MemberException(MemberErrorCode.ALREADY_EXIST_ROLE);
                 }
             }
 
@@ -202,7 +202,7 @@ public class FamilyMemberProfileService {
         // 1) 프로필 조회 (memberId + familyRoomId 조건으로 찾는 걸 추천)
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
 
         if (file == null || file.isEmpty()) {
@@ -241,7 +241,7 @@ public class FamilyMemberProfileService {
         // 방안에 있는 맴버 찾기.
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
         Long profileId = profile.getId();
 
@@ -266,11 +266,11 @@ public class FamilyMemberProfileService {
 
         FamilyMemberProfile targetProfile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndId(familyRoomId, profileId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
         FamilyMemberProfile requesterProfile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
 
         //자기 프로필이 거나, 권한이 있을때 삭제
@@ -283,7 +283,7 @@ public class FamilyMemberProfileService {
 
         // 5) 본인이거나 리더면 삭제 가능
         if (!isSelf && !isLeader) {
-            throw new MemberException(MemberErrorCode.FORBIDDEN_Member);
+            throw new MemberException(MemberErrorCode.FORBIDDEN_MEMBER);
         }
 
         familyMemberProfileRepository.delete(targetProfile);

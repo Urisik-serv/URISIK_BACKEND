@@ -34,7 +34,7 @@ public class FamilyMemberProfileController {
 
 
         return ApiResponse.onSuccess(
-                MemberSuccessCode.MemberProfile_Create,
+                MemberSuccessCode.MEMBER_PROFILE_CREATE,
                 familyMemberProfileService.create(familyRoomId, memberId,req));
     }
 
@@ -46,7 +46,7 @@ public class FamilyMemberProfileController {
             @AuthenticationPrincipal Long memberId
     ) {
         return ApiResponse.onSuccess(
-                MemberSuccessCode.MemberProfile_Get,
+                MemberSuccessCode.MEMBER_PROFILE_GET,
                 familyMemberProfileService.getMyProfile(familyRoomId, memberId)
         );
     }
@@ -61,7 +61,7 @@ public class FamilyMemberProfileController {
         FamilyMemberProfileResponse.Update result =
                 familyMemberProfileService.update(familyRoomId, memberId, req);
 
-        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Update,result);
+        return ApiResponse.onSuccess(MemberSuccessCode.MEMBER_PROFILE_UPDATE,result);
     }
 
 
@@ -72,7 +72,7 @@ public class FamilyMemberProfileController {
             @RequestPart("file") MultipartFile file
     ){
         var result = familyMemberProfileService.updatePic(familyRoomId, memberId, file);
-        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Update, result);
+        return ApiResponse.onSuccess(MemberSuccessCode.MEMBER_PROFILE_PIC_UPDATE, result);
     }
 
 
@@ -84,7 +84,7 @@ public class FamilyMemberProfileController {
     ) {
 
 
-        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Delete,
+        return ApiResponse.onSuccess(MemberSuccessCode.MEMBER_PROFILE_DELETE,
                 familyMemberProfileService.quitFamilyRoom(familyRoomId,profileId,memberId));
     }
 
@@ -101,7 +101,7 @@ public class FamilyMemberProfileController {
     ) {
         WishListResponse.PostWishes result = memberWishListService.addWishItems(memberId,familyRoomId, req);
 
-        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Create,result);
+        return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_CREATE,result);
     }
 
     @GetMapping("/{familyRoomId}/profile-wishes")
@@ -114,7 +114,7 @@ public class FamilyMemberProfileController {
         WishListResponse.GetWishes result =
                 memberWishListService.getMyWishes(familyRoomId, memberId, cursor, size);
 
-        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Get, result);
+        return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_GET, result);
     }
     @DeleteMapping("/{familyRoomId}/profile-wishes")
     public ApiResponse<WishListResponse.DeleteWishes> deleteWishItems(
@@ -124,7 +124,7 @@ public class FamilyMemberProfileController {
     ) {
         WishListResponse.DeleteWishes result = memberWishListService.deleteWishItems(memberId,familyRoomId, req);
 
-        return ApiResponse.onSuccess(MemberSuccessCode.MemberProfile_Create,result);
+        return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_DELETE,result);
     }
 
 

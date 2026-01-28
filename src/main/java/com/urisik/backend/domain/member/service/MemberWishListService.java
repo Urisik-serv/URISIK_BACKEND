@@ -32,12 +32,12 @@ public class MemberWishListService {
 
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_MEMBER));
 
         // ✅ 추가: 기존 것은 유지하고, 요청으로 들어온 것들을 append
         for (Long recipeId : req.getRecipeId()) {
             Recipe recipe= recipeRepository.findById(recipeId)
-                    .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));//수정 요청 음식 없음
+                    .orElseThrow(() -> new MemberException(MemberErrorCode.NO_MEMBER));//수정 요청 음식 없음
 
             profile.addWish(MemberWishList.of(recipe));// 추후에 recipe와 memberWishList 매핑 로직 구현. 현재 recipe가 없음.
         }
@@ -56,7 +56,7 @@ public class MemberWishListService {
 
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_MEMBER));
 
         // req.getRecipeId()가 null/empty면 바로 성공 처리(정책에 따라 에러로 바꿔도 됨)
         if (req.getRecipeId() == null || req.getRecipeId().isEmpty()) {
@@ -84,7 +84,7 @@ public class MemberWishListService {
         // 1) 토큰 memberId로 해당 familyRoom 안의 내 프로필 찾기
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Member));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_MEMBER));
 
         // 2) 커서 페이징 조회 (size+1)
         int limit = Math.min(size, 50);

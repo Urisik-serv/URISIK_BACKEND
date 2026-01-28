@@ -40,13 +40,13 @@ public class AuthController {
 
         // 비어있거나, 유효하거나 , 리프레시 토큰(어쎄스로 속일수도) 이어야함
         if (refreshToken == null) {
-            throw new AuthenExcetion(AuthErrorCode.No_Token);
+            throw new AuthenExcetion(AuthErrorCode.NO_TOKEN);
         }
         if(!jwtUtil.isValid(refreshToken)){
-            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+            throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
         if(!jwtUtil.isRefresh(refreshToken)){
-            throw new AuthenExcetion(AuthErrorCode.Not_Refresh_Token);
+            throw new AuthenExcetion(AuthErrorCode.NOT_REFRESH_TOKEN);
 
         }
 
@@ -56,7 +56,7 @@ public class AuthController {
         Long memberId = jwtUtil.getMemberId(refreshToken);
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.No_Member));
+                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.NO_MEMBER));
 
         boolean needAgreement =
                 !member.isServiceTermsAgreed()
@@ -116,7 +116,7 @@ public class AuthController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || auth.getPrincipal() == null) {
-            throw new AuthenExcetion(AuthErrorCode.No_Token);
+            throw new AuthenExcetion(AuthErrorCode.NO_TOKEN);
         }
 
         Long memberId;
@@ -128,7 +128,7 @@ public class AuthController {
 
         // ✅ 회원 조회
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.No_Member));
+                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.NO_MEMBER));
 
         // ✅ (중요) 연관 데이터 때문에 hard delete 실패할 수 있음
         // 2) hard delete면 cascade/orphanRemoval / FK on delete cascade 정리가 필요

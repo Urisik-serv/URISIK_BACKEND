@@ -32,7 +32,7 @@ public class InviteController {
             @AuthenticationPrincipal Long memberId
     ) {
         if (memberId == null) {
-            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+            throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
 
         CreateInviteResDTO result = inviteService.createInvite(familyRoomId, memberId);
@@ -59,7 +59,7 @@ public class InviteController {
             @AuthenticationPrincipal Long memberId
     ) {
         if (memberId == null) {
-            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+            throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
 
         AcceptInviteResDTO result = inviteService.acceptInvite(token, memberId);

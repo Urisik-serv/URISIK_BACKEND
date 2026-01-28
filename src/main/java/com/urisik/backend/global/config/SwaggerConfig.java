@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +24,14 @@ import org.springframework.context.annotation.Configuration;
 )
 public class SwaggerConfig {
 
+
+    // 개발 환경에서는 "http://api.urisik.com" 로, EC2배포에서는 "https://api.urisik.com"로 설정해야함.
+    @Bean
+    public OpenAPI openAPI() {
+        return new OpenAPI()
+                .addServersItem(new Server().url("https://api.urisik.com"));
+    }
+
     /*
      * 각 API 도메인 별로 그룹화하여 Swagger UI에 표시합니다.
      * */
@@ -35,11 +45,39 @@ public class SwaggerConfig {
     }
 
     @Bean
+    public GroupedOpenApi memberApi() {
+        return GroupedOpenApi.builder()
+                .group("member")
+                .displayName("2. 사용자 동의여부 API")     // UI 드롭다운에 보일 이름
+                .pathsToMatch("/api/member/**") // 이 그룹에 포함될 API의 URL 패턴
+                .build();
+    }
+
+    @Bean
     public GroupedOpenApi recipeApi() {
         return GroupedOpenApi.builder()
                 .group("recipe")
-                .displayName("2. 레시피 API")
+                .displayName("3. 레시피 API")
                 .pathsToMatch("/api/recipes/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi familyMemberProfileApi() {
+        return GroupedOpenApi.builder()
+                .group("profile")
+                .displayName("4. 프로필 API")     // UI 드롭다운에 보일 이름
+                .pathsToMatch("/api/family-rooms/*/profiles/**",
+                        "/api/family-rooms/*/profile-pic") // 이 그룹에 포함될 API의 URL 패턴
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi wishListApi() {
+        return GroupedOpenApi.builder()
+                .group("wishList")
+                .displayName("5. 위시리스트 API")     // UI 드롭다운에 보일 이름
+                .pathsToMatch("/api/family-rooms/*/profile-wishes") // 이 그룹에 포함될 API의 URL 패턴
                 .build();
     }
 

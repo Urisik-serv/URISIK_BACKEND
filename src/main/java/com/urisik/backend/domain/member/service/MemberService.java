@@ -21,7 +21,7 @@ public class MemberService {
     public MemberResponse.PatchAgree patchAgree(Long memberId, MemberRequest.PatchAgree req) {
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.No_Member));
+                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.NO_MEMBER));
 
         // ✅ 저장
         member.setServiceTermsAgreed(req.getServiceTermsAgreed());
@@ -40,7 +40,7 @@ public class MemberService {
     // ✅ 알람 정책 조회 GET
     public MemberResponse.alarmInfo getAlarmInfo(Long memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.No_Member));
+                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.NO_MEMBER));
 
         return MemberResponse.alarmInfo.builder()
                 .alarmPolicy(member.getAlarmPolicy())
@@ -51,7 +51,7 @@ public class MemberService {
     @Transactional
     public MemberResponse.alarmInfo updateAlarmInfo(Long memberId, MemberRequest.AlarmUpdateInfo req) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.No_Member));
+                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.NO_MEMBER));
 
         member.setAlarmPolicy(req.getAlarmPolicy());
 

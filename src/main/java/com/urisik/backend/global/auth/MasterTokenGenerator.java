@@ -35,7 +35,7 @@ public class MasterTokenGenerator {
                 .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .signWith(secretKey)
                 .compact();
 
         System.out.println("====== MASTER JWT (2 months) ======");
