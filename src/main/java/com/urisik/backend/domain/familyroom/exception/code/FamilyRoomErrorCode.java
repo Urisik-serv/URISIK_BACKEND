@@ -18,9 +18,9 @@ public enum FamilyRoomErrorCode implements BaseErrorCode {
             "INVITE_403",
             "초대 토큰 생성 권한이 없습니다."),
 
-    FAMILY_WISHLIST_FORBIDDEN(HttpStatus.FORBIDDEN,
-            "FAMILY_WISHLIST_403",
-            "가족 위시리스트 수정 권한이 없습니다."),
+    NOT_LEADER(HttpStatus.FORBIDDEN,
+            "FAMILY_ROOM_403",
+            "가족방 방장 권한이 없습니다."),
 
     FAMILY_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND,
             "FAMILY_ROOM_404",

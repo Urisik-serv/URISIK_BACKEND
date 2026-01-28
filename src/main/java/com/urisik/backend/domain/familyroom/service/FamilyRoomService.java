@@ -160,4 +160,28 @@ public class FamilyRoomService {
 
         return profile.getFamilyRole();
     }
+
+    /**
+     * 방장 검증
+     * - 방장 권한은 상태가 아니라, 가족방 정책(FamilyPolicy) + 역할(FamilyRole) 조합으로 항상 계산
+     */
+    @Transactional(readOnly = true)
+    public void validateLeader(Long memberId, Long familyRoomId) {
+
+        // 가족방 조회
+        FamilyRoom familyRoom = familyRoomRepository.findById(familyRoomId)
+                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM_NOT_FOUND));
+
+        // 해당 가족방에서의 내 프로필 조회
+        FamilyMemberProfile profile = familyMemberProfileRepository
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+
+        FamilyRole role = profile.getFamilyRole();
+        boolean isLeader = familyRoom.getFamilyPolicy().isLeaderRole(role);
+
+        if (!isLeader) {
+            throw new FamilyRoomException(FamilyRoomErrorCode.NOT_LEADER);
+        }
+    }
 }
