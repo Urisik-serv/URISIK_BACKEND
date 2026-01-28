@@ -48,14 +48,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             // ✅ 유효 + access 토큰인지 확인까지 하고 싶으면 isAccess() 추가 추천
             if (!jwtUtil.isValid(token)) {
-                throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+                throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
             }
 
             Long memberId = jwtUtil.getMemberId(token);
             String role = jwtUtil.getRole(token);
 
             if (role == null) {
-                throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+                throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
             }
 
             var auth = new UsernamePasswordAuthenticationToken(
@@ -68,9 +68,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (ExpiredJwtException e) {
-            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild); // 또는 TOKEN_EXPIRED로 분리 가능
+            throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID); // 또는 TOKEN_EXPIRED로 분리 가능
         } catch (JwtException e) {
-            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+            throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
     }
 }

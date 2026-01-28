@@ -32,7 +32,7 @@ public class FamilyWishListController {
             @PathVariable Long familyRoomId
     ) {
         if (memberId == null) {
-            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+            throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
 
         List<FamilyWishListItemResDTO> result = familyWishListQueryService.getFamilyWishList(familyRoomId);
@@ -50,7 +50,7 @@ public class FamilyWishListController {
             @Valid @RequestBody DeleteFamilyWishListReqDTO request
     ) {
         if (memberId == null) {
-            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+            throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
         familyWishListQueryService.deleteFamilyWishListItems(memberId, familyRoomId, request.recipeIds());
         return ApiResponse.onSuccess(FamilyRoomSuccessCode.FAMILY_WISHLIST_DELETE, null);

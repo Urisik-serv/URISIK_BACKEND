@@ -28,7 +28,7 @@ public class FamilyRoomController {
             @Valid @RequestBody CreateFamilyRoomReqDTO request
     ) {
         if (memberId == null) {
-            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+            throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
 
         CreateFamilyRoomResDTO result = familyRoomService.createFamilyRoom(memberId, request);
@@ -40,7 +40,7 @@ public class FamilyRoomController {
             @AuthenticationPrincipal Long memberId
     ) {
         if (memberId == null) {
-            throw new AuthenExcetion(AuthErrorCode.Token_Not_Vaild);
+            throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
 
         ReadFamilyRoomContextResDTO result = familyRoomService.readMyFamilyRoomContext(memberId);

@@ -12,27 +12,39 @@ import org.springframework.http.HttpStatus;
 public enum MemberSuccessCode implements BaseSuccessCode {
 
 
-    Login_Access_Token(HttpStatus.GONE,
+    LOGIN_ACCESS_TOKEN(HttpStatus.GONE,
             "Auth_200_1",
             "Access 토큰 발급 성공했습니다."),
-    Logout_Suc(HttpStatus.GONE,
+    LOGOUT_SUCCESS(HttpStatus.GONE,
             "Auth_200_2",
             "로그아웃 성공했습니다."),
-    Auth_delete_Suc(HttpStatus.GONE,
+    AUTH_DELETE_SUCCESS(HttpStatus.GONE,
             "Auth_200_2",
             "계정이 성공적으로 삭제 되었습니다."),
-    MemberProfile_Get(HttpStatus.GONE,
+
+
+    MEMBER_PROFILE_GET(HttpStatus.GONE,
             "Auth_200_2",
             "프로필 요청 성공했습니다."),
-    MemberProfile_Create(HttpStatus.GONE,
+
+    MEMBER_PROFILE_CREATE(HttpStatus.GONE,
             "Auth_200_2",
             "프로필 생성 성공했습니다."),
-    MemberProfile_Update(HttpStatus.GONE,
+
+    MEMBER_PROFILE_UPDATE(HttpStatus.GONE,
             "Auth_200_2",
             "프로필 수정 성공했습니다."),
-    MemberProfile_Delete(HttpStatus.GONE,
+
+    MEMBER_PROFILE_DELETE(HttpStatus.GONE,
             "Auth_200_2",
             "가족방 탈퇴 성공했습니다."),
+
+    MEMBER_PROFILE_PIC_UPDATE(HttpStatus.GONE,
+            "Auth_200_2",
+            "프로필사진이 변경되었습니다"),
+
+
+
     AlARM_GET(HttpStatus.GONE,
             "Auth_200_2",
             "알람 동의 여부 조회 성공."),
@@ -41,8 +53,19 @@ public enum MemberSuccessCode implements BaseSuccessCode {
             "알람 동의 여부 변경 성공."),
     AGREEMENT_UPDATE(HttpStatus.GONE,
             "Auth_200_2",
-            "사용자 약관 동의 여부 갱신 성공")
+            "사용자 약관 동의 여부 갱신 성공"),
 
+    WISH_LIST_CREATE(HttpStatus.OK,
+            "WISH_200_1",
+            "위시리스트 등록 성공"),
+
+    WISH_LIST_GET(HttpStatus.OK,
+            "WISH_200_2",
+            "위시리스트 조회 성공"),
+
+    WISH_LIST_DELETE(HttpStatus.OK,
+            "WISH_200_3",
+            "위시리스트 삭제 성공")
 
     ;
 

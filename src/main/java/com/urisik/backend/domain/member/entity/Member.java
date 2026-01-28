@@ -47,7 +47,7 @@ public class Member {
     private boolean marketingOptIn;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
+    @Column(nullable = false)
     private AlarmPolicy alarmPolicy;
 
     //연관 N:1

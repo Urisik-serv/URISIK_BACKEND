@@ -70,7 +70,7 @@ public class FamilyRoomService {
 
         // 프로필 생성 이후 사용
         FamilyMemberProfile profile = familyMemberProfileRepository.findByMember_Id(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
         FamilyRole role = profile.getFamilyRole(); // "MOM" / "DAD" / "SON" / "DAUGHTER"
         boolean isLeader = familyRoom.getFamilyPolicy().isLeaderRole(role);
@@ -156,7 +156,7 @@ public class FamilyRoomService {
         }
 
         FamilyMemberProfile profile = familyMemberProfileRepository.findByMember_Id(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
         return profile.getFamilyRole();
     }
