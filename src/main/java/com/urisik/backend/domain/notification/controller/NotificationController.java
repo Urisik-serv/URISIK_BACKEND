@@ -4,6 +4,7 @@ import com.urisik.backend.domain.notification.dto.NotificationResDto;
 import com.urisik.backend.domain.notification.exception.NotificationSuccessCode;
 import com.urisik.backend.domain.notification.service.NotificationService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
@@ -40,7 +41,8 @@ public class NotificationController {
      * @param memberId
      * @param size
      */
-    @GetMapping(value = "/")
+    @GetMapping(value = "")
+    @Operation(summary = "알림 목록 조회 API", description = "사용자가 받은 알림 목록을 조회합니다. ")
     public ApiResponse<Slice<NotificationResDto>> getNotifications(
             @AuthenticationPrincipal Long memberId,
             @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
