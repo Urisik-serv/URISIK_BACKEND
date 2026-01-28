@@ -119,6 +119,16 @@ public class SwaggerConfig {
                 .build();
     }
 
+    @Bean
+    public GroupedOpenApi notificationApi() {
+        return GroupedOpenApi.builder()
+                .group("notification")
+                .displayName("10. 알림 API")
+                .pathsToMatch("/api/notifications/**")
+                .build();
+    }
+
+
     // 아래 부분 지우고 각자 도메인에 맞게 변경하면 됨!!
     @Bean
     public GroupedOpenApi allApi() {

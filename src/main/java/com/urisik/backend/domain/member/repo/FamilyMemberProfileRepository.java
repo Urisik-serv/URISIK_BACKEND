@@ -4,6 +4,7 @@ import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.enums.FamilyRole;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,10 @@ public interface FamilyMemberProfileRepository extends JpaRepository<FamilyMembe
     @EntityGraph(attributePaths = {"familyRoom"})
     Optional<FamilyMemberProfile> findByFamilyRoom_IdAndId(Long familyRoomId, Long profileId);
 
+
+    @EntityGraph(attributePaths = {"familyRoom", "member"})
+    @Query("select p from FamilyMemberProfile p")
+    List<FamilyMemberProfile> findAllWithFamilyRoom();
 
 
     boolean existsByFamilyRoom_IdAndFamilyRoleAndIdNot(
