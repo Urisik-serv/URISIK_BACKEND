@@ -10,8 +10,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum MealPlanErrorCode implements BaseErrorCode {
 
-    MEAL_PLAN_VALIDATION_FAILED(
-            HttpStatus.BAD_REQUEST,
+    MEAL_PLAN_VALIDATION_FAILED(HttpStatus.BAD_REQUEST,
             "MEAL_PLAN_VALIDATION_400",
             "식단 생성 결과 검증에 실패했습니다."),
 
