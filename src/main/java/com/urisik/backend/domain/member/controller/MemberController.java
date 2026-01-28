@@ -6,7 +6,7 @@ import com.urisik.backend.domain.member.dto.res.MemberResponse;
 import com.urisik.backend.domain.member.exception.code.MemberSuccessCode;
 import com.urisik.backend.domain.member.service.MemberService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
-import com.urisik.backend.global.apiPayload.code.GeneralSuccessCode;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/member")
+@Tag(name = "Member", description = "유저 관련 API")
 public class MemberController {
 
     private final MemberService memberService;

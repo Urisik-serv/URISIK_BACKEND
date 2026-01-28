@@ -9,6 +9,7 @@ import com.urisik.backend.domain.member.exception.code.MemberSuccessCode;
 import com.urisik.backend.domain.member.service.FamilyMemberProfileService;
 import com.urisik.backend.domain.member.service.MemberWishListService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/family-rooms")
+@Tag(name = "Profiles", description = "프로필 관련 API")
 public class FamilyMemberProfileController {
 
     private final FamilyMemberProfileService familyMemberProfileService;
