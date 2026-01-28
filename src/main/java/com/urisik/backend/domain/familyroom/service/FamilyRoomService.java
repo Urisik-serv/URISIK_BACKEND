@@ -175,7 +175,7 @@ public class FamilyRoomService {
         // 해당 가족방에서의 내 프로필 조회
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.No_Profile_In_Family));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
         FamilyRole role = profile.getFamilyRole();
         boolean isLeader = familyRoom.getFamilyPolicy().isLeaderRole(role);
