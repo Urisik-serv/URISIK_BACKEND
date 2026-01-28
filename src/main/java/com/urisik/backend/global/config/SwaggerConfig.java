@@ -38,7 +38,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi authApi() {
         return GroupedOpenApi.builder()
-                .group("auth")
+                .group("1. auth")
                 .displayName("1. 인증 API")     // UI 드롭다운에 보일 이름
                 .pathsToMatch("/api/auth/**") // 이 그룹에 포함될 API의 URL 패턴
                 .build();
@@ -47,7 +47,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi memberApi() {
         return GroupedOpenApi.builder()
-                .group("member")
+                .group("2. member")
                 .displayName("2. 사용자 동의여부 API")     // UI 드롭다운에 보일 이름
                 .pathsToMatch("/api/member/**") // 이 그룹에 포함될 API의 URL 패턴
                 .build();
@@ -56,7 +56,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi recipeApi() {
         return GroupedOpenApi.builder()
-                .group("recipe")
+                .group("3. recipe")
                 .displayName("3. 레시피 API")
                 .pathsToMatch("/api/recipes/**")
                 .build();
@@ -65,7 +65,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi familyMemberProfileApi() {
         return GroupedOpenApi.builder()
-                .group("profile")
+                .group("4. profile")
                 .displayName("4. 프로필 API")     // UI 드롭다운에 보일 이름
                 .pathsToMatch("/api/family-rooms/*/profiles/**",
                         "/api/family-rooms/*/profile-pic") // 이 그룹에 포함될 API의 URL 패턴
@@ -75,7 +75,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi familyRoomApi() {
         return GroupedOpenApi.builder()
-                .group("familyRoom")
+                .group("5. familyRoom")
                 .displayName("5. 가족방 API")
                 .pathsToMatch("/api/family-rooms",
                         "/api/family-rooms/me")
@@ -85,7 +85,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi wishListApi() {
         return GroupedOpenApi.builder()
-                .group("wishList")
+                .group("6. wishList")
                 .displayName("6. 개인 위시리스트 API")     // UI 드롭다운에 보일 이름
                 .pathsToMatch("/api/family-rooms/*/profile-wishes") // 이 그룹에 포함될 API의 URL 패턴
                 .build();
@@ -94,7 +94,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi inviteApi() {
         return GroupedOpenApi.builder()
-                .group("invites")
+                .group("7. invites")
                 .displayName("7. 초대 API")
                 .pathsToMatch("/api/family-rooms/{familyRoomId}/invites",
                         "/api/invites/**")
@@ -104,7 +104,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi familyWishListApi() {
         return GroupedOpenApi.builder()
-                .group("familyWishList")
+                .group("8. familyWishList")
                 .displayName("8. 가족 위시리스트 API")
                 .pathsToMatch("/api/family-rooms/{familyRoomId}/family-wishlist/**")
                 .build();
@@ -113,7 +113,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi MealPlanApi() {
         return GroupedOpenApi.builder()
-                .group("mealPlan")
+                .group("9. mealPlan")
                 .displayName("9. 식단 API")
                 .pathsToMatch("/api/family-rooms/{familyRoomId}/meal-plans/**")
                 .build();
@@ -122,7 +122,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi notificationApi() {
         return GroupedOpenApi.builder()
-                .group("notification")
+                .group("10. notification")
                 .displayName("10. 알림 API")
                 .pathsToMatch("/api/notifications/**")
                 .build();
@@ -134,7 +134,7 @@ public class SwaggerConfig {
     public GroupedOpenApi allApi() {
         return GroupedOpenApi.builder()
                 .group("0. ALL")
-                .displayName("전체 API")
+                .displayName("0. 전체 API")
                 .pathsToMatch("/**") // 모든 경로 포함
                 .build();
     }
