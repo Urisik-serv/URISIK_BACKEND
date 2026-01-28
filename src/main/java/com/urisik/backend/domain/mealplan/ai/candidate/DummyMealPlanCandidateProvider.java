@@ -1,11 +1,9 @@
 package com.urisik.backend.domain.mealplan.ai.candidate;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Profile({"default","local","dev"})
 @Component
 public class DummyMealPlanCandidateProvider implements MealPlanCandidateProvider {
 

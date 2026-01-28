@@ -3,14 +3,12 @@ package com.urisik.backend.domain.mealplan.ai.generator;
 import com.urisik.backend.domain.mealplan.entity.MealPlan;
 import com.urisik.backend.domain.mealplan.exception.MealPlanException;
 import com.urisik.backend.domain.mealplan.exception.code.MealPlanErrorCode;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Profile({"default","local","dev"})
 @Component
 public class DummyMealPlanGenerator implements MealPlanGenerator {
 
