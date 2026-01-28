@@ -23,6 +23,14 @@ public class Recipe {
     @Column(nullable = false)
     private String name;
 
+    // 별점
+    @Column(nullable = false)
+    private Double avgScore = 0.0;
+
+    // 해당 레시피에 대해 작성된 전체 리뷰 개수
+    @Column(nullable = false)
+    private Long reviewCount = 0L;
+
     // 검증된 재료 (중립 데이터)
     @ElementCollection
     @CollectionTable(name = "recipe_ingredient", joinColumns = @JoinColumn(name = "recipe_id"))
@@ -37,6 +45,13 @@ public class Recipe {
     public Recipe(String name, List<String> ingredients) {
         this.name = name;
         this.ingredients = ingredients;
+    }
+
+    public void updateAvgScore (Integer newScore) {
+        double totalScore = this.avgScore * this.reviewCount;
+        this.reviewCount++;
+        this.avgScore = (totalScore + newScore) / this.reviewCount;
+        this.avgScore = Math.round(this.avgScore * 10) / 10.0;
     }
 
 }

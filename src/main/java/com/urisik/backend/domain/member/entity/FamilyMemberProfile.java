@@ -7,6 +7,7 @@ import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import com.urisik.backend.domain.member.enums.FamilyRole;
 import com.urisik.backend.domain.recipe.entity.Recipe;
+import com.urisik.backend.domain.review.entity.Review;
 import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -73,6 +74,10 @@ public class FamilyMemberProfile extends BaseEntity {
     @Builder.Default
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<DietPreference> dietPreferenceList = new HashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Review> reviewList = new ArrayList<>();
 
     // 1:1 연관
     @OneToOne(fetch = FetchType.LAZY)
