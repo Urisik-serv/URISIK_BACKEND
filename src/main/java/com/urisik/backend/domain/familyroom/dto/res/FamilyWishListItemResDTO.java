@@ -8,11 +8,6 @@ import java.util.List;
 */
 public class FamilyWishListItemResDTO {
 
-    /**
-     * TODO(리팩터링):
-     * - recipeId/recipeName -> newFoodId/newFoodName 로 치환 예정
-     * - foodImageUrl/score/foodCategory는 NewFood(또는 Recipe 확장 정보)에서 채운다.
-     */
     private final Long recipeId;
     private final String recipeName;
     private final String foodImageUrl;
@@ -20,8 +15,6 @@ public class FamilyWishListItemResDTO {
     private final FoodCategory foodCategory;
     /**
      * 주간식단 후보로 사용 가능 여부 (가족 전체 기준)
-     * TODO(리팩터링):
-     * - NewFood/Recipe 알레르기 성분 + 가족 구성원 알레르기 집계로 계산해 채운다.
      * - 저장하지 않고 조회 시점에 계산해서 내려주는 값이다.
      */
     private final boolean usableForMealPlan;

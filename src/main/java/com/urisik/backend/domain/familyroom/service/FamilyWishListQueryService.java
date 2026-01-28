@@ -22,10 +22,8 @@ public class FamilyWishListQueryService {
      * 가족 위시리스트 조회
      * - 개인 위시리스트(MemberWishList)를 가족방 단위로 집계
      * - 방장이 삭제한 항목은 exclusion에 의해 조회에서만 제외
-     * TODO(리팩터링):
-     * - NewFood 연동 시: recipeId -> newFoodId로 치환하고, 이미지/점수/카테고리를 NewFood에서 집계
-     * - NewFood/Recipe 알레르기 성분 + 가족 구성원 알레르기 집계로 usableForMealPlan 계산 로직 추가
      */
+    // TODO(리팩터링): Recipe 알레르기 성분 + 가족 구성원 알레르기 집계로 usableForMealPlan 계산 로직 추가
     public List<FamilyWishListItemResDTO> getFamilyWishList(Long familyRoomId) {
 
         // 방장 제외 목록 조회 (exclusion)

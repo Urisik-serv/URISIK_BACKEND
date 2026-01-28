@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class MealPlanGenerationValidator {
@@ -25,7 +26,7 @@ public class MealPlanGenerationValidator {
         if (candidateRecipeIds == null || candidateRecipeIds.isEmpty()) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
-        if (candidateRecipeIds.contains(null)) {
+        if (candidateRecipeIds.stream().anyMatch(Objects::isNull)) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
