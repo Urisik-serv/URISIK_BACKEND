@@ -1,6 +1,0 @@
-spring:
-  config:
-    import: optional:file:URISIK_BACKEND_PRIVATE/application.yml
-food-safety:
-  base-url: http://openapi.foodsafetykorea.go.kr/api
-  api-key: 8c3c5a704f72434a8460
