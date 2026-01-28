@@ -8,6 +8,7 @@ import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.auth.exception.AuthenExcetion;
 import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,7 +27,7 @@ public class MealPlanController {
     public ApiResponse<CreateMealPlanResDTO> createWeeklyMealPlan(
             @AuthenticationPrincipal Long memberId,
             @PathVariable Long familyRoomId,
-            @RequestBody CreateMealPlanReqDTO request
+            @Valid @RequestBody CreateMealPlanReqDTO request
     ) {
         if (memberId == null) {
             throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);

@@ -22,8 +22,20 @@ public class MealPlanGenerationValidator {
         if (recipeAssignments == null) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
+        if (candidateRecipeIds == null || candidateRecipeIds.isEmpty()) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+        }
+        if (candidateRecipeIds.contains(null)) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+        }
 
         for (MealPlan.SlotKey slot : selectedSlots) {
+            if (slot == null) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+            }
+            if (slot.mealType() == null || slot.dayOfWeek() == null) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+            }
             if (!recipeAssignments.containsKey(slot)) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
             }
