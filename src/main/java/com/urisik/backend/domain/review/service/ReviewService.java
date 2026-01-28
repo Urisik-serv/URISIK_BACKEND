@@ -10,6 +10,8 @@ import com.urisik.backend.domain.review.converter.ReviewConverter;
 import com.urisik.backend.domain.review.dto.ReviewRequestDto;
 import com.urisik.backend.domain.review.dto.ReviewResponseDto;
 import com.urisik.backend.domain.review.entity.Review;
+import com.urisik.backend.domain.review.exception.ReviewErrorCode;
+import com.urisik.backend.domain.review.exception.ReviewException;
 import com.urisik.backend.domain.review.repository.ReviewRepository;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
@@ -37,6 +39,11 @@ public class ReviewService {
 
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new GeneralException(GeneralErrorCode.NOT_FOUND));
+
+        // 리뷰 중복 작성 확인
+        if (reviewRepository.existsByFamilyMemberProfileAndRecipe(familyMember, recipe)) {
+            throw new ReviewException(ReviewErrorCode.REVIEW_ALREADY_EXISTS);
+        }
 
         // 데이터 저장
         Review review = ReviewConverter.toReview(familyMember, recipe, requestDto);

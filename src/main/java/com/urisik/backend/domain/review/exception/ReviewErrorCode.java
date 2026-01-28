@@ -9,9 +9,10 @@ import org.springframework.http.HttpStatus;
 @Getter
 @AllArgsConstructor
 public enum ReviewErrorCode implements BaseErrorCode {
-    INVITE_TOKEN_INVALID(HttpStatus.NOT_FOUND,
-            "INVITE_404",
-            "유효하지 않은 초대 링크입니다.");
+
+    REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT,
+            "MEAL_PLAN_409",
+            "이미 리뷰를 작성한 메뉴입니다. ");
 
     private final HttpStatus httpStatus;
     private final String code;
