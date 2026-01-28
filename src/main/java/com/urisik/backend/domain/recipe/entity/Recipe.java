@@ -54,4 +54,8 @@ public class Recipe {
         this.avgScore = Math.round(this.avgScore * 10) / 10.0;
     }
 
+    public void updateReviewCount () {
+        this.reviewCount++;
+    }
+
 }
