@@ -8,7 +8,6 @@ import java.util.Optional;
 
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
-    List<Recipe> findByNameContaining(String name);
-
+    Optional<Recipe> findBySourceRef(String sourceRef);
 
 }

@@ -1,15 +1,13 @@
-package com.urisik.backend.domain.recipe.model;
+package com.urisik.backend.domain.recipe.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class RecipeStep {
+public class RecipeStepDTO {
 
     private int order;
     private String description;
-    private String imageUrl;
 
 }
-

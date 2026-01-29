@@ -21,30 +21,36 @@ public class AllergySubstitutionService {
     private final AllergenAlternativeRepository allergenAlternativeRepository;
     private final IngredientNormalizer ingredientNormalizer;
 
-    public Map<Allergen, List<AllergenAlternative>> checkAndMapSubstitutions(
-            Long memberId,
+    /**
+     * 가족 기준 알레르기 판별 후
+     * AI에 전달할 "대체 규칙"을 생성한다.
+     * 이 서비스는 레시피를 생성하지 않는다.
+     */
+    public Map<Allergen, List<AllergenAlternative>> generateSubstitutionRules(
+            Long familyRoomId,
             List<String> recipeIngredients
     ) {
-        // 사용자 알레르기 조회
-        List<Allergen> userAllergens =
-                memberAllergyRepository.findByFamilyMemberProfile_Id(memberId)
+        // 1. 가족 전체 알레르기 조회
+        List<Allergen> familyAllergens =
+                memberAllergyRepository.findByFamilyRoomId(familyRoomId)
                         .stream()
                         .map(MemberAllergy::getAllergen)
+                        .distinct()
                         .toList();
 
-        if (userAllergens.isEmpty()) {
+        if (familyAllergens.isEmpty()) {
             return Map.of();
         }
 
-        // 재료 정규화
+        // 2. 재료 정규화
         List<String> normalizedIngredients =
                 recipeIngredients.stream()
                         .map(ingredientNormalizer::normalize)
                         .toList();
 
-        // 실제 레시피에 포함된 알레르기만 추출
+        // 3. 실제 레시피에 포함된 알레르기 필터링
         List<Allergen> matchedAllergens =
-                userAllergens.stream()
+                familyAllergens.stream()
                         .filter(allergen ->
                                 normalizedIngredients.stream()
                                         .anyMatch(ing ->
@@ -57,16 +63,16 @@ public class AllergySubstitutionService {
             return Map.of();
         }
 
-        // 알레르기 → 대체 식재료 + 이유 조회
+        // 4. 알레르기 → 대체 식재료 매핑
         List<AllergenAlternative> alternatives =
                 allergenAlternativeRepository.findByAllergenIn(matchedAllergens);
 
-        // Map 변환
         return alternatives.stream()
                 .collect(Collectors.groupingBy(
                         AllergenAlternative::getAllergen
                 ));
     }
-
 }
+
+
 
