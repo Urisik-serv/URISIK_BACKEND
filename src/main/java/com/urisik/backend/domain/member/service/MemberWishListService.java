@@ -111,7 +111,7 @@ public class MemberWishListService {
                 .map(w -> WishListResponse.WishItem.builder()
                         .wishId(w.getId())
                         .recipeId(w.getRecipe().getId())
-                        .recipeName(w.getRecipe().getName())
+                        .recipeName(w.getRecipe().getTitle())
                         .build())
                 .toList();
 

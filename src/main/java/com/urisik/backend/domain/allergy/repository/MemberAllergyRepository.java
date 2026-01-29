@@ -19,5 +19,7 @@ public interface MemberAllergyRepository extends JpaRepository<MemberAllergy, Lo
     List<MemberAllergy> findByFamilyRoomId(Long familyRoomId);
 
     List<MemberAllergy> findByFamilyMemberProfile_Id(Long profileId);
+
+    void deleteAllByFamilyMemberProfile_Id(Long familyMemberProfileId);
 }
 
