@@ -15,7 +15,6 @@ import java.util.Objects;
 
 /**
  * 주간 식단(가족 기준) 엔티티
- * 슬롯 컬럼(monday_lunch ~ sunday_dinner)은 가족 기준 변형 레시피(transformed_recipe)의 PK를 저장
  */
 @Entity
 @Table(
@@ -103,6 +102,31 @@ public class MealPlan extends BaseEntity {
     }
 
     /**
+     * SlotKey 기반 조회
+     */
+    public Long getSlot(SlotKey slotKey) {
+        Objects.requireNonNull(slotKey, "slotKey");
+        return getSlot(slotKey.mealType(), slotKey.dayOfWeek());
+    }
+
+    /**
+     * 선택 슬롯 여부
+     */
+    public boolean isSelectedSlot(SlotKey slotKey) {
+        return getSlot(slotKey) != null;
+    }
+
+    /**
+     * SlotKey 기반 단일 슬롯 업데이트
+     * - DRAFT/권한/안전성 등은 Service에서 검증
+     */
+    public void updateSlot(SlotKey slotKey, Long transformedRecipeId) {
+        Objects.requireNonNull(slotKey, "slotKey");
+        Objects.requireNonNull(transformedRecipeId, "transformedRecipeId");
+        setSlot(slotKey.mealType(), slotKey.dayOfWeek(), transformedRecipeId);
+    }
+
+    /**
      * 슬롯에 transformedRecipeId 설정
      */
     public void setSlot(MealType mealType, DayOfWeek dayOfWeek, Long transformedRecipeId) {
@@ -130,6 +154,14 @@ public class MealPlan extends BaseEntity {
                 }
             }
         }
+    }
+
+    /**
+     * SlotKey 기반 설정
+     */
+    public void setSlot(SlotKey slotKey, Long transformedRecipeId) {
+        Objects.requireNonNull(slotKey, "slotKey");
+        setSlot(slotKey.mealType(), slotKey.dayOfWeek(), transformedRecipeId);
     }
 
     /**
