@@ -74,7 +74,7 @@ public class FamilyWishListQueryService {
             List<MemberWishList> rows = entry.getValue();
 
             // 같은 recipeId 그룹에서는 recipe 정보 동일
-            String recipeName = rows.get(0).getRecipe().getName();
+            String recipeName = rows.get(0).getRecipe().getTitle();
 
             // 누가 위시했는지
             Map<Long, FamilyWishListItemResDTO.Profile> uniqueProfiles = new LinkedHashMap<>();
