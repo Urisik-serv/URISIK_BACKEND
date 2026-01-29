@@ -9,6 +9,8 @@ import java.util.List;
 @AllArgsConstructor
 public class AllergySubstitutionResponseDTO {
 
-    private String allergen;              // 알레르기 이름 (한글)
+    private String allergen; // 알레르기 이름 (한글)
     private List<AlternativeIngredientResponseDTO> alternatives;
+
 }
+

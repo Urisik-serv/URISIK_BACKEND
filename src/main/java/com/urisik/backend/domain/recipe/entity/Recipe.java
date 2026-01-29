@@ -1,6 +1,7 @@
 package com.urisik.backend.domain.recipe.entity;
 
 import com.urisik.backend.domain.member.entity.MemberWishList;
+import com.urisik.backend.domain.recipe.enums.SourceType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,53 +10,54 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 @Entity
+@Table(name = "recipe")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "recipe")
 public class Recipe {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 음식명
     @Column(nullable = false)
-    private String name;
+    private String title;
 
-    // 별점
+    // 외부 API 원본 재료 문자열 그대로
+    @Lob
     @Column(nullable = false)
-    private Double avgScore = 0.0;
+    private String ingredientsRaw;
 
-    // 해당 레시피에 대해 작성된 전체 리뷰 개수
+    // 외부 API 단계들을 합친 원본 조리법 문자열 그대로(줄바꿈 포함)
+    @Lob
     @Column(nullable = false)
-    private Long reviewCount = 0L;
+    private String instructionsRaw;
 
-    // 검증된 재료 (중립 데이터)
-    @ElementCollection
-    @CollectionTable(name = "recipe_ingredient", joinColumns = @JoinColumn(name = "recipe_id"))
-    @Column(name = "ingredient", nullable = false)
-    private List<String> ingredients;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SourceType sourceType;
 
+    // 외부 API RCP_SEQ 또는 AI 요청 ID 같은 참조값
+    private String sourceRef;
 
-    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<MemberWishList> memberWishLists = new ArrayList<>();
-
-
-    public Recipe(String name, List<String> ingredients) {
-        this.name = name;
-        this.ingredients = ingredients;
-    }
-
-    public void updateAvgScore (Integer newScore) {
-        double totalScore = this.avgScore * this.reviewCount;
-        this.reviewCount++;
-        this.avgScore = (totalScore + newScore) / this.reviewCount;
-        this.avgScore = Math.round(this.avgScore * 10) / 10.0;
-    }
-
-    public void updateReviewCount () {
-        this.reviewCount++;
+    public Recipe(
+            String title,
+            String ingredientsRaw,
+            String instructionsRaw,
+            SourceType sourceType,
+            String sourceRef
+    ) {
+        this.title = title;
+        this.ingredientsRaw = ingredientsRaw;
+        this.instructionsRaw = instructionsRaw;
+        this.sourceType = sourceType;
+        this.sourceRef = sourceRef;
     }
 
 }
+
