@@ -42,6 +42,12 @@ public class Recipe {
     @Column(nullable = false)
     private SourceType sourceType;
 
+    @Column(nullable = false)
+    private int reviewCount = 0;
+
+    @Column(nullable = false)
+    private double avgScore = 0.0;
+
     // 외부 API RCP_SEQ 또는 AI 요청 ID 같은 참조값
     private String sourceRef;
 
@@ -57,6 +63,18 @@ public class Recipe {
         this.instructionsRaw = instructionsRaw;
         this.sourceType = sourceType;
         this.sourceRef = sourceRef;
+    }
+
+    /** 리뷰 개수 증가 */
+    public void updateReviewCount() {
+        this.reviewCount++;
+    }
+
+    /** 평균 점수 갱신 */
+    public void updateAvgScore(int newScore) {
+        this.avgScore =
+                ((this.avgScore * (this.reviewCount - 1)) + newScore)
+                        / this.reviewCount;
     }
 
 }
