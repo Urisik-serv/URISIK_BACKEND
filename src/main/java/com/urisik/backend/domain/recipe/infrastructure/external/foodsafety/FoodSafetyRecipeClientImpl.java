@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FoodSafetyRecipeClientImpl implements FoodSafetyRecipeClient {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Value("${foodsafety.api.key}")
     private String apiKey;
@@ -27,10 +27,8 @@ public class FoodSafetyRecipeClientImpl implements FoodSafetyRecipeClient {
 
     @Override
     public FoodSafetyRecipeResponse.Row fetchOneByRcpSeq(String rcpSeq) {
-        // RCP_SEQ로 필터를 path 뒤에 붙이는 형식
-        // /RCP_SEQ=값
-        String encoded = URLEncoder.encode("RCP_SEQ=" + rcpSeq, StandardCharsets.UTF_8);
-        String url = String.format("%s/%s/%s/json/%d/%d/%s", BASE, apiKey, serviceId, 1, 1, encoded);
+        String url = String.format("%s/%s/%s/json/%d/%d/RCP_SEQ=%s",
+                BASE, apiKey, serviceId, 1, 1, rcpSeq);
 
         ResponseEntity<FoodSafetyRecipeResponse> res =
                 restTemplate.exchange(url, HttpMethod.GET, null, FoodSafetyRecipeResponse.class);
@@ -42,6 +40,4 @@ public class FoodSafetyRecipeClientImpl implements FoodSafetyRecipeClient {
         List<FoodSafetyRecipeResponse.Row> rows = body.getCookrcp01().getRow();
         return rows.isEmpty() ? null : rows.get(0);
     }
-
 }
-

@@ -55,6 +55,12 @@ public class TransformedRecipe {
     @Column(nullable = false)
     private ValidationStatus validationStatus = ValidationStatus.VALID;
 
+    @Column(nullable = false)
+    private int reviewCount = 0;
+
+    @Column(nullable = false)
+    private double avgScore = 0.0;
+
     private TransformedRecipe(
             Recipe recipe,
             Long familyRoomId,
@@ -95,5 +101,15 @@ public class TransformedRecipe {
         );
     }
 
+    public void updateReviewCount() {
+        this.reviewCount++;
+    }
+
+    /** 평균 점수 갱신 */
+    public void updateAvgScore(int newScore) {
+        this.avgScore =
+                ((this.avgScore * (this.reviewCount - 1)) + newScore)
+                        / this.reviewCount;
+    }
 }
 
