@@ -10,17 +10,24 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum MealPlanSuccessCode implements BaseSuccessCode {
 
+    // 생성
     MEAL_PLAN_CREATED(HttpStatus.OK,
             "MEAL_PLAN_CREATED_200",
             "주간 식단 생성에 성공했습니다."),
 
-    MEAL_PLAN_CONFIRMED(HttpStatus.OK,
-            "MEAL_PLAN_CONFIRMED_200",
-            "주간 식단 확정에 성공했습니다."),
-
     MEAL_PLAN_REGENERATED(HttpStatus.OK,
             "MEAL_PLAN_REGENERATED_200",
-            "주간 식단 재생성에 성공했습니다.")
+            "주간 식단 재생성에 성공했습니다."),
+
+    // 수정
+    MEAL_PLAN_UPDATED(HttpStatus.OK,
+            "MEAL_PLAN_200",
+            "주간 식단 수정 성공"),
+
+    // 확정
+    MEAL_PLAN_CONFIRMED(HttpStatus.OK,
+            "MEAL_PLAN_CONFIRMED_200",
+            "주간 식단 확정에 성공했습니다.")
     ;
 
     private final HttpStatus httpStatus;

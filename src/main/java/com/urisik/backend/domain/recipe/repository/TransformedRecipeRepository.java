@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface TransformedRecipeRepository extends JpaRepository<TransformedRecipe, Long> {
 
     Optional<TransformedRecipe> findByRecipe_IdAndFamilyRoomId(Long recipeId, Long familyRoomId);
-
+    List<TransformedRecipe> findByFamilyRoomId(Long familyRoomId);
     List<TransformedRecipe> findByVisibility(Visibility visibility);
 
 }

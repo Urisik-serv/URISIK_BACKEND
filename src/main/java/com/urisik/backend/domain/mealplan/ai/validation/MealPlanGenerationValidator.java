@@ -5,9 +5,7 @@ import com.urisik.backend.domain.mealplan.exception.MealPlanException;
 import com.urisik.backend.domain.mealplan.exception.code.MealPlanErrorCode;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Component
 public class MealPlanGenerationValidator {
@@ -20,23 +18,17 @@ public class MealPlanGenerationValidator {
         if (selectedSlots == null || selectedSlots.isEmpty()) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
-        if (recipeAssignments == null) {
+        if (selectedSlots.stream().anyMatch(Objects::isNull)) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
-        if (candidateRecipeIds == null || candidateRecipeIds.isEmpty()) {
+        if (candidateRecipeIds == null || candidateRecipeIds.isEmpty() || candidateRecipeIds.stream().anyMatch(Objects::isNull)) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
-        if (candidateRecipeIds.stream().anyMatch(Objects::isNull)) {
+        if (recipeAssignments == null || recipeAssignments.isEmpty()) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
         for (MealPlan.SlotKey slot : selectedSlots) {
-            if (slot == null) {
-                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
-            }
-            if (slot.mealType() == null || slot.dayOfWeek() == null) {
-                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
-            }
             if (!recipeAssignments.containsKey(slot)) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
             }
@@ -44,7 +36,11 @@ public class MealPlanGenerationValidator {
             if (recipeId == null) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
             }
-            if (!candidateRecipeIds.contains(recipeId)) {
+        }
+
+        Set<Long> candidateSet = new HashSet<>(candidateRecipeIds);
+        for (Long recipeId : recipeAssignments.values()) {
+            if (recipeId == null || !candidateSet.contains(recipeId)) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
             }
         }
