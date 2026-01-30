@@ -31,7 +31,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         response.addCookie(createRefreshCookie(token));
         //프론트 특정 url
-        response.sendRedirect("http://localhost:3000/");
+        response.sendRedirect("https://urisik.vercel.app/login");
     }
 
 
