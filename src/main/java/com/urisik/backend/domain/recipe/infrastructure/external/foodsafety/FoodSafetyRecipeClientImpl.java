@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -39,5 +40,23 @@ public class FoodSafetyRecipeClientImpl implements FoodSafetyRecipeClient {
         }
         List<FoodSafetyRecipeResponse.Row> rows = body.getCookrcp01().getRow();
         return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    @Override
+    public List<FoodSafetyRecipeResponse.Row> searchByName(String keyword, int startIdx, int endIdx) {
+        // 외부 API 필터: RCP_NM
+        String filter = "RCP_NM=" + keyword;
+        String encoded = URLEncoder.encode(filter, StandardCharsets.UTF_8);
+
+        String url = String.format("%s/%s/%s/json/%d/%d/%s", BASE, apiKey, serviceId, startIdx, endIdx, encoded);
+
+        ResponseEntity<FoodSafetyRecipeResponse> res =
+                restTemplate.exchange(url, HttpMethod.GET, null, FoodSafetyRecipeResponse.class);
+
+        FoodSafetyRecipeResponse body = res.getBody();
+        if (body == null || body.getCookrcp01() == null || body.getCookrcp01().getRow() == null) {
+            return Collections.emptyList();
+        }
+        return body.getCookrcp01().getRow();
     }
 }
