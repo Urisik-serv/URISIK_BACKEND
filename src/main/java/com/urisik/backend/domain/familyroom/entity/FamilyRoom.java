@@ -58,8 +58,4 @@ public class FamilyRoom {
     public void incrementMealPlanGenerationCount() {
         this.mealPlanGenerationCount += 1;
     }
-
-    public Integer getMealPlanGenerationCount() {
-        return mealPlanGenerationCount;
-    }
 }

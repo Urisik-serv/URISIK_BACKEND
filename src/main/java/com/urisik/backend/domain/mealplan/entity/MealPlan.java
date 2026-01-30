@@ -13,6 +13,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * 주간 식단(가족 기준) 엔티티
@@ -66,6 +68,54 @@ public class MealPlan extends BaseEntity {
     @JoinColumn(name = "family_room_id", nullable = false)
     private FamilyRoom familyRoom;
 
+    /**
+     * 사용자가 선택한 슬롯 목록(= UI에서 선택한 칸)
+     * - 값(레시피 id)이 아직 채워지기 전이라도 선택 자체는 보존되어야 하므로 별도 저장
+     */
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "meal_plan_selected_slot",
+            joinColumns = @JoinColumn(name = "meal_plan_id")
+    )
+    @Builder.Default
+    private Set<SelectedSlot> selectedSlots = new HashSet<>();
+
+    @Embeddable
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
+    public static class SelectedSlot {
+        @Enumerated(EnumType.STRING)
+        @Column(name = "meal_type", nullable = false)
+        private MealType mealType;
+
+        @Enumerated(EnumType.STRING)
+        @Column(name = "day_of_week", nullable = false)
+        private DayOfWeek dayOfWeek;
+
+        public SlotKey toSlotKey() {
+            return new SlotKey(mealType, dayOfWeek);
+        }
+
+        public static SelectedSlot from(SlotKey key) {
+            Objects.requireNonNull(key, "slotKey");
+            return new SelectedSlot(key.mealType(), key.dayOfWeek());
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            SelectedSlot that = (SelectedSlot) o;
+            return mealType == that.mealType && dayOfWeek == that.dayOfWeek;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(mealType, dayOfWeek);
+        }
+    }
+
     /** MealType, DayOfWeek 조합을 안전하게 다루기 위한 키 */
     public record SlotKey(MealType mealType, DayOfWeek dayOfWeek) {
         public SlotKey {
@@ -104,9 +154,11 @@ public class MealPlan extends BaseEntity {
         return getSlot(slotKey.mealType(), slotKey.dayOfWeek());
     }
 
-    /** 선택 슬롯 여부 */
+    /** 선택 슬롯 여부(= UI에서 선택한 칸인지) */
     public boolean isSelectedSlot(SlotKey slotKey) {
-        return getSlot(slotKey) != null;
+        Objects.requireNonNull(slotKey, "slotKey");
+        if (selectedSlots == null || selectedSlots.isEmpty()) return false;
+        return selectedSlots.contains(SelectedSlot.from(slotKey));
     }
 
     /**
@@ -116,6 +168,9 @@ public class MealPlan extends BaseEntity {
     public void updateSlot(SlotKey slotKey, Long recipeRefId) {
         Objects.requireNonNull(slotKey, "slotKey");
         Objects.requireNonNull(recipeRefId, "recipeRefId");
+
+        // 수정 시 선택 슬롯을 보존
+        selectedSlots.add(SelectedSlot.from(slotKey));
         setSlot(slotKey.mealType(), slotKey.dayOfWeek(), recipeRefId);
     }
 
@@ -173,21 +228,33 @@ public class MealPlan extends BaseEntity {
         saturdayDinner = null;
         sundayDinner = null;
 
+        // selected reset
+        if (selectedSlots == null) {
+            selectedSlots = new HashSet<>();
+        } else {
+            selectedSlots.clear();
+        }
+
         if (selectedAssignments == null || selectedAssignments.isEmpty()) {
             return;
         }
 
         for (Map.Entry<SlotKey, Long> e : selectedAssignments.entrySet()) {
-            if (e.getKey() == null || e.getValue() == null) {
+            if (e.getKey() == null) {
                 continue;
             }
-            setSlot(e.getKey().mealType(), e.getKey().dayOfWeek(), e.getValue());
+
+            // 선택 슬롯은 값 유무와 상관없이 저장
+            selectedSlots.add(SelectedSlot.from(e.getKey()));
+
+            // 값이 있으면 실제 슬롯에 반영
+            if (e.getValue() != null) {
+                setSlot(e.getKey().mealType(), e.getKey().dayOfWeek(), e.getValue());
+            }
         }
     }
 
-    /**
-     * 엔티티의 전체 슬롯 스냅샷(Map)
-     */
+    /** 엔티티의 전체 슬롯 스냅샷(Map) */
     public Map<SlotKey, Long> snapshotAllSlots() {
         Map<SlotKey, Long> map = new HashMap<>();
 
@@ -225,14 +292,11 @@ public class MealPlan extends BaseEntity {
         this.status = status;
     }
 
-    /**
-     * 선택된 슬롯 목록
-     * - 이 엔티티에서는 "선택"을 별도로 저장하지 않고, 값이 채워진 슬롯을 선택된 것으로 본다.
-     */
+    /** 선택된 슬롯 목록 */
     public Collection<SlotKey> getSelectedSlots() {
-        return snapshotAllSlots().entrySet().stream()
-                .filter(e -> e.getValue() != null)
-                .map(Map.Entry::getKey)
+        if (selectedSlots == null || selectedSlots.isEmpty()) return java.util.List.of();
+        return selectedSlots.stream()
+                .map(SelectedSlot::toSlotKey)
                 .toList();
     }
 
@@ -243,6 +307,6 @@ public class MealPlan extends BaseEntity {
 
     /** 확정 전 검증용: 선택된 슬롯이 1개 이상인지 */
     public boolean hasAnySelectedSlot() {
-        return snapshotAllSlots().values().stream().anyMatch(Objects::nonNull);
+        return selectedSlots != null && !selectedSlots.isEmpty();
     }
 }

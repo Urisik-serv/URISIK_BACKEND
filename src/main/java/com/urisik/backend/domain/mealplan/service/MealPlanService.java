@@ -53,7 +53,7 @@ public class MealPlanService {
     public CreateMealPlanResDTO createMealPlan(Long memberId, Long familyRoomId, CreateMealPlanReqDTO req) {
         LocalDate weekStart = normalizeToMonday(req.weekStartDate());
 
-        // 방장 검증 (생성/재생성 모두)
+        // 방장 검증
         familyRoomService.validateLeader(memberId, familyRoomId);
 
         Optional<MealPlan> existingMealPlanOpt =
@@ -63,12 +63,12 @@ public class MealPlanService {
         if (existingMealPlanOpt.isPresent()) {
             mealPlan = existingMealPlanOpt.get();
 
-            // 확정된 식단은 regenerate=true 여도 재생성/수정 불가
+            // 확정된 식단은 재생성/수정 불가
             if (mealPlan.getStatus() == MealPlanStatus.CONFIRMED) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_ALREADY_CONFIRMED);
             }
 
-            // DRAFT 식단이 이미 있는데 regenerate=false면 중복 생성 불가
+            // DRAFT 식단이 있을 시 regenerate=false면 중복 생성 불가
             if (!req.regenerate()) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_ALREADY_EXISTS);
             }
@@ -116,39 +116,42 @@ public class MealPlanService {
     ) {
     }
 
-    private GenerationResult generateForSelectedSlots(Long familyRoomId, List<MealPlan.SlotKey> selectedSlots) {
-        // 후보군: 원본 recipeId 목록 (null 원소 방어)
+    private GenerationResult generateForSelectedSlots(
+            Long familyRoomId,
+            List<MealPlan.SlotKey> selectedSlots
+    ) {
+        // 후보군 조회
         List<Long> candidateRecipeIdsRaw = candidateProvider.getCandidateRecipeIds(familyRoomId);
         if (candidateRecipeIdsRaw == null || candidateRecipeIdsRaw.isEmpty()) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED);
         }
 
+        // null 방어만 수행 (중복 허용)
         List<Long> candidateRecipeIds = candidateRecipeIdsRaw.stream()
                 .filter(Objects::nonNull)
-                .distinct()
                 .toList();
 
         if (candidateRecipeIds.isEmpty()) {
-            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED);
-        }
-
-        // null 원소가 있었던 경우는 명시적으로 실패 처리
-        if (candidateRecipeIds.size() != candidateRecipeIdsRaw.size()) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
-        // 생성: 슬롯 -> 원본 recipeId 배정
+        // AI 생성: slot -> recipeId
         Map<MealPlan.SlotKey, Long> recipeAssignments;
         try {
-            recipeAssignments = generator.generateRecipeAssignments(selectedSlots, candidateRecipeIds);
+            recipeAssignments =
+                    generator.generateRecipeAssignments(selectedSlots, candidateRecipeIds);
         } catch (Exception e) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED);
         }
 
-        // 검증
-        validator.validateRecipeAssignments(selectedSlots, recipeAssignments, candidateRecipeIds);
+        // 검증 (slot 누락 / 후보군 외 id 등)
+        validator.validateRecipeAssignments(
+                selectedSlots,
+                recipeAssignments,
+                candidateRecipeIds
+        );
 
-        // transformed 있으면 사용, 없으면 recipe 그대로 사용
+        // transformed 있으면 transformedId, 없으면 recipeId 그대로
         Map<MealPlan.SlotKey, Long> chosenAssignments = new HashMap<>();
         for (MealPlan.SlotKey slot : selectedSlots) {
             Long recipeId = recipeAssignments.get(slot);
@@ -368,15 +371,17 @@ public class MealPlanService {
     }
 
     private void validateAllSelectedSlotsFilled(MealPlan mealPlan) {
-        Collection<MealPlan.SlotKey> selected = mealPlan.getSelectedSlots();
-        if (selected == null || selected.isEmpty()) {
+        Collection<MealPlan.SlotKey> selectedSlots = mealPlan.getSelectedSlots();
+
+        if (selectedSlots == null || selectedSlots.isEmpty()) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
-        for (MealPlan.SlotKey key : selected) {
+        for (MealPlan.SlotKey key : selectedSlots) {
             if (key == null) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
             }
+
             Long value = mealPlan.getSlotValue(key);
             if (value == null) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
