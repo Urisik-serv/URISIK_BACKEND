@@ -59,6 +59,7 @@ public class SwaggerConfig {
                 .group("03. recipe")
                 .displayName("03. 레시피 API")
                 .pathsToMatch("/api/recipes/**")
+                .pathsToMatch("/api/transformed-recipes/**")
                 .build();
     }
 
@@ -127,7 +128,6 @@ public class SwaggerConfig {
                 .pathsToMatch("/api/notifications/**")
                 .build();
     }
-
 
     // 아래 부분 지우고 각자 도메인에 맞게 변경하면 됨!!
     @Bean
