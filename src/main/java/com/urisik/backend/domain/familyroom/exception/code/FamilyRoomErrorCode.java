@@ -23,7 +23,7 @@ public enum FamilyRoomErrorCode implements BaseErrorCode {
             "가족방 방장 권한이 없습니다."),
 
     NOT_FAMILY_MEMBER(HttpStatus.FORBIDDEN,
-            "FAMILY_ROOM_403,",
+            "FAMILY_ROOM_403",
             "가족방 구성원이 아닙니다." ),
 
     FAMILY_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND,

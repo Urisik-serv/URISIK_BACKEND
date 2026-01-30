@@ -31,7 +31,7 @@ public enum MealPlanSuccessCode implements BaseSuccessCode {
 
     // 조회
     MEAL_PLAN_GET(HttpStatus.OK,
-            "MEAL_PLAN_GET_200,",
+            "MEAL_PLAN_GET_200",
             "주간 식단 조회에 성공했습니다.")
     ;
 
