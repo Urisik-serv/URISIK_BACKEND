@@ -2,6 +2,7 @@ package com.urisik.backend.domain.mealplan.controller;
 
 import com.urisik.backend.domain.mealplan.dto.req.CreateMealPlanReqDTO;
 import com.urisik.backend.domain.mealplan.dto.req.UpdateMealPlanReqDTO;
+import com.urisik.backend.domain.mealplan.dto.res.ConfirmMealPlanResDTO;
 import com.urisik.backend.domain.mealplan.dto.res.CreateMealPlanResDTO;
 import com.urisik.backend.domain.mealplan.dto.res.UpdateMealPlanResDTO;
 import com.urisik.backend.domain.mealplan.exception.code.MealPlanSuccessCode;
@@ -58,5 +59,19 @@ public class MealPlanController {
                 mealPlanService.updateMealPlan(memberId, familyRoomId, mealPlanId, request);
 
         return ApiResponse.onSuccess(MealPlanSuccessCode.MEAL_PLAN_UPDATED, result);
+    }
+
+    @PostMapping("/{mealPlanId}/confirm")
+    public ApiResponse<ConfirmMealPlanResDTO> confirmMealPlan(
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable Long familyRoomId,
+            @PathVariable Long mealPlanId
+    ) {
+        if (memberId == null) {
+            throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
+        }
+
+        ConfirmMealPlanResDTO result = mealPlanService.confirmMealPlan(memberId, familyRoomId, mealPlanId);
+        return ApiResponse.onSuccess(MealPlanSuccessCode.MEAL_PLAN_CONFIRMED, result);
     }
 }

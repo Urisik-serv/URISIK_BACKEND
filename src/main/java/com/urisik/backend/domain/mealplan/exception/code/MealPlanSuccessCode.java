@@ -22,7 +22,7 @@ public enum MealPlanSuccessCode implements BaseSuccessCode {
     // 수정
     MEAL_PLAN_UPDATED(HttpStatus.OK,
             "MEAL_PLAN_UPDATE_200",
-            "주간 식단 수정 성공"),
+            "주간 식단 수정에 성공했습니다."),
 
     // 확정
     MEAL_PLAN_CONFIRMED(HttpStatus.OK,

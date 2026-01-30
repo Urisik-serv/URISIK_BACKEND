@@ -13,6 +13,7 @@ import com.urisik.backend.domain.mealplan.dto.req.RecipeSelectionDTO;
 import com.urisik.backend.domain.mealplan.dto.req.UpdateMealPlanReqDTO;
 import com.urisik.backend.domain.mealplan.dto.res.CreateMealPlanResDTO;
 import com.urisik.backend.domain.mealplan.dto.res.UpdateMealPlanResDTO;
+import com.urisik.backend.domain.mealplan.dto.res.ConfirmMealPlanResDTO;
 import com.urisik.backend.domain.mealplan.entity.MealPlan;
 import com.urisik.backend.domain.mealplan.enums.MealPlanStatus;
 import com.urisik.backend.domain.mealplan.exception.MealPlanException;
@@ -62,13 +63,16 @@ public class MealPlanService {
         if (existingMealPlanOpt.isPresent()) {
             mealPlan = existingMealPlanOpt.get();
 
+            // 확정된 식단은 regenerate=true 여도 재생성/수정 불가
+            if (mealPlan.getStatus() == MealPlanStatus.CONFIRMED) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_ALREADY_CONFIRMED);
+            }
+
+            // DRAFT 식단이 이미 있는데 regenerate=false면 중복 생성 불가
             if (!req.regenerate()) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_ALREADY_EXISTS);
             }
 
-            if (mealPlan.getStatus() == MealPlanStatus.CONFIRMED) {
-                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
-            }
         } else {
             FamilyRoom familyRoom = familyRoomRepository.findById(familyRoomId)
                     .orElseThrow(() -> new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED));
@@ -113,10 +117,24 @@ public class MealPlanService {
     }
 
     private GenerationResult generateForSelectedSlots(Long familyRoomId, List<MealPlan.SlotKey> selectedSlots) {
-        // 후보군: 원본 recipeId 목록
-        List<Long> candidateRecipeIds = candidateProvider.getCandidateRecipeIds(familyRoomId);
-        if (candidateRecipeIds == null || candidateRecipeIds.isEmpty()) {
+        // 후보군: 원본 recipeId 목록 (null 원소 방어)
+        List<Long> candidateRecipeIdsRaw = candidateProvider.getCandidateRecipeIds(familyRoomId);
+        if (candidateRecipeIdsRaw == null || candidateRecipeIdsRaw.isEmpty()) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED);
+        }
+
+        List<Long> candidateRecipeIds = candidateRecipeIdsRaw.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (candidateRecipeIds.isEmpty()) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED);
+        }
+
+        // null 원소가 있었던 경우는 명시적으로 실패 처리
+        if (candidateRecipeIds.size() != candidateRecipeIdsRaw.size()) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
         // 생성: 슬롯 -> 원본 recipeId 배정
@@ -240,36 +258,35 @@ public class MealPlanService {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
-        // 선택 타입에 따라 저장할 id 결정
+        // 선택 타입에 따라 저장할 id 결정 + title 결정
         Long chosenId;
-        String typeName = selection.type().name();
+        String title;
 
-        if ("RECIPE".equals(typeName)) {
-            Recipe recipe = recipeRepository.findById(selection.id())
-                    .orElseThrow(() -> new MealPlanException(MealPlanErrorCode.MEAL_PLAN_RECIPE_NOT_FOUND));
-            chosenId = recipe.getId();
-        } else if ("TRANSFORMED_RECIPE".equals(typeName)) {
-            TransformedRecipe tr = transformedRecipeRepository.findById(selection.id())
-                    .orElseThrow(() -> new MealPlanException(MealPlanErrorCode.MEAL_PLAN_TRANSFORMED_RECIPE_NOT_FOUND));
-            chosenId = tr.getId();
-        } else {
-            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+        switch (selection.type()) {
+            case RECIPE -> {
+                Recipe recipe = recipeRepository.findById(selection.id())
+                        .orElseThrow(() ->
+                                new MealPlanException(MealPlanErrorCode.MEAL_PLAN_RECIPE_NOT_FOUND)
+                        );
+                chosenId = recipe.getId();
+                title = recipe.getTitle();
+            }
+
+            case TRANSFORMED_RECIPE -> {
+                TransformedRecipe tr = transformedRecipeRepository.findById(selection.id())
+                        .orElseThrow(() ->
+                                new MealPlanException(MealPlanErrorCode.MEAL_PLAN_TRANSFORMED_RECIPE_NOT_FOUND)
+                        );
+                chosenId = tr.getId();
+                title = tr.getRecipe() == null ? "UNKNOWN" : tr.getRecipe().getTitle();
+            }
+
+            default -> throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
         // 실제 슬롯 컬럼 업데이트
         mealPlan.updateSlot(slotKey, chosenId);
         mealPlanRepository.save(mealPlan);
-
-        // 응답 title
-        String title;
-        if ("RECIPE".equals(typeName)) {
-            title = recipeRepository.findById(chosenId).map(Recipe::getTitle).orElse("UNKNOWN");
-        } else {
-            title = transformedRecipeRepository.findById(chosenId)
-                    .map(TransformedRecipe::getRecipe)
-                    .map(Recipe::getTitle)
-                    .orElse("UNKNOWN");
-        }
 
         String updatedSlotKeyStr = slotKey.mealType().name() + "-" + slotKey.dayOfWeek().name();
 
@@ -301,5 +318,69 @@ public class MealPlanService {
                 .forEach(r -> titles.put(r.getId(), r.getTitle()));
 
         return titles;
+    }
+
+    /**
+     * 식단 확정 API
+     * - DRAFT 상태의 식단을 CONFIRMED로 전환
+     * - 확정 시 가족방 식단 생성 횟수 +1
+     */
+    @Transactional
+    public ConfirmMealPlanResDTO confirmMealPlan(Long memberId, Long familyRoomId, Long mealPlanId) {
+        // 방장 검증
+        familyRoomService.validateLeader(memberId, familyRoomId);
+
+        MealPlan mealPlan = mealPlanRepository.findById(mealPlanId)
+                .orElseThrow(() -> new MealPlanException(MealPlanErrorCode.MEAL_PLAN_NOT_FOUND));
+
+        // 가족방 일치 검증
+        if (!mealPlan.getFamilyRoom().getId().equals(familyRoomId)) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_NOT_IN_FAMILY_ROOM);
+        }
+
+        // 상태 검증
+        // - 이미 확정된 식단은 재확정 불가 (명확한 에러코드 반환)
+        if (mealPlan.getStatus() == MealPlanStatus.CONFIRMED) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_ALREADY_CONFIRMED);
+        }
+
+        // - DRAFT만 확정 가능
+        if (mealPlan.getStatus() != MealPlanStatus.DRAFT) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_NOT_DRAFT);
+        }
+
+        // 선택된 슬롯이 모두 채워져 있어야 확정 가능
+        validateAllSelectedSlotsFilled(mealPlan);
+
+        // 상태 변경 + 가족방 생성횟수 증가
+        mealPlan.updateStatus(MealPlanStatus.CONFIRMED);
+        mealPlan.getFamilyRoom().incrementMealPlanGenerationCount();
+
+        mealPlanRepository.save(mealPlan);
+
+        FamilyRoom familyRoom = mealPlan.getFamilyRoom();
+        return new ConfirmMealPlanResDTO(
+                mealPlan.getId(),
+                mealPlan.getStatus(),
+                mealPlan.getWeekStartDate(),
+                familyRoom.getMealPlanGenerationCount()
+        );
+    }
+
+    private void validateAllSelectedSlotsFilled(MealPlan mealPlan) {
+        Collection<MealPlan.SlotKey> selected = mealPlan.getSelectedSlots();
+        if (selected == null || selected.isEmpty()) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+        }
+
+        for (MealPlan.SlotKey key : selected) {
+            if (key == null) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+            }
+            Long value = mealPlan.getSlotValue(key);
+            if (value == null) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+            }
+        }
     }
 }
