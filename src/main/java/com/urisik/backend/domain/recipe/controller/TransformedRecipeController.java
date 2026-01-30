@@ -4,6 +4,7 @@ import com.urisik.backend.domain.recipe.dto.TransformedRecipeDetailResponseDTO;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
 import com.urisik.backend.domain.recipe.service.TransformedRecipeReadService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/transformed-recipes")
+@Tag(name = "Recipes", description = "레시피 관련 API")
 public class TransformedRecipeController {
 
     private final TransformedRecipeReadService transformedRecipeReadService;

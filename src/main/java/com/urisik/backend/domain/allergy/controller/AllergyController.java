@@ -9,6 +9,7 @@ import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/members")
+@Tag(name = "Allergy", description = "알레르기 관련 API")
 public class AllergyController {
 
     private final AllergyQueryService allergyQueryService;

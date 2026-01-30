@@ -12,6 +12,7 @@ import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +26,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/recipes")
+@Tag(name = "Recipes", description = "레시피 관련 API")
 public class RecipeAllergyController {
 
     private final AllergySubstitutionService allergySubstitutionService;

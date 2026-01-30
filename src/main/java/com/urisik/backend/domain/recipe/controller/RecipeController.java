@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/recipes")
+@Tag(name = "Recipes", description = "레시피 관련 API")
 public class RecipeController {
 
     private final RecipeReadService recipeReadService;

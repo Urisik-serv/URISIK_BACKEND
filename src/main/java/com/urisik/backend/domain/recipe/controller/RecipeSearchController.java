@@ -4,12 +4,14 @@ import com.urisik.backend.domain.recipe.dto.RecipeSearchResponseDTO;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
 import com.urisik.backend.domain.recipe.service.RecipeSearchService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/recipes")
+@Tag(name = "Recipes", description = "레시피 관련 API")
 public class RecipeSearchController {
 
     private final RecipeSearchService recipeSearchService;
