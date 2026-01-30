@@ -9,6 +9,7 @@ import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,6 +29,7 @@ public class AllergyController {
     private final AllergyQueryService allergyQueryService;
 
     @GetMapping("/{memberId}/allergies")
+    @Operation(summary = "사용자 알레르기 조회 API", description = "사용자의 알레르기를 조회하는 api 입니다. ")
     public ApiResponse<List<AllergyResponseDTO>> getUserAllergies(
             @PathVariable Long memberId,
             @AuthenticationPrincipal Long loginUserId

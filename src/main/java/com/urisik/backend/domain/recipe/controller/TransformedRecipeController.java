@@ -4,6 +4,7 @@ import com.urisik.backend.domain.recipe.dto.TransformedRecipeDetailResponseDTO;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
 import com.urisik.backend.domain.recipe.service.TransformedRecipeReadService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +19,7 @@ public class TransformedRecipeController {
     private final TransformedRecipeReadService transformedRecipeReadService;
 
     @GetMapping("/{transformedRecipeId}")
+    @Operation(summary = "변형 레시피 상세 조회 API", description = "사용자들이 생성한 변형 레시피의 상세 내용을 조회하는 api 입니다.")
     public ApiResponse<TransformedRecipeDetailResponseDTO> getTransformedRecipeDetail(
             @PathVariable Long transformedRecipeId,
             @AuthenticationPrincipal(expression = "username") String userId

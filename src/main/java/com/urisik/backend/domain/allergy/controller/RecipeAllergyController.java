@@ -12,6 +12,7 @@ import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,6 +34,7 @@ public class RecipeAllergyController {
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
 
     @PostMapping("/allergy-check")
+    @Operation(summary = "레시피 알레르기 판별 & 대체 식재료 조회 API", description = "가족 전체 알레르기를 고려한 알레르기 판별 및 대체 식재료 규칙을 생성하는 api 입니다.")
     public ApiResponse<List<AllergySubstitutionResponseDTO>> checkRecipeAllergy(
             @RequestBody RecipeAllergyCheckRequestDTO request,
             @AuthenticationPrincipal(expression = "username") String userId
