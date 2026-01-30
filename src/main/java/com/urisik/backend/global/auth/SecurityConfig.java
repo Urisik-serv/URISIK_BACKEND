@@ -101,7 +101,9 @@ public class SecurityConfig  {
         var config = new org.springframework.web.cors.CorsConfiguration();
 
         config.setAllowedOrigins(
-                List.of("http://localhost:5173","https://urisik.vercel.app")
+                List.of("http://localhost:5173"
+                        ,"https://urisik.vercel.app"
+                        ,"https://api.urisik.com")
         );
         config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
