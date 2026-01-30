@@ -27,7 +27,12 @@ public enum MealPlanSuccessCode implements BaseSuccessCode {
     // 확정
     MEAL_PLAN_CONFIRMED(HttpStatus.OK,
             "MEAL_PLAN_CONFIRMED_200",
-            "주간 식단 확정에 성공했습니다.")
+            "주간 식단 확정에 성공했습니다."),
+
+    // 조회
+    MEAL_PLAN_GET(HttpStatus.OK,
+            "MEAL_PLAN_GET_200",
+            "주간 식단 조회에 성공했습니다.")
     ;
 
     private final HttpStatus httpStatus;

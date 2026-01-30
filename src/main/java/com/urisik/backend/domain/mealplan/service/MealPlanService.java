@@ -329,44 +329,44 @@ public class MealPlanService {
      * - 확정 시 가족방 식단 생성 횟수 +1
      */
     @Transactional
-    public ConfirmMealPlanResDTO confirmMealPlan(Long memberId, Long familyRoomId, Long mealPlanId) {
+    public ConfirmMealPlanResDTO confirmMealPlan(
+            Long memberId,
+            Long familyRoomId,
+            Long mealPlanId
+    ) {
         // 방장 검증
         familyRoomService.validateLeader(memberId, familyRoomId);
 
-        MealPlan mealPlan = mealPlanRepository.findById(mealPlanId)
+        // 잠금 조회
+        MealPlan mealPlan = mealPlanRepository.findByIdForConfirm(mealPlanId)
                 .orElseThrow(() -> new MealPlanException(MealPlanErrorCode.MEAL_PLAN_NOT_FOUND));
 
-        // 가족방 일치 검증
+        // 가족방 검증
         if (!mealPlan.getFamilyRoom().getId().equals(familyRoomId)) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_NOT_IN_FAMILY_ROOM);
         }
 
-        // 상태 검증
-        // - 이미 확정된 식단은 재확정 불가 (명확한 에러코드 반환)
+        // 이미 확정된 경우 → 두 번째 요청은 여기서 걸림
         if (mealPlan.getStatus() == MealPlanStatus.CONFIRMED) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_ALREADY_CONFIRMED);
         }
 
-        // - DRAFT만 확정 가능
         if (mealPlan.getStatus() != MealPlanStatus.DRAFT) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_NOT_DRAFT);
         }
 
-        // 선택된 슬롯이 모두 채워져 있어야 확정 가능
+        // 슬롯 검증
         validateAllSelectedSlotsFilled(mealPlan);
 
-        // 상태 변경 + 가족방 생성횟수 증가
+        // 상태 변경 + 카운트 증가
         mealPlan.updateStatus(MealPlanStatus.CONFIRMED);
         mealPlan.getFamilyRoom().incrementMealPlanGenerationCount();
 
-        mealPlanRepository.save(mealPlan);
-
-        FamilyRoom familyRoom = mealPlan.getFamilyRoom();
         return new ConfirmMealPlanResDTO(
                 mealPlan.getId(),
                 mealPlan.getStatus(),
                 mealPlan.getWeekStartDate(),
-                familyRoom.getMealPlanGenerationCount()
+                mealPlan.getFamilyRoom().getMealPlanGenerationCount()
         );
     }
 

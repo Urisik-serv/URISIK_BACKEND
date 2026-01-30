@@ -184,4 +184,14 @@ public class FamilyRoomService {
             throw new FamilyRoomException(FamilyRoomErrorCode.NOT_LEADER);
         }
     }
+
+    /** 가족방 멤버 검증 */
+    @Transactional(readOnly = true)
+    public void validateMember(Long memberId, Long familyRoomId) {
+        familyMemberProfileRepository
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .orElseThrow(() ->
+                        new FamilyRoomException(FamilyRoomErrorCode.NOT_FAMILY_MEMBER)
+                );
+    }
 }
