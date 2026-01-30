@@ -7,6 +7,7 @@ import com.urisik.backend.domain.familyroom.service.FamilyWishListQueryService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.auth.exception.AuthenExcetion;
 import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,10 +24,8 @@ public class FamilyWishListController {
 
     private final FamilyWishListQueryService familyWishListQueryService;
 
-    /**
-     * 가족 위시리스트 조회
-     */
     @GetMapping("/family-rooms/{familyRoomId}/family-wishlist")
+    @Operation(summary = "가족 위시리스트 조회 API")
     public ApiResponse<List<FamilyWishListItemResDTO>> readFamilyWishList(
             @AuthenticationPrincipal Long memberId,
             @PathVariable Long familyRoomId
@@ -39,11 +38,8 @@ public class FamilyWishListController {
         return ApiResponse.onSuccess(FamilyRoomSuccessCode.FAMILY_WISHLIST, result);
     }
 
-    /**
-     * 가족 위시리스트 항목 삭제 (방장만 가능)
-     * - 가족 위시리스트 제외 기록(FamilyWishListExclusion)에 등록하여 조회에서만 제외한다.
-     */
     @DeleteMapping("/family-rooms/{familyRoomId}/family-wishlist/items")
+    @Operation(summary = "가족 위시리스트 항목 삭제 API")
     public ApiResponse<Void> deleteFamilyWishListItems(
             @AuthenticationPrincipal Long memberId,
             @PathVariable Long familyRoomId,

@@ -8,6 +8,7 @@ import com.urisik.backend.domain.familyroom.service.InviteService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.auth.exception.AuthenExcetion;
 import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,10 +26,8 @@ public class InviteController {
 
     private final InviteService inviteService;
 
-    /**
-     * 초대 토큰 생성 API
-     */
     @PostMapping("/family-rooms/{familyRoomId}/invites")
+    @Operation(summary = "초대 토큰 생성 API")
     public ApiResponse<CreateInviteResDTO> createInvite(
             @PathVariable Long familyRoomId,
             @AuthenticationPrincipal Long memberId
@@ -41,10 +40,8 @@ public class InviteController {
         return ApiResponse.onSuccess(FamilyRoomSuccessCode.INVITE_CREATED, result);
     }
 
-    /**
-     * 초대 토큰 조회 API (비로그인 허용)
-     */
     @GetMapping("/invites/{token}")
+    @Operation(summary = "초대 토큰 조회 API")
     public ApiResponse<ReadInviteResDTO> readInvite(
             @PathVariable String token
     ) {
@@ -52,10 +49,8 @@ public class InviteController {
         return ApiResponse.onSuccess(FamilyRoomSuccessCode.INVITE_PREVIEW, result);
     }
 
-    /**
-     * 초대 토큰 수락 API
-     */
     @PostMapping("/invites/{token}/accept")
+    @Operation(summary = "초대 토큰 수락 API")
     public ApiResponse<AcceptInviteResDTO> acceptInvite(
             @PathVariable String token,
             @AuthenticationPrincipal Long memberId

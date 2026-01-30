@@ -8,6 +8,7 @@ import com.urisik.backend.domain.familyroom.service.FamilyRoomService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.auth.exception.AuthenExcetion;
 import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,6 +24,7 @@ public class FamilyRoomController {
     private final FamilyRoomService familyRoomService;
 
     @PostMapping("/family-rooms")
+    @Operation(summary = "가족방 생성 API")
     public ApiResponse<CreateFamilyRoomResDTO> createFamilyRoom(
             @AuthenticationPrincipal Long memberId,
             @Valid @RequestBody CreateFamilyRoomReqDTO request
@@ -36,6 +38,7 @@ public class FamilyRoomController {
     }
 
     @GetMapping("/family-rooms/me")
+    @Operation(summary = "가족방 조회 API")
     public ApiResponse<ReadFamilyRoomContextResDTO> readMyFamilyRoomContext(
             @AuthenticationPrincipal Long memberId
     ) {

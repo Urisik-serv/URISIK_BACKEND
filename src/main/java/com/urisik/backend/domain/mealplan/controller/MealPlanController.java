@@ -10,23 +10,23 @@ import com.urisik.backend.domain.mealplan.service.MealPlanService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.auth.exception.AuthenExcetion;
 import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/family-rooms/{familyRoomId}/meal-plans")
-@Tag(name = "MealPlan", description = "식단 관련 API")
+@Tag(name = "MealPlan", description = "주간 식단 관련 API")
 public class MealPlanController {
 
     private final MealPlanService mealPlanService;
 
-    public MealPlanController(MealPlanService mealPlanService) {
-        this.mealPlanService = mealPlanService;
-    }
-
     @PostMapping("")
+    @Operation(summary = "주간 식단 생성 API")
     public ApiResponse<CreateMealPlanResDTO> createWeeklyMealPlan(
             @AuthenticationPrincipal Long memberId,
             @PathVariable Long familyRoomId,
@@ -45,6 +45,7 @@ public class MealPlanController {
     }
 
     @PatchMapping("/{mealPlanId}")
+    @Operation(summary = "주간 식단 수정 API")
     public ApiResponse<UpdateMealPlanResDTO> updateMealPlan(
             @AuthenticationPrincipal Long memberId,
             @PathVariable Long familyRoomId,
@@ -62,6 +63,7 @@ public class MealPlanController {
     }
 
     @PostMapping("/{mealPlanId}/confirm")
+    @Operation(summary = "주간 식단 확정 API")
     public ApiResponse<ConfirmMealPlanResDTO> confirmMealPlan(
             @AuthenticationPrincipal Long memberId,
             @PathVariable Long familyRoomId,
