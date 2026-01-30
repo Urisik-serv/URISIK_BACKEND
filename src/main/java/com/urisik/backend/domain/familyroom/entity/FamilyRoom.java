@@ -55,7 +55,7 @@ public class FamilyRoom {
         return new FamilyRoom(familyPolicy);
     }
 
-    public void increaseMealPlanGenerationCount() {
-        this.mealPlanGenerationCount++;
+    public void incrementMealPlanGenerationCount() {
+        this.mealPlanGenerationCount += 1;
     }
 }

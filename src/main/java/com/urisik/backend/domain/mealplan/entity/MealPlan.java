@@ -9,9 +9,12 @@ import lombok.*;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * 주간 식단(가족 기준) 엔티티
@@ -66,8 +69,54 @@ public class MealPlan extends BaseEntity {
     private FamilyRoom familyRoom;
 
     /**
-     * MealType, DayOfWeek 조합을 안전하게 다루기 위한 키
+     * 사용자가 선택한 슬롯 목록(= UI에서 선택한 칸)
+     * - 값(레시피 id)이 아직 채워지기 전이라도 선택 자체는 보존되어야 하므로 별도 저장
      */
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "meal_plan_selected_slot",
+            joinColumns = @JoinColumn(name = "meal_plan_id")
+    )
+    @Builder.Default
+    private Set<SelectedSlot> selectedSlots = new HashSet<>();
+
+    @Embeddable
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
+    public static class SelectedSlot {
+        @Enumerated(EnumType.STRING)
+        @Column(name = "meal_type", nullable = false)
+        private MealType mealType;
+
+        @Enumerated(EnumType.STRING)
+        @Column(name = "day_of_week", nullable = false)
+        private DayOfWeek dayOfWeek;
+
+        public SlotKey toSlotKey() {
+            return new SlotKey(mealType, dayOfWeek);
+        }
+
+        public static SelectedSlot from(SlotKey key) {
+            Objects.requireNonNull(key, "slotKey");
+            return new SelectedSlot(key.mealType(), key.dayOfWeek());
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            SelectedSlot that = (SelectedSlot) o;
+            return mealType == that.mealType && dayOfWeek == that.dayOfWeek;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(mealType, dayOfWeek);
+        }
+    }
+
+    /** MealType, DayOfWeek 조합을 안전하게 다루기 위한 키 */
     public record SlotKey(MealType mealType, DayOfWeek dayOfWeek) {
         public SlotKey {
             Objects.requireNonNull(mealType, "mealType");
@@ -75,9 +124,7 @@ public class MealPlan extends BaseEntity {
         }
     }
 
-    /**
-     * 슬롯에 저장된 transformedRecipeId 조회
-     */
+    /** 슬롯에 저장된 id(Recipe/TransformedRecipe) 조회 */
     public Long getSlot(MealType mealType, DayOfWeek dayOfWeek) {
         return switch (mealType) {
             case LUNCH -> switch (dayOfWeek) {
@@ -101,72 +148,67 @@ public class MealPlan extends BaseEntity {
         };
     }
 
-    /**
-     * SlotKey 기반 조회
-     */
+    /** SlotKey 기반 조회 */
     public Long getSlot(SlotKey slotKey) {
         Objects.requireNonNull(slotKey, "slotKey");
         return getSlot(slotKey.mealType(), slotKey.dayOfWeek());
     }
 
-    /**
-     * 선택 슬롯 여부
-     */
+    /** 선택 슬롯 여부(= UI에서 선택한 칸인지) */
     public boolean isSelectedSlot(SlotKey slotKey) {
-        return getSlot(slotKey) != null;
+        Objects.requireNonNull(slotKey, "slotKey");
+        if (selectedSlots == null || selectedSlots.isEmpty()) return false;
+        return selectedSlots.contains(SelectedSlot.from(slotKey));
     }
 
     /**
      * SlotKey 기반 단일 슬롯 업데이트
      * - DRAFT/권한/안전성 등은 Service에서 검증
      */
-    public void updateSlot(SlotKey slotKey, Long transformedRecipeId) {
+    public void updateSlot(SlotKey slotKey, Long recipeRefId) {
         Objects.requireNonNull(slotKey, "slotKey");
-        Objects.requireNonNull(transformedRecipeId, "transformedRecipeId");
-        setSlot(slotKey.mealType(), slotKey.dayOfWeek(), transformedRecipeId);
+        Objects.requireNonNull(recipeRefId, "recipeRefId");
+
+        // 수정 시 선택 슬롯을 보존
+        selectedSlots.add(SelectedSlot.from(slotKey));
+        setSlot(slotKey.mealType(), slotKey.dayOfWeek(), recipeRefId);
     }
 
-    /**
-     * 슬롯에 transformedRecipeId 설정
-     */
-    public void setSlot(MealType mealType, DayOfWeek dayOfWeek, Long transformedRecipeId) {
+    /** 슬롯에 id(Recipe/TransformedRecipe) 설정 */
+    public void setSlot(MealType mealType, DayOfWeek dayOfWeek, Long recipeRefId) {
         switch (mealType) {
             case LUNCH -> {
                 switch (dayOfWeek) {
-                    case MONDAY -> mondayLunch = transformedRecipeId;
-                    case TUESDAY -> tuesdayLunch = transformedRecipeId;
-                    case WEDNESDAY -> wednesdayLunch = transformedRecipeId;
-                    case THURSDAY -> thursdayLunch = transformedRecipeId;
-                    case FRIDAY -> fridayLunch = transformedRecipeId;
-                    case SATURDAY -> saturdayLunch = transformedRecipeId;
-                    case SUNDAY -> sundayLunch = transformedRecipeId;
+                    case MONDAY -> mondayLunch = recipeRefId;
+                    case TUESDAY -> tuesdayLunch = recipeRefId;
+                    case WEDNESDAY -> wednesdayLunch = recipeRefId;
+                    case THURSDAY -> thursdayLunch = recipeRefId;
+                    case FRIDAY -> fridayLunch = recipeRefId;
+                    case SATURDAY -> saturdayLunch = recipeRefId;
+                    case SUNDAY -> sundayLunch = recipeRefId;
                 }
             }
             case DINNER -> {
                 switch (dayOfWeek) {
-                    case MONDAY -> mondayDinner = transformedRecipeId;
-                    case TUESDAY -> tuesdayDinner = transformedRecipeId;
-                    case WEDNESDAY -> wednesdayDinner = transformedRecipeId;
-                    case THURSDAY -> thursdayDinner = transformedRecipeId;
-                    case FRIDAY -> fridayDinner = transformedRecipeId;
-                    case SATURDAY -> saturdayDinner = transformedRecipeId;
-                    case SUNDAY -> sundayDinner = transformedRecipeId;
+                    case MONDAY -> mondayDinner = recipeRefId;
+                    case TUESDAY -> tuesdayDinner = recipeRefId;
+                    case WEDNESDAY -> wednesdayDinner = recipeRefId;
+                    case THURSDAY -> thursdayDinner = recipeRefId;
+                    case FRIDAY -> fridayDinner = recipeRefId;
+                    case SATURDAY -> saturdayDinner = recipeRefId;
+                    case SUNDAY -> sundayDinner = recipeRefId;
                 }
             }
         }
     }
 
-    /**
-     * SlotKey 기반 설정
-     */
-    public void setSlot(SlotKey slotKey, Long transformedRecipeId) {
+    /** SlotKey 기반 설정 */
+    public void setSlot(SlotKey slotKey, Long recipeRefId) {
         Objects.requireNonNull(slotKey, "slotKey");
-        setSlot(slotKey.mealType(), slotKey.dayOfWeek(), transformedRecipeId);
+        setSlot(slotKey.mealType(), slotKey.dayOfWeek(), recipeRefId);
     }
 
-    /**
-     * 선택된 슬롯만 채우고, 선택되지 않은 슬롯은 null
-     */
+    /** 선택된 슬롯만 채우고, 선택되지 않은 슬롯은 null */
     public void applySelectedSlots(Map<SlotKey, Long> selectedAssignments) {
         // lunch reset
         mondayLunch = null;
@@ -186,18 +228,33 @@ public class MealPlan extends BaseEntity {
         saturdayDinner = null;
         sundayDinner = null;
 
+        // selected reset
+        if (selectedSlots == null) {
+            selectedSlots = new HashSet<>();
+        } else {
+            selectedSlots.clear();
+        }
+
         if (selectedAssignments == null || selectedAssignments.isEmpty()) {
             return;
         }
 
         for (Map.Entry<SlotKey, Long> e : selectedAssignments.entrySet()) {
-            setSlot(e.getKey().mealType(), e.getKey().dayOfWeek(), e.getValue());
+            if (e.getKey() == null) {
+                continue;
+            }
+
+            // 선택 슬롯은 값 유무와 상관없이 저장
+            selectedSlots.add(SelectedSlot.from(e.getKey()));
+
+            // 값이 있으면 실제 슬롯에 반영
+            if (e.getValue() != null) {
+                setSlot(e.getKey().mealType(), e.getKey().dayOfWeek(), e.getValue());
+            }
         }
     }
 
-    /**
-     * 엔티티의 전체 슬롯 스냅샷(Map)
-     */
+    /** 엔티티의 전체 슬롯 스냅샷(Map) */
     public Map<SlotKey, Long> snapshotAllSlots() {
         Map<SlotKey, Long> map = new HashMap<>();
 
@@ -222,14 +279,34 @@ public class MealPlan extends BaseEntity {
         return map;
     }
 
-    /**
-     * 생성 시 기본 상태를 DRAFT로 시작시키는 팩토리
-     */
+    /** 생성 시 기본 상태를 DRAFT로 시작시키는 팩토리 */
     public static MealPlan draft(FamilyRoom familyRoom, LocalDate weekStartDate) {
         return MealPlan.builder()
                 .familyRoom(familyRoom)
                 .weekStartDate(weekStartDate)
                 .status(MealPlanStatus.DRAFT)
                 .build();
+    }
+
+    public void updateStatus(MealPlanStatus status) {
+        this.status = status;
+    }
+
+    /** 선택된 슬롯 목록 */
+    public Collection<SlotKey> getSelectedSlots() {
+        if (selectedSlots == null || selectedSlots.isEmpty()) return java.util.List.of();
+        return selectedSlots.stream()
+                .map(SelectedSlot::toSlotKey)
+                .toList();
+    }
+
+    /** slotKey에 저장된 id 반환 (Recipe 또는 TransformedRecipe) */
+    public Long getSlotValue(SlotKey key) {
+        return getSlot(key);
+    }
+
+    /** 확정 전 검증용: 선택된 슬롯이 1개 이상인지 */
+    public boolean hasAnySelectedSlot() {
+        return selectedSlots != null && !selectedSlots.isEmpty();
     }
 }
