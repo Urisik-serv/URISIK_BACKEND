@@ -31,15 +31,29 @@ public class MasterTokenGenerator {
         );
 
         String token = Jwts.builder()
-                .setSubject(String.valueOf(masterMemberId))
+                .subject(String.valueOf(masterMemberId))
                 .claim("role", role)
-                .setIssuedAt(now)
-                .setExpiration(expiry)
+                .claim("typ", "access")
+                .issuedAt(now)
+                .expiration(expiry)
                 .signWith(secretKey)
                 .compact();
 
+        String tokend = Jwts.builder()
+                .subject(String.valueOf(masterMemberId))
+                .claim("typ", "refresh")
+                .issuedAt(now)
+                .expiration(expiry)
+                .signWith(secretKey)
+                .compact();
+
+
         System.out.println("====== MASTER JWT (2 months) ======");
         System.out.println(token);
+        System.out.println("expiresAt = " + expiry);
+
+        System.out.println("====== MASTER JWT (2 months) ======");
+        System.out.println(tokend);
         System.out.println("expiresAt = " + expiry);
     }
 }

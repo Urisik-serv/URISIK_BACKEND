@@ -107,15 +107,15 @@ public class FamilyWishListQueryService {
      * 방장만 가족 위시리스트 항목 삭제 (=exclusion 등록)
      * - 개인이 해당 항목을 삭제했다가 다시 담으면 exclusion 해제 (로직은 개인 위시리스트 add 시점에서 수행)
      */
-    public void deleteFamilyWishListItems(Long memberId, Long familyRoomId, List<Long> foodIds) {
+    public void deleteFamilyWishListItems(Long memberId, Long familyRoomId, List<Long> recipeId) {
 
         // 방장 검증
         familyRoomService.validateLeader(memberId, familyRoomId);
 
-        if (foodIds == null || foodIds.isEmpty()) {
+        if (recipeId == null || recipeId.isEmpty()) {
             return;
         }
 
-        familyWishListExclusionRepository.excludeRecipes(familyRoomId, foodIds);
+        familyWishListExclusionRepository.excludeRecipes(familyRoomId, recipeId);
     }
 }
