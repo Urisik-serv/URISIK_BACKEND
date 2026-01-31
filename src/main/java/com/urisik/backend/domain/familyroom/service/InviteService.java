@@ -151,6 +151,9 @@ public class InviteService {
     }
 
     private String hashToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new FamilyRoomException(FamilyRoomErrorCode.INVITE_TOKEN_INVALID);
+        }
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             SecretKeySpec key =
@@ -160,7 +163,7 @@ public class InviteService {
                     .withoutPadding()
                     .encodeToString(mac.doFinal(token.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
-            throw new FamilyRoomException(FamilyRoomErrorCode.INVITE_TOKEN_INVALID);
+            throw new IllegalStateException("Failed to hash invite token", e);
         }
     }
 }
