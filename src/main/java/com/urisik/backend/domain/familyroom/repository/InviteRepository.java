@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface InviteRepository extends JpaRepository<Invite, Long> {
 
-    Optional<Invite> findByToken(String token);
-    boolean existsByToken(String token);
+    boolean existsByTokenHash(String tokenHash);
+
+    Optional<Invite> findByTokenHash(String tokenHash);
 }

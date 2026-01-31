@@ -14,10 +14,15 @@ import com.urisik.backend.domain.member.entity.Member;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.UUID;
 
 @Service
@@ -33,6 +38,9 @@ public class InviteService {
     private final MemberRepository memberRepository;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
 
+    @Value("${invite.token.pepper}")
+    private String inviteTokenPepper;
+
     /**
      * 초대 토큰 생성
      * - 가족방에 이미 속한 멤버만 생성 가능
@@ -46,37 +54,26 @@ public class InviteService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.MEMBER_NOT_FOUND));
 
-        // 가족방 소속 여부 확인
         if (member.getFamilyRoom() == null ||
                 !member.getFamilyRoom().getId().equals(familyRoom.getId())) {
             throw new FamilyRoomException(FamilyRoomErrorCode.INVITE_FORBIDDEN);
         }
 
-        String token = generateUniqueToken();
-        LocalDateTime now = LocalDateTime.now();
+        String rawToken = generateUniqueToken();
+        String tokenHash = hashToken(rawToken);
 
         Invite invite = Invite.create(
-                token,
+                tokenHash,
                 familyRoom,
                 memberId,
-                now.plusDays(DEFAULT_EXPIRE_DAYS)
+                LocalDateTime.now().plusDays(DEFAULT_EXPIRE_DAYS)
         );
 
         inviteRepository.save(invite);
 
         return CreateInviteResDTO.builder()
-                .inviteUrl(INVITE_BASE_URL + token)
+                .inviteUrl(INVITE_BASE_URL + rawToken)
                 .build();
-    }
-
-    private String generateUniqueToken() {
-        for (int i = 0; i < 3; i++) {
-            String token = UUID.randomUUID().toString().replace("-", "");
-            if (!inviteRepository.existsByToken(token)) {
-                return token;
-            }
-        }
-        return UUID.randomUUID().toString().replace("-", "");
     }
 
     /**
@@ -86,28 +83,26 @@ public class InviteService {
      *   2) member.name
      */
     @Transactional(readOnly = true)
-    public ReadInviteResDTO readInvite(String token) {
+    public ReadInviteResDTO readInvite(String rawToken) {
 
-        Invite invite = inviteRepository.findByToken(token)
+        Invite invite = inviteRepository.findByTokenHash(hashToken(rawToken))
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.INVITE_TOKEN_INVALID));
 
         if (invite.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new FamilyRoomException(FamilyRoomErrorCode.INVITE_TOKEN_EXPIRED);
         }
 
-        FamilyRoom familyRoom = invite.getFamilyRoom();
-        Long inviterMemberId = invite.getInviterMemberId();
-
-        Member inviter = memberRepository.findById(inviterMemberId)
+        Member inviter = memberRepository.findById(invite.getInviterMemberId())
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.MEMBER_NOT_FOUND));
 
-        String inviterName = familyMemberProfileRepository.findByMember_Id(inviterMemberId)
-                .map(FamilyMemberProfile::getNickname)
-                .filter(n -> n != null && !n.isBlank())
-                .orElse(inviter.getName());
+        String inviterName =
+                familyMemberProfileRepository.findByMember_Id(inviter.getId())
+                        .map(FamilyMemberProfile::getNickname)
+                        .filter(n -> n != null && !n.isBlank())
+                        .orElse(inviter.getName());
 
         return ReadInviteResDTO.builder()
-                .familyRoomId(familyRoom.getId())
+                .familyRoomId(invite.getFamilyRoom().getId())
                 .inviterName(inviterName)
                 .expiresAt(invite.getExpiresAt())
                 .isExpired(false)
@@ -120,30 +115,55 @@ public class InviteService {
      * - 이미 다른 가족방에 속해 있으면 예외
      * - Member.familyRoom 세팅
      */
-    public AcceptInviteResDTO acceptInvite(String token, Long memberId) {
+    public AcceptInviteResDTO acceptInvite(String rawToken, Long memberId) {
 
-        Invite invite = inviteRepository.findByToken(token)
+        Invite invite = inviteRepository.findByTokenHash(hashToken(rawToken))
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.INVITE_TOKEN_INVALID));
 
         if (invite.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new FamilyRoomException(FamilyRoomErrorCode.INVITE_TOKEN_EXPIRED);
         }
 
-        FamilyRoom familyRoom = invite.getFamilyRoom();
-
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.MEMBER_NOT_FOUND));
 
-        // 이미 가족방에 속해있으면 차단
         if (member.getFamilyRoom() != null) {
             throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_MEMBER_ALREADY_JOINED);
         }
 
-        member.setFamilyRoom(familyRoom);
-        memberRepository.save(member);
+        member.setFamilyRoom(invite.getFamilyRoom());
 
         return AcceptInviteResDTO.builder()
-                .familyRoomId(familyRoom.getId())
+                .familyRoomId(invite.getFamilyRoom().getId())
                 .build();
+    }
+
+    // ---------------- helpers ----------------
+
+    private String generateUniqueToken() {
+        for (int i = 0; i < 3; i++) {
+            String token = UUID.randomUUID().toString().replace("-", "");
+            if (!inviteRepository.existsByTokenHash(hashToken(token))) {
+                return token;
+            }
+        }
+        return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    private String hashToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new FamilyRoomException(FamilyRoomErrorCode.INVITE_TOKEN_INVALID);
+        }
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec key =
+                    new SecretKeySpec(inviteTokenPepper.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            mac.init(key);
+            return Base64.getUrlEncoder()
+                    .withoutPadding()
+                    .encodeToString(mac.doFinal(token.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to hash invite token", e);
+        }
     }
 }
