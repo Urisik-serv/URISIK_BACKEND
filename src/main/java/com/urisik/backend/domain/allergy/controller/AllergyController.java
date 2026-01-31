@@ -23,7 +23,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/members")
-@Tag(name = "Allergy", description = "알레르기 관련 API")
+@Tag(name = "Allergy", description = "개인 알레르기 관련 API")
 public class AllergyController {
 
     private final AllergyQueryService allergyQueryService;
