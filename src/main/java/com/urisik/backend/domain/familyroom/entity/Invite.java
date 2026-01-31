@@ -16,8 +16,8 @@ public class Invite {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "token", nullable = false, unique = true)
-    private String token;
+    @Column(name = "token_hash", nullable = false, unique = true)
+    private String tokenHash;
 
     @Column(name = "inviter_member_id", nullable = false)
     private Long inviterMemberId;
@@ -33,13 +33,13 @@ public class Invite {
     private FamilyRoom familyRoom;
 
     public static Invite create(
-            String token,
+            String tokenHash,
             FamilyRoom familyRoom,
             Long inviterMemberId,
             LocalDateTime expiresAt
     ) {
         return Invite.builder()
-                .token(token)
+                .tokenHash(tokenHash)
                 .familyRoom(familyRoom)
                 .inviterMemberId(inviterMemberId)
                 .createdAt(LocalDateTime.now())
