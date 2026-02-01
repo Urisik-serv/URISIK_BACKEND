@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.recipe.controller;
 
-import com.urisik.backend.domain.recipe.dto.RecipeSearchResponseDTO;
+import com.urisik.backend.domain.recipe.dto.res.RecipeSearchResponseDTO;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
 import com.urisik.backend.domain.recipe.service.RecipeSearchService;
 import com.urisik.backend.global.apiPayload.ApiResponse;

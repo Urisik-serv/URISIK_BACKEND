@@ -6,7 +6,7 @@ import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
-import com.urisik.backend.domain.recipe.dto.TransformedRecipeDetailResponseDTO;
+import com.urisik.backend.domain.recipe.dto.res.TransformedRecipeDetailResponseDTO;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.enums.RecipeErrorCode;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;

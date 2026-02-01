@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.recipe.converter;
 
-import com.urisik.backend.domain.recipe.dto.RecipeStepDTO;
+import com.urisik.backend.domain.recipe.dto.res.RecipeStepDTO;
 
 import java.util.ArrayList;
 import java.util.Arrays;
