@@ -31,22 +31,17 @@ public class FoodSafetyRecipeClientImpl implements FoodSafetyRecipeClient {
     @Override
     public FoodSafetyRecipeResponse.Row fetchOneByRcpSeq(String rcpSeq) {
 
-        String filter = "RCP_SEQ=" + rcpSeq;
-        String encoded = URLEncoder.encode(filter, StandardCharsets.UTF_8);
-
         String url = String.format(
-                "%s/%s/%s/json/%d/%d/%s",
-                BASE, apiKey, serviceId, 1, 1, encoded
+                "%s/%s/%s/json/1/1/RCP_SEQ=%s",
+                BASE, apiKey, serviceId, rcpSeq
         );
 
         log.info("FoodSafety fetchOneByRcpSeq url = {}", url);
 
         ResponseEntity<FoodSafetyRecipeResponse> res =
-                restTemplate.exchange(url, HttpMethod.GET, null, FoodSafetyRecipeResponse.class);
+                restTemplate.getForEntity(url, FoodSafetyRecipeResponse.class);
 
         FoodSafetyRecipeResponse body = res.getBody();
-
-        log.info("FoodSafety response body = {}", body);
 
         if (body == null ||
                 body.getCookrcp01() == null ||
@@ -56,8 +51,8 @@ public class FoodSafetyRecipeClientImpl implements FoodSafetyRecipeClient {
         }
 
         return body.getCookrcp01().getRow().get(0);
-
     }
+
 
 
 
