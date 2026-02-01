@@ -30,12 +30,12 @@ public class Recipe {
 
     // 외부 API 원본 재료 문자열 그대로
     @Lob
-    @Column(nullable = false)
+    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String ingredientsRaw;
 
-    // 외부 API 단계들을 합친 원본 조리법 문자열 그대로(줄바꿈 포함)
+    // 외부 API 단계들을 합친 원본 조리법 문자열 그대로
     @Lob
-    @Column(nullable = false)
+    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String instructionsRaw;
 
     @Enumerated(EnumType.STRING)
@@ -48,7 +48,8 @@ public class Recipe {
     @Column(nullable = false)
     private double avgScore = 0.0;
 
-    // 외부 API RCP_SEQ 또는 AI 요청 ID 같은 참조값
+    // 외부 API RCP_SEQ 또는 AI 요청 ID
+    @Column(length = 255)
     private String sourceRef;
 
     public Recipe(
@@ -76,6 +77,6 @@ public class Recipe {
                 ((this.avgScore * (this.reviewCount - 1)) + newScore)
                         / this.reviewCount;
     }
-
 }
+
 

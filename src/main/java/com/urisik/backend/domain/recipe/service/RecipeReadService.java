@@ -26,16 +26,46 @@ public class RecipeReadService {
     private final RecipeExternalMetadataRepository metadataRepository;
     private final FoodSafetyRecipeClient foodSafetyRecipeClient;
 
+    /**
+     * 내부 레시피 상세 조회 (이미 DB에 있는 recipe)
+     */
+    @Transactional(readOnly = true)
+    public RecipeDetailResponseDTO getRecipeDetail(Long recipeId) {
+
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new GeneralException(RecipeErrorCode.RECIPE_NOT_FOUND));
+
+        RecipeExternalMetadata meta =
+                metadataRepository.findByRecipe_Id(recipe.getId())
+                        .orElse(null);
+
+        return toDetailDto(recipe, meta);
+    }
+
+    /**
+     * 외부 API 레시피 상세 조회 + 내부 저장
+     */
     @Transactional
     public Recipe loadOrCreateByExternalId(String rcpSeq) {
+
         return recipeRepository.findBySourceRef(rcpSeq)
                 .orElseGet(() -> {
-                    FoodSafetyRecipeResponse.Row row = foodSafetyRecipeClient.fetchOneByRcpSeq(rcpSeq);
-                    if (row == null) throw new GeneralException(RecipeErrorCode.EXTERNAL_RECIPE_NOT_FOUND);
+
+                    FoodSafetyRecipeResponse.Row row =
+                            foodSafetyRecipeClient.fetchOneByRcpSeq(rcpSeq);
+
+                    if (row == null) {
+                        throw new GeneralException(
+                                RecipeErrorCode.EXTERNAL_RECIPE_NOT_FOUND,
+                                "외부 레시피를 찾을 수 없습니다. rcpSeq=" + rcpSeq
+                        );
+                    }
 
                     String title = requiredText(row.getRcpNm(), "RCP_NM");
-                    String ingredientsRaw = requiredText(row.getIngredientsRaw(), "RCP_PARTS_DTLS");
-                    String instructionsRaw = requiredText(joinManuals(row), "MANUAL01~20"); // 합친 결과가 비면 예외
+                    String ingredientsRaw =
+                            requiredText(row.getIngredientsRaw(), "RCP_PARTS_DTLS");
+                    String instructionsRaw =
+                            requiredText(joinManuals(row), "MANUAL01~20");
 
                     Recipe recipe = new Recipe(
                             title,
@@ -47,7 +77,6 @@ public class RecipeReadService {
 
                     Recipe saved = recipeRepository.save(recipe);
 
-                    // metadata는 "빈 값이면 빈 문자열"로 저장 (DB NOT NULL이어도 안전)
                     RecipeExternalMetadata meta = new RecipeExternalMetadata(
                             saved,
                             emptyIfNull(row.getCategory()),
@@ -66,6 +95,34 @@ public class RecipeReadService {
                 });
     }
 
+    /* ================= 내부 헬퍼 메서드 ================= */
+
+    private RecipeDetailResponseDTO toDetailDto(
+            Recipe recipe,
+            RecipeExternalMetadata meta
+    ) {
+        return new RecipeDetailResponseDTO(
+                recipe.getId(),
+                recipe.getTitle(),
+                meta != null ? meta.getCategory() : null,
+                meta != null ? meta.getServingWeight() : null,
+                new RecipeDetailResponseDTO.NutritionDTO(
+                        meta != null ? meta.getCalorie() : null,
+                        meta != null ? meta.getCarbohydrate() : null,
+                        meta != null ? meta.getProtein() : null,
+                        meta != null ? meta.getFat() : null,
+                        meta != null ? meta.getSodium() : null
+                ),
+                new RecipeDetailResponseDTO.ImagesDTO(
+                        meta != null ? meta.getImageSmallUrl() : null,
+                        meta != null ? meta.getImageLargeUrl() : null
+                ),
+                RecipeTextParser.parseIngredients(recipe.getIngredientsRaw()),
+                RecipeTextParser.parseSteps(recipe.getInstructionsRaw()),
+                recipe.getSourceType().name()
+        );
+    }
+
     private String joinManuals(FoodSafetyRecipeResponse.Row row) {
         return Stream.of(
                         row.getManual01(), row.getManual02(), row.getManual03(), row.getManual04(), row.getManual05(),
@@ -77,7 +134,7 @@ public class RecipeReadService {
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
                 .reduce((a, b) -> a + "\n" + b)
-                .orElse(""); // ✅ 비면 requiredText에서 잡아줄 거임
+                .orElse("");
     }
 
     private Integer safeInt(String s) {
@@ -89,26 +146,32 @@ public class RecipeReadService {
         }
     }
 
-    /** null/blank면 예외 (recipe 저장에 필요한 필수값) */
     private String requiredText(String s, String fieldName) {
-        if (s == null) throw new GeneralException(RecipeErrorCode.EXTERNAL_RECIPE_NOT_FOUND, fieldName + " is null");
+        if (s == null) {
+            throw new GeneralException(
+                    RecipeErrorCode.EXTERNAL_RECIPE_NOT_FOUND,
+                    fieldName + " is null"
+            );
+        }
         String t = s.trim();
-        if (t.isBlank()) throw new GeneralException(RecipeErrorCode.EXTERNAL_RECIPE_NOT_FOUND, fieldName + " is blank");
+        if (t.isBlank()) {
+            throw new GeneralException(
+                    RecipeErrorCode.EXTERNAL_RECIPE_NOT_FOUND,
+                    fieldName + " is blank"
+            );
+        }
         return t;
     }
 
-    /** null/blank면 null */
     private String nullableText(String s) {
         if (s == null) return null;
         String t = s.trim();
         return t.isBlank() ? null : t;
     }
 
-    /** null/blank면 "" (DB NOT NULL 컬럼을 안전하게 채우기 용도) */
     private String emptyIfNull(String s) {
         if (s == null) return "";
         String t = s.trim();
         return t.isBlank() ? "" : t;
     }
 }
-
