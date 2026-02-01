@@ -22,7 +22,7 @@ public class ExternalRecipeController {
     private final RecipeReadService recipeReadService;
 
     @GetMapping("/external/{rcpSeq}")
-    @Operation(summary = "외부 레시피 상세 조회&내부 저장 API\"", description = "외부 레시피 상세 조회하고 내부에 저장하는 api 입니다.")
+    @Operation(summary = "외부 레시피 상세 조회&내부 저장 API", description = "외부 레시피 상세 조회하고 내부에 저장하는 api 입니다.")
     public ApiResponse<RecipeDetailResponseDTO> getExternalDetail(
             @PathVariable String rcpSeq
     ) {
