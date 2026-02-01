@@ -20,16 +20,31 @@ public class RecipeExternalMetadata {
     @JoinColumn(name = "recipe_id", nullable = false, unique = true)
     private Recipe recipe;
 
-    private String category;        // 요리종류
-    private String servingWeight;   // 중량(1인분)
+    @Column(nullable = true)
+    private String category;
 
+    @Column(nullable = true)
+    private String servingWeight;
+
+    @Column(nullable = true)
     private Integer calorie;
+
+    @Column(nullable = true)
     private Integer carbohydrate;
+
+    @Column(nullable = true)
     private Integer protein;
+
+    @Column(nullable = true)
     private Integer fat;
+
+    @Column(nullable = true)
     private Integer sodium;
 
+    @Column(nullable = true)
     private String imageSmallUrl;
+
+    @Column(nullable = true)
     private String imageLargeUrl;
 
     public RecipeExternalMetadata(
