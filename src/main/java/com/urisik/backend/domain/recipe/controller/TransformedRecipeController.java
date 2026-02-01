@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.recipe.controller;
 
-import com.urisik.backend.domain.recipe.dto.TransformedRecipeDetailResponseDTO;
+import com.urisik.backend.domain.recipe.dto.res.TransformedRecipeDetailResponseDTO;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
 import com.urisik.backend.domain.recipe.service.TransformedRecipeReadService;
 import com.urisik.backend.global.apiPayload.ApiResponse;

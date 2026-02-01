@@ -1,7 +1,7 @@
 package com.urisik.backend.domain.recipe.service;
 
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
-import com.urisik.backend.domain.recipe.dto.RecipeDetailResponseDTO;
+import com.urisik.backend.domain.recipe.dto.res.RecipeDetailResponseDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
 import com.urisik.backend.domain.recipe.enums.RecipeErrorCode;

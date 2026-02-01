@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.recipe.infrastructure.ai;
 
-import com.urisik.backend.domain.recipe.dto.TransformedRecipeDetailResponseDTO;
+import com.urisik.backend.domain.recipe.dto.res.TransformedRecipeDetailResponseDTO;
 
 import java.util.List;
 

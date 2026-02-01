@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.recipe.converter;
 
-import com.urisik.backend.domain.recipe.dto.RecipeSearchResponseDTO;
+import com.urisik.backend.domain.recipe.dto.res.RecipeSearchResponseDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
@@ -22,7 +22,9 @@ public class RecipeSearchConverter {
                 meta != null ? meta.getCategory() : null,
                 meta != null ? meta.getImageSmallUrl() : null,
                 recipe.getAvgScore(),
-                recipe.getReviewCount()
+                recipe.getReviewCount(),
+                null
+
         );
     }
 
@@ -38,22 +40,39 @@ public class RecipeSearchConverter {
                 meta != null ? meta.getCategory() : null,
                 meta != null ? meta.getImageSmallUrl() : null,
                 tr.getAvgScore(),
-                tr.getReviewCount()
+                tr.getReviewCount(),
+                null
         );
     }
 
     /** 외부 API 레시피 */
-    public static RecipeSearchResponseDTO.Item fromExternal(
-            FoodSafetyRecipeResponse.Row row
-    ) {
+    public static RecipeSearchResponseDTO.Item fromExternal(FoodSafetyRecipeResponse.Row row, String instructionsRaw) {
+        RecipeSearchResponseDTO.ExternalSnapshot snapshot =
+                new RecipeSearchResponseDTO.ExternalSnapshot(
+                        row.getRcpSeq(),
+                        row.getRcpNm(),
+                        row.getCategory(),
+                        row.getServingWeight(),
+                        row.getCalorie(),
+                        row.getCarbohydrate(),
+                        row.getProtein(),
+                        row.getFat(),
+                        row.getSodium(),
+                        row.getImageSmall(),
+                        row.getImageLarge(),
+                        row.getIngredientsRaw(),
+                        instructionsRaw
+                );
+
         return new RecipeSearchResponseDTO.Item(
                 "EXT-" + row.getRcpSeq(),
                 "EXTERNAL",
                 row.getRcpNm(),
-                row.getCategory(),
                 row.getImageSmall(),
+                row.getCategory(),
                 null,
-                null
+                null,
+                snapshot
         );
     }
 }
