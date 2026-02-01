@@ -26,6 +26,7 @@ public class RecipeReadService {
     private final RecipeExternalMetadataRepository metadataRepository;
     private final FoodSafetyRecipeClient foodSafetyRecipeClient;
 
+
     @Transactional
     public RecipeDetailResponseDTO getRecipeDetail(Long recipeId) {
         Recipe recipe = recipeRepository.findById(recipeId)
