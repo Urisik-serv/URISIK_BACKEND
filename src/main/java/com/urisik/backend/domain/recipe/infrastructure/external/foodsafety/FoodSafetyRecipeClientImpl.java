@@ -28,19 +28,28 @@ public class FoodSafetyRecipeClientImpl implements FoodSafetyRecipeClient {
 
     @Override
     public FoodSafetyRecipeResponse.Row fetchOneByRcpSeq(String rcpSeq) {
-        String url = String.format("%s/%s/%s/json/%d/%d/RCP_SEQ=%s",
-                BASE, apiKey, serviceId, 1, 1, rcpSeq);
+
+        String url = String.format(
+                "%s/%s/%s/json/%d/%d/RCP_SEQ=%s",
+                BASE, apiKey, serviceId, 1, 10, rcpSeq
+        );
 
         ResponseEntity<FoodSafetyRecipeResponse> res =
                 restTemplate.exchange(url, HttpMethod.GET, null, FoodSafetyRecipeResponse.class);
 
         FoodSafetyRecipeResponse body = res.getBody();
-        if (body == null || body.getCookrcp01() == null || body.getCookrcp01().getRow() == null) {
+
+        if (body == null ||
+                body.getCookrcp01() == null ||
+                body.getCookrcp01().getRow() == null ||
+                body.getCookrcp01().getRow().isEmpty()) {
+
             return null;
         }
-        List<FoodSafetyRecipeResponse.Row> rows = body.getCookrcp01().getRow();
-        return rows.isEmpty() ? null : rows.get(0);
+
+        return body.getCookrcp01().getRow().get(0);
     }
+
 
     @Override
     public List<FoodSafetyRecipeResponse.Row> searchByName(String keyword, int startIdx, int endIdx) {
