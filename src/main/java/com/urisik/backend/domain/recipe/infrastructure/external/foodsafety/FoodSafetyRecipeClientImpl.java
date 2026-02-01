@@ -2,6 +2,7 @@ package com.urisik.backend.domain.recipe.infrastructure.external.foodsafety;
 
 import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.dto.FoodSafetyRecipeResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class FoodSafetyRecipeClientImpl implements FoodSafetyRecipeClient {
@@ -29,26 +31,34 @@ public class FoodSafetyRecipeClientImpl implements FoodSafetyRecipeClient {
     @Override
     public FoodSafetyRecipeResponse.Row fetchOneByRcpSeq(String rcpSeq) {
 
+        String filter = "RCP_SEQ=" + rcpSeq;
+        String encoded = URLEncoder.encode(filter, StandardCharsets.UTF_8);
+
         String url = String.format(
-                "%s/%s/%s/json/%d/%d/RCP_SEQ=%s",
-                BASE, apiKey, serviceId, 1, 10, rcpSeq
+                "%s/%s/%s/json/%d/%d/%s",
+                BASE, apiKey, serviceId, 1, 1, encoded
         );
+
+        log.info("FoodSafety fetchOneByRcpSeq url = {}", url);
 
         ResponseEntity<FoodSafetyRecipeResponse> res =
                 restTemplate.exchange(url, HttpMethod.GET, null, FoodSafetyRecipeResponse.class);
 
         FoodSafetyRecipeResponse body = res.getBody();
 
+        log.info("FoodSafety response body = {}", body);
+
         if (body == null ||
                 body.getCookrcp01() == null ||
                 body.getCookrcp01().getRow() == null ||
                 body.getCookrcp01().getRow().isEmpty()) {
-
             return null;
         }
 
         return body.getCookrcp01().getRow().get(0);
+
     }
+
 
 
     @Override
