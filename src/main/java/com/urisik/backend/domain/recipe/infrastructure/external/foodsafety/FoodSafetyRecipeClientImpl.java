@@ -32,7 +32,7 @@ public class FoodSafetyRecipeClientImpl implements FoodSafetyRecipeClient {
     public FoodSafetyRecipeResponse.Row fetchOneByRcpSeq(String rcpSeq) {
 
         String url = String.format(
-                "%s/%s/%s/json/1/1/RCP_SEQ=%s",
+                "%s/%s/%s/json/1/10/RCP_SEQ=%s",
                 BASE, apiKey, serviceId, rcpSeq
         );
 
@@ -50,8 +50,13 @@ public class FoodSafetyRecipeClientImpl implements FoodSafetyRecipeClient {
             return null;
         }
 
-        return body.getCookrcp01().getRow().get(0);
+
+        return body.getCookrcp01().getRow().stream()
+                .filter(r -> rcpSeq.equals(r.getRcpSeq()))
+                .findFirst()
+                .orElse(null);
     }
+
 
 
 
