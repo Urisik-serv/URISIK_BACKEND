@@ -47,21 +47,24 @@ public class RecipeReadService {
                     FoodSafetyRecipeResponse.Row row = foodSafetyRecipeClient.fetchOneByRcpSeq(rcpSeq);
                     if (row == null) throw new GeneralException(RecipeErrorCode.EXTERNAL_RECIPE_NOT_FOUND);
 
+                    //조리법 합치기
                     String instructionsRaw = joinManuals(row);
 
+                    //레시피 저장
                     Recipe recipe = new Recipe(
                             row.getRcpNm(),
-                            row.getIngredientsRaw(),
+                            normalize(row.getIngredientsRaw()),
                             instructionsRaw,
                             SourceType.EXTERNAL_API,
                             row.getRcpSeq()
                     );
+
                     Recipe saved = recipeRepository.save(recipe);
 
                     RecipeExternalMetadata meta = new RecipeExternalMetadata(
                             saved,
-                            row.getCategory(),
-                            row.getServingWeight(),
+                            normalize(row.getCategory()),
+                            normalize(row.getServingWeight()),
                             safeInt(row.getCalorie()),
                             safeInt(row.getCarbohydrate()),
                             safeInt(row.getProtein()),
@@ -120,5 +123,10 @@ public class RecipeReadService {
             return null;
         }
     }
+
+    private String normalize(String s) {
+        return (s == null || s.isBlank()) ? null : s.trim();
+    }
+
 }
 
