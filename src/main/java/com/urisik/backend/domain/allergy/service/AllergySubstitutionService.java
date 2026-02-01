@@ -8,6 +8,7 @@ import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.global.util.IngredientNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AllergySubstitutionService {
 
     private final MemberAllergyRepository memberAllergyRepository;

@@ -16,6 +16,12 @@ public enum AllergySuccessCode implements BaseSuccessCode {
             "사용자 알레르기 조회 성공"
     ),
 
+    FAMILY_ALLERGY_LIST_OK(
+            HttpStatus.OK,
+            "ALLERGY_201",
+            "가족방 알레르기 조회 성공"
+    ),
+
     RECIPE_ALLERGY_CHECK_OK(
             HttpStatus.OK,
             "ALLERGY_200_002",
