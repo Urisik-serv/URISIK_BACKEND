@@ -55,7 +55,7 @@ public class RecipeSearchService {
             items.add(RecipeSearchConverter.fromTransformed(tr, meta));
         }
 
-        // 3) 외부 API 검색 (✅ row를 상세 저장에 쓸 snapshot으로도 내려줌)
+        // 3) 외부 API 검색 ( row를 상세 저장에 쓸 snapshot으로도 내려줌)
         int startIdx = page * size + 1;
         int endIdx = startIdx + size - 1;
 

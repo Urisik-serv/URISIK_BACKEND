@@ -23,6 +23,8 @@ public class RecipeDetailResponseDTO {
 
     private String sourceType; // EXTERNAL_API / AI_GENERATED
 
+    private AllergyWarningDTO allergyWarning;
+
     @Getter
     @AllArgsConstructor
     public static class NutritionDTO {
@@ -38,6 +40,13 @@ public class RecipeDetailResponseDTO {
     public static class ImagesDTO {
         private String small;
         private String large;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class AllergyWarningDTO {
+        private boolean hasRisk;
+        private List<String> allergens;
     }
 
 }

@@ -1,6 +1,10 @@
 package com.urisik.backend.domain.recipe.service;
 
+import com.urisik.backend.domain.allergy.enums.Allergen;
+import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
+import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
+import com.urisik.backend.domain.recipe.dto.res.AllergyWarningDTO;
 import com.urisik.backend.domain.recipe.dto.res.RecipeDetailResponseDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
@@ -10,11 +14,13 @@ import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.FoodS
 import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.dto.FoodSafetyRecipeResponse;
 import com.urisik.backend.domain.recipe.repository.RecipeExternalMetadataRepository;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
+import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -26,24 +32,66 @@ public class RecipeReadService {
     private final RecipeExternalMetadataRepository metadataRepository;
     private final FoodSafetyRecipeClient foodSafetyRecipeClient;
 
+    private final FamilyMemberProfileRepository familyMemberProfileRepository;
+    private final AllergyRiskService allergyRiskService;
+
     /**
      * 내부 레시피 상세 조회 (이미 DB에 있는 recipe)
+     * - 로그인 사용자 기준
+     * - 가족방 알레르기 판별 포함
      */
     @Transactional(readOnly = true)
-    public RecipeDetailResponseDTO getRecipeDetail(Long recipeId) {
-
+    public RecipeDetailResponseDTO getRecipeDetail(
+            Long recipeId,
+            Long loginUserId
+    ) {
+        // 1..⃣ 레시피 조회
         Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new GeneralException(RecipeErrorCode.RECIPE_NOT_FOUND));
+                .orElseThrow(() ->
+                        new GeneralException(RecipeErrorCode.RECIPE_NOT_FOUND));
 
+        // 2️. 외부 메타데이터 조회 (없을 수도 있음)
         RecipeExternalMetadata meta =
                 metadataRepository.findByRecipe_Id(recipe.getId())
                         .orElse(null);
 
-        return toDetailDto(recipe, meta);
+        // 3️. 로그인 사용자 → 가족방 조회
+        FamilyMemberProfile profile =
+                familyMemberProfileRepository.findByMember_Id(loginUserId)
+                        .orElseThrow(() ->
+                                new GeneralException(GeneralErrorCode.NOT_FOUND));
+
+        Long familyRoomId = profile.getFamilyRoom().getId();
+
+        // 4. 재료 파싱
+        List<String> ingredients =
+                RecipeTextParser.parseIngredients(recipe.getIngredientsRaw());
+
+        // 5️. 가족 기준 알레르기 판별
+        List<Allergen> risky =
+                allergyRiskService.detectRiskAllergens(familyRoomId, ingredients);
+
+        // 6️. AllergyWarningDTO 생성
+        RecipeDetailResponseDTO.AllergyWarningDTO warning =
+                risky.isEmpty()
+                        ? new RecipeDetailResponseDTO.AllergyWarningDTO(
+                        false,
+                        List.of()
+                )
+                        : new RecipeDetailResponseDTO.AllergyWarningDTO(
+                        true,
+                        risky.stream()
+                                .map(Allergen::getKoreanName)
+                                .toList()
+                );
+
+        // 7️. DTO 변환 후 반환
+        return toDetailDto(recipe, meta, warning);
     }
 
     /**
      * 외부 API 레시피 상세 조회 + 내부 저장
+     * (이 메서드는 알레르기 판별 ❌ — 저장 전용)
      */
     @Transactional
     public Recipe loadOrCreateByExternalId(String rcpSeq) {
@@ -95,11 +143,12 @@ public class RecipeReadService {
                 });
     }
 
-    /* ================= 내부 헬퍼 메서드 ================= */
+    /* ================= DTO 변환 ================= */
 
     private RecipeDetailResponseDTO toDetailDto(
             Recipe recipe,
-            RecipeExternalMetadata meta
+            RecipeExternalMetadata meta,
+            RecipeDetailResponseDTO.AllergyWarningDTO warning
     ) {
         return new RecipeDetailResponseDTO(
                 recipe.getId(),
@@ -119,16 +168,22 @@ public class RecipeReadService {
                 ),
                 RecipeTextParser.parseIngredients(recipe.getIngredientsRaw()),
                 RecipeTextParser.parseSteps(recipe.getInstructionsRaw()),
-                recipe.getSourceType().name()
+                recipe.getSourceType().name(),
+                warning
         );
     }
 
+    /* ================= 내부 헬퍼 메서드 ================= */
+
     private String joinManuals(FoodSafetyRecipeResponse.Row row) {
         return Stream.of(
-                        row.getManual01(), row.getManual02(), row.getManual03(), row.getManual04(), row.getManual05(),
-                        row.getManual06(), row.getManual07(), row.getManual08(), row.getManual09(), row.getManual10(),
-                        row.getManual11(), row.getManual12(), row.getManual13(), row.getManual14(), row.getManual15(),
-                        row.getManual16(), row.getManual17(), row.getManual18(), row.getManual19(), row.getManual20()
+                        row.getManual01(), row.getManual02(), row.getManual03(),
+                        row.getManual04(), row.getManual05(), row.getManual06(),
+                        row.getManual07(), row.getManual08(), row.getManual09(),
+                        row.getManual10(), row.getManual11(), row.getManual12(),
+                        row.getManual13(), row.getManual14(), row.getManual15(),
+                        row.getManual16(), row.getManual17(), row.getManual18(),
+                        row.getManual19(), row.getManual20()
                 )
                 .filter(Objects::nonNull)
                 .map(String::trim)
