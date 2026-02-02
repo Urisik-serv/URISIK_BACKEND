@@ -36,10 +36,11 @@ public class NotificationService {
     /**
      * 1. 알림 전송 메서드
      * @param members
-     * @param
+     * @param type
+     * @Param data
      */
     @Transactional
-    public void sendNotification(List<Member> members, NotificationType type) {
+    public void sendNotification(List<Member> members, NotificationType type, Object data) {
 
         List<Notification> notifications = members.stream()
                 .map(member -> Notification.builder()
@@ -52,7 +53,7 @@ public class NotificationService {
         notificationRepository.saveAll(notifications);
 
         for (Member member : members) {
-            sendSseOnly(member.getId(), type);
+            sendSseOnly(member.getId(), type, data);
         }
     }
 
@@ -101,13 +102,14 @@ public class NotificationService {
 
 
     // 유저가 접속 중인 경우 (emitter 갹체가 존재하는 경우) - 실시간 전송 메서드
-    private void sendSseOnly(Long memberId, NotificationType type) {
+    private void sendSseOnly(Long memberId, NotificationType type, Object data) {
         SseEmitter emitter = emitters.get(memberId);
         if (emitter != null) {
             try {
                 emitter.send(SseEmitter.event()
                         .id(String.valueOf(memberId))
-                        .name("notification"));
+                        .name("notification")
+                        .data(data));
             } catch (IOException e) {
                 emitters.remove(memberId);
                 throw new NotificationException(NotificationErrorCode.NOTIFICATION_SEND_FAILED);
