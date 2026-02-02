@@ -5,13 +5,16 @@ import com.urisik.backend.domain.familyroom.repository.FamilyWishListExclusionRe
 import com.urisik.backend.domain.member.dto.req.WishListRequest;
 import com.urisik.backend.domain.member.dto.res.WishListResponse;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
+import com.urisik.backend.domain.member.entity.MemberTransformedRecipeWish;
 import com.urisik.backend.domain.member.entity.MemberWishList;
 import com.urisik.backend.domain.member.exception.MemberException;
 import com.urisik.backend.domain.member.exception.code.MemberErrorCode;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberWishListRepository;
 import com.urisik.backend.domain.recipe.entity.Recipe;
+import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
+import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,7 @@ public class MemberWishListService {
     private final MemberWishListRepository memberWishListRepository;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final FamilyWishListExclusionRepository familyWishListExclusionRepository;
+    private final TransformedRecipeRepository transformedRecipeRepository;
 
     @Transactional
     public WishListResponse.PostWishes addWishItems
@@ -49,6 +53,22 @@ public class MemberWishListService {
                     recipeId
             );
         }
+        for (Long recipeId : req.getTransformedRecipeId()) {
+            TransformedRecipe recipe = transformedRecipeRepository.findById(recipeId)
+                    .orElseThrow(() -> new MemberException(MemberErrorCode.NO_RECIPE));//수정 요청 음식 없음
+
+            profile.addTransWish(MemberTransformedRecipeWish.of(recipe));//
+
+            // 가족 위시리스트 삭제DB 업데이트
+            /*
+            familyWishListExclusionRepository.deleteByFamilyRoom_IdAndRecipeId(
+                    profile.getFamilyRoom().getId(),
+                    recipeId
+
+            );
+             */
+        }
+
 
         return WishListResponse.PostWishes.builder()
                 .isSuccess(true)

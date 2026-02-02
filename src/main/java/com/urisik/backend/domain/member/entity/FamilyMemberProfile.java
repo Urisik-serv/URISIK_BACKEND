@@ -73,6 +73,11 @@ public class FamilyMemberProfile extends BaseEntity {
 
     @Builder.Default
     @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<MemberTransformedRecipeWish> memberTransformedWishLists = new ArrayList<>();
+
+
+    @Builder.Default
+    @OneToMany(mappedBy = "familyMemberProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<DietPreference> dietPreferenceList = new HashSet<>();
 
     @Builder.Default
@@ -100,6 +105,12 @@ public class FamilyMemberProfile extends BaseEntity {
         dietPreferenceList.add(dietPreference);
         dietPreference.setFamilyMemberProfile(this);
     }
+    //변형된 레시피 추가.
+    public void addTransWish(MemberTransformedRecipeWish wish) {
+        memberTransformedWishLists.add(wish);
+        wish.setFamilyMemberProfile(this);
+    }
+
 
     public void replaceAllergies(List<Allergen> allergens) {
         this.memberAllergyList.clear();   // 기존 전부 삭제(orphanRemoval)

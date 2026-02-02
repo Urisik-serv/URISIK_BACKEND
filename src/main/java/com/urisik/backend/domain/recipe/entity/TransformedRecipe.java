@@ -58,6 +58,10 @@ public class TransformedRecipe {
     @Column(nullable = false)
     private int reviewCount = 0;
 
+    //위시리스트 선택개수
+    @Column(nullable = false)
+    private int wishCount = 0;
+
     @Column(nullable = false)
     private double avgScore = 0.0;
 
@@ -111,5 +115,15 @@ public class TransformedRecipe {
                 ((this.avgScore * (this.reviewCount - 1)) + newScore)
                         / this.reviewCount;
     }
+
+    public void incrementWishCount() {
+        wishCount++;
+    }
+
+    public void decrementWishCount() {
+        wishCount--;
+    }
+
+
 }
 
