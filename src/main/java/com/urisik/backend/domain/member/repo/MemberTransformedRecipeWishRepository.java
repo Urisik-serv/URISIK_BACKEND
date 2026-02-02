@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Set;
 
 public interface MemberTransformedRecipeWishRepository extends JpaRepository<MemberTransformedRecipeWish, Long> {
 
@@ -55,6 +56,16 @@ public interface MemberTransformedRecipeWishRepository extends JpaRepository<Mem
     List<MemberTransformedRecipeWish> findAllByFamilyRoomIdWithRecipe(
             @Param("familyRoomId") Long familyRoomId
     );
+
+    @Query("""
+    select distinct tr.id
+    from MemberTransformedRecipeWish mw
+    join mw.familyMemberProfile p
+    join mw.recipe tr
+    where p.familyRoom.id = :familyRoomId
+      and tr.id in :transformedIds
+""")
+    Set<Long> findExistingTransformedRecipeIds(Long familyRoomId, List<Long> transformedIds);
 
 
 }

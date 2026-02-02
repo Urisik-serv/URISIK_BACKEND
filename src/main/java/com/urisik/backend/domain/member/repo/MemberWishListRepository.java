@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Set;
 
 public interface MemberWishListRepository extends JpaRepository<MemberWishList, Long> {
 
@@ -39,6 +40,16 @@ public interface MemberWishListRepository extends JpaRepository<MemberWishList, 
     order by w.id desc
 """)
     List<MemberWishList> findAllByFamilyRoomIdWithRecipe(Long familyRoomId);
+
+    @Query("""
+    select distinct r.id
+    from MemberWishList mw
+    join mw.familyMemberProfile p
+    join mw.recipe r
+    where p.familyRoom.id = :familyRoomId
+      and r.id in :recipeIds
+""")
+    Set<Long> findExistingRecipeIds(Long familyRoomId, List<Long> recipeIds);
 
     long deleteByFamilyMemberProfile_IdAndRecipe_IdIn(Long profileId, List<Long> recipeIds);
 

@@ -178,10 +178,18 @@ public class FamilyWishListQueryService {
         }
 
         if (hasCanonical) {
+            Set<Long> existing = memberWishListRepository.findExistingRecipeIds(familyRoomId, recipeId);
+            if (existing.size() != new HashSet<>(recipeId).size()) {
+                throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_WISHLIST_NOT_FOUND);
+            }
             familyWishListExclusionRepository.excludeRecipes(familyRoomId, recipeId);
         }
 
         if (hasTransformed) {
+            Set<Long> existing = memberTransformedRecipeWishRepository.findExistingTransformedRecipeIds(familyRoomId, transformedRecipeId);
+            if (existing.size() != new HashSet<>(transformedRecipeId).size()) {
+                throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_WISHLIST_NOT_FOUND);
+            }
             familyWishListExclusionRepository.excludeTransformedRecipes(familyRoomId, transformedRecipeId);
         }
     }
