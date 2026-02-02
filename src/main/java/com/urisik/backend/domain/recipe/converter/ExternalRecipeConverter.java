@@ -22,39 +22,25 @@ public class ExternalRecipeConverter {
         );
     }
 
-    public RecipeExternalMetadata toMetadata(Recipe recipe, ExternalRecipeUpsertRequestDTO req) {
-        return new RecipeExternalMetadata(
-                recipe,
-                trimToNull(req.getCategory()),
-                trimToNull(req.getServingWeight()),
-                safeInt(req.getCalorie()),
-                safeInt(req.getCarbohydrate()),
-                safeInt(req.getProtein()),
-                safeInt(req.getFat()),
-                safeInt(req.getSodium()),
-                trimToNull(req.getImageSmallUrl()),
-                trimToNull(req.getImageLargeUrl())
-        );
-    }
-
     public RecipeExternalMetadata toMetadata(
             Recipe recipe,
-            FoodSafetyRecipeResponse.Row row
+            ExternalRecipeUpsertRequestDTO req
     ) {
+        ExternalRecipeUpsertRequestDTO.Metadata m = req.getMetadata();
+
         return new RecipeExternalMetadata(
                 recipe,
-                trimToNull(row.getCategory()),        // RCP_PAT2
-                trimToNull(row.getServingWeight()),   // INFO_WGT
-                safeInt(row.getCalorie()),             // INFO_ENG
-                safeInt(row.getCarbohydrate()),        // INFO_CAR
-                safeInt(row.getProtein()),             // INFO_PRO
-                safeInt(row.getFat()),                  // INFO_FAT
-                safeInt(row.getSodium()),               // INFO_NA
-                trimToNull(row.getImageSmall()),        // ATT_FILE_NO_MK
-                trimToNull(row.getImageLarge())         // ATT_FILE_NO_MAIN
+                trimToNull(m.getCategory()),
+                trimToNull(m.getServingWeight()),
+                m.getCalorie(),
+                m.getCarbohydrate(),
+                m.getProtein(),
+                m.getFat(),
+                m.getSodium(),
+                trimToNull(m.getImageSmallUrl()),
+                trimToNull(m.getImageLargeUrl())
         );
     }
-
 
     /* ===== 내부 유틸 ===== */
 
@@ -74,13 +60,5 @@ public class ExternalRecipeConverter {
         return t.isBlank() ? null : t;
     }
 
-    private Integer safeInt(String s) {
-        try {
-            if (s == null || s.isBlank()) return null;
-            return (int) Double.parseDouble(s.trim());
-        } catch (Exception e) {
-            return null;
-        }
-    }
 }
 

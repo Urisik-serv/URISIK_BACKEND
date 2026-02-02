@@ -22,6 +22,7 @@ public class ExternalRecipeService {
 
     private final RecipeRepository recipeRepository;
     private final RecipeExternalMetadataRepository metadataRepository;
+    private final ExternalRecipeConverter externalRecipeConverter;
 
     @Transactional
     public ExternalRecipeUpsertResponseDTO upsertExternal(ExternalRecipeUpsertRequestDTO req) {
@@ -32,55 +33,19 @@ public class ExternalRecipeService {
             return new ExternalRecipeUpsertResponseDTO(existing.get().getId(), false);
         }
 
-        // 2) 없으면 새로 저장
-        Recipe recipe = new Recipe(
-                required(req.getRcpNm(), "rcpNm"),
-                required(req.getIngredientsRaw(), "ingredientsRaw"),
-                required(req.getInstructionsRaw(), "instructionsRaw"),
-                SourceType.EXTERNAL_API,
-                required(req.getRcpSeq(), "rcpSeq")
-        );
+        // 2) 새로 저장
+        Recipe recipe = externalRecipeConverter.toRecipe(req);
         Recipe saved = recipeRepository.save(recipe);
 
-        RecipeExternalMetadata meta = new RecipeExternalMetadata(
-                saved,
-                trimToNull(req.getCategory()),
-                trimToNull(req.getServingWeight()),
-                safeInt(req.getCalorie()),
-                safeInt(req.getCarbohydrate()),
-                safeInt(req.getProtein()),
-                safeInt(req.getFat()),
-                safeInt(req.getSodium()),
-                trimToNull(req.getImageSmallUrl()),
-                trimToNull(req.getImageLargeUrl())
-        );
+        RecipeExternalMetadata meta =
+                externalRecipeConverter.toMetadata(saved, req);
         metadataRepository.save(meta);
 
         return new ExternalRecipeUpsertResponseDTO(saved.getId(), true);
     }
 
-    private String required(String s, String field) {
-        if (s == null || s.trim().isBlank()) {
-            throw new GeneralException(RecipeErrorCode.EXTERNAL_RECIPE_NOT_FOUND, field + " is blank");
-        }
-        return s.trim();
-    }
-
-    private String trimToNull(String s) {
-        if (s == null) return null;
-        String t = s.trim();
-        return t.isBlank() ? null : t;
-    }
-
-    private Integer safeInt(String s) {
-        try {
-            if (s == null || s.isBlank()) return null;
-            return (int) Double.parseDouble(s.trim());
-        } catch (Exception e) {
-            return null;
-        }
-    }
 }
+
 
 
 
