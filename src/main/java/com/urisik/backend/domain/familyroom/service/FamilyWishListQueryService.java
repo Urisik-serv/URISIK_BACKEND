@@ -2,11 +2,13 @@ package com.urisik.backend.domain.familyroom.service;
 
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
-import com.urisik.backend.domain.allergy.service.AllergySubstitutionService;
 import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO;
+import com.urisik.backend.domain.familyroom.exception.FamilyRoomException;
+import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomErrorCode;
 import com.urisik.backend.domain.familyroom.repository.FamilyWishListExclusionRepository;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.entity.MemberWishList;
+import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberWishListRepository;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import lombok.RequiredArgsConstructor;
@@ -23,30 +25,41 @@ public class FamilyWishListQueryService {
     private final MemberWishListRepository memberWishListRepository;
     private final FamilyWishListExclusionRepository familyWishListExclusionRepository;
     private final FamilyRoomService familyRoomService;
+    private final FamilyMemberProfileRepository familyMemberProfileRepository;
 
     // 가족방 전체 알레르기 집계
     private final MemberAllergyRepository memberAllergyRepository;
-
-    // 알레르기 매칭 로직 재사용
-    private final AllergySubstitutionService allergySubstitutionService;
 
     /**
      * 가족 위시리스트 조회
      * - 개인 위시리스트(MemberWishList)를 가족방 단위로 집계
      * - 방장이 삭제한 항목은 exclusion에 의해 조회에서만 제외
      * - 가족 알레르기 필터링:
-     * 레시피 재료(ingredientsRaw) 기준으로 가족방 전체 알레르기(Allergen) 포함 여부를 판별
-     * unsafe(알레르기 포함) 레시피는 가족 위시리스트 결과에서 제외
+     *   레시피 재료(ingredientsRaw) 기준으로 가족방 전체 알레르기(Allergen) 포함 여부를 판별
+     *   unsafe(알레르기 포함) 레시피는 가족 위시리스트 결과에서 제외
      */
-    public List<FamilyWishListItemResDTO> getFamilyWishList(Long familyRoomId) {
+    public List<FamilyWishListItemResDTO> getFamilyWishList(Long memberId, Long familyRoomId) {
+
+        // 가족방 구성원만 가능
+        validateFamilyRoomMember(memberId, familyRoomId);
 
         // 방장 제외 목록 조회 (exclusion)
         Set<Long> excludedRecipeIds =
                 familyWishListExclusionRepository.findExcludedRecipeIdsByFamilyRoomId(familyRoomId);
 
-        // 가족방 전체 알레르기 조회 (중복 제거)
+        // 가족방 전체 알레르기 조회
         List<Allergen> familyAllergens =
                 memberAllergyRepository.findDistinctAllergensByFamilyRoomId(familyRoomId);
+
+        // 알레르겐 정규화
+        List<String> normalizedAllergens = familyAllergens.stream()
+                .filter(Objects::nonNull)
+                .map(Allergen::getKoreanName)
+                .filter(Objects::nonNull)
+                .map(this::normalize)
+                .filter(s -> s != null && !s.isBlank())
+                .distinct()
+                .toList();
 
         // 가족방 내 전체 개인 위시리스트 조회 (recipe + profile join fetch)
         List<MemberWishList> all = memberWishListRepository.findAllByFamilyRoomIdWithRecipe(familyRoomId);
@@ -93,13 +106,10 @@ public class FamilyWishListQueryService {
 
             // 가족 알레르기 기준으로 unsafe면 가족 위시리스트 결과에서 제외
             boolean usableForMealPlan = isUsableForMealPlan(
-                    familyRoomId,
                     agg.getIngredientsRaw(),
-                    familyAllergens
+                    normalizedAllergens
             );
-            if (!usableForMealPlan) {
-                continue;
-            }
+            if (!usableForMealPlan) continue;
 
             result.add(new FamilyWishListItemResDTO(
                     recipeId,
@@ -122,6 +132,9 @@ public class FamilyWishListQueryService {
     @Transactional
     public void deleteFamilyWishListItems(Long memberId, Long familyRoomId, List<Long> recipeId) {
 
+        // 가족방 구성원만 가능
+        validateFamilyRoomMember(memberId, familyRoomId);
+
         // 방장 검증
         familyRoomService.validateLeader(memberId, familyRoomId);
 
@@ -132,36 +145,48 @@ public class FamilyWishListQueryService {
         familyWishListExclusionRepository.excludeRecipes(familyRoomId, recipeId);
     }
 
+    private void validateFamilyRoomMember(Long memberId, Long familyRoomId) {
+        familyMemberProfileRepository.findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.NOT_FAMILY_MEMBER));
+    }
+
     /**
      * usableForMealPlan 판단
-     * - AllergySubstitutionService의 matchedAllergens 로직 재사용
+     * - getFamilyWishList에서 미리 조회한 가족 알레르기를 사용해 in-memory로 매칭
      */
-    private boolean isUsableForMealPlan(Long familyRoomId, String ingredientsRaw, List<Allergen> familyAllergens) {
-        // 가족 알레르기가 없으면 모두 안전
-        if (familyAllergens == null || familyAllergens.isEmpty()) {
+    private boolean isUsableForMealPlan(String ingredientsRaw, List<String> normalizedAllergens) {
+        if (normalizedAllergens == null || normalizedAllergens.isEmpty()) {
             return true;
         }
 
-        // 재료 정보가 없으면 false
         if (ingredientsRaw == null || ingredientsRaw.isBlank()) {
             return false;
         }
 
-        Map<Allergen, ?> matched = allergySubstitutionService.generateSubstitutionRules(
-                familyRoomId,
-                splitIngredientsRaw(ingredientsRaw)
-        );
+        List<String> normalizedIngredients = splitIngredientsRaw(ingredientsRaw).stream()
+                .map(this::normalize)
+                .filter(s -> s != null && !s.isBlank())
+                .toList();
 
-        return matched == null || matched.isEmpty();
+        if (normalizedIngredients.isEmpty()) {
+            return false;
+        }
+
+        for (String allergenKey : normalizedAllergens) {
+            if (allergenKey == null || allergenKey.isBlank()) continue;
+
+            boolean matched = normalizedIngredients.stream()
+                    .anyMatch(ing -> ing.contains(allergenKey));
+
+            if (matched) return false;
+        }
+
+        return true;
     }
 
     private String normalize(String s) {
         if (s == null) return "";
-
-        // 소문자화
         String lowered = s.toLowerCase(Locale.ROOT);
-
-        // 공백 포함, 대부분의 구분기호/특수문자를 제거
         return lowered.replaceAll("[^0-9a-zA-Z가-힣]", "");
     }
 
@@ -176,9 +201,7 @@ public class FamilyWishListQueryService {
         for (String p : parts) {
             if (p == null) continue;
             String t = p.trim();
-            if (!t.isEmpty()) {
-                tokens.add(t);
-            }
+            if (!t.isEmpty()) tokens.add(t);
         }
         return tokens;
     }
@@ -187,19 +210,17 @@ public class FamilyWishListQueryService {
      * recipeId별 집계용 내부 클래스
      * - distinct profiles (인원 수)
      * - latest wish id (최신)
-     * - recipeTitle, ingredientsRaw, normalizedIngredientsBlob(usableForMealPlan 계산용)
+     * - recipeTitle, ingredientsRaw
      */
     private class Agg {
         private final String recipeTitle;
         private final String ingredientsRaw;
-        private final String normalizedIngredientsBlob;
         private final Map<Long, FamilyWishListItemResDTO.Profile> profiles = new LinkedHashMap<>();
         private long latestWishId = 0L;
 
         private Agg(Recipe recipe) {
             this.recipeTitle = (recipe == null) ? null : recipe.getTitle();
             this.ingredientsRaw = (recipe == null) ? null : recipe.getIngredientsRaw();
-            this.normalizedIngredientsBlob = normalize(this.ingredientsRaw);
         }
 
         private void add(MemberWishList w) {
@@ -236,10 +257,6 @@ public class FamilyWishListQueryService {
 
         private String getIngredientsRaw() {
             return ingredientsRaw;
-        }
-
-        private String getNormalizedIngredientsBlob() {
-            return normalizedIngredientsBlob;
         }
     }
 }

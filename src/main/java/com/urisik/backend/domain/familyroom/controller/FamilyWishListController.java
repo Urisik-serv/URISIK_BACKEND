@@ -34,7 +34,7 @@ public class FamilyWishListController {
             throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
 
-        List<FamilyWishListItemResDTO> result = familyWishListQueryService.getFamilyWishList(familyRoomId);
+        List<FamilyWishListItemResDTO> result = familyWishListQueryService.getFamilyWishList(memberId, familyRoomId);
         return ApiResponse.onSuccess(FamilyRoomSuccessCode.FAMILY_WISHLIST, result);
     }
 
