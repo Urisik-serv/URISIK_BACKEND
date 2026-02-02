@@ -1,5 +1,6 @@
 package com.urisik.backend.domain.recipe.controller;
 
+import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeSnapshotDTO;
 import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeUpsertRequestDTO;
 import com.urisik.backend.domain.recipe.dto.res.ExternalRecipeUpsertResponseDTO;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
@@ -22,11 +23,14 @@ public class ExternalRecipeController {
     @PostMapping("/external")
     @Operation(summary = "외부 레시피 상세 저장 & 내부 레시피 생성 API", description = "외부 레시피를 내부 레시피로 저장하는 api 입니다.")
     public ApiResponse<ExternalRecipeUpsertResponseDTO> upsertExternal(
-           @Valid @RequestBody ExternalRecipeUpsertRequestDTO request
+            @RequestBody ExternalRecipeSnapshotDTO snapshot
     ) {
+        ExternalRecipeUpsertRequestDTO command =
+                ExternalRecipeUpsertRequestDTO.from(snapshot);
+
         return ApiResponse.onSuccess(
                 RecipeSuccessCode.EXTERNAL_RECIPE_UPSERT_OK,
-                externalRecipeService.upsertExternal(request)
+                externalRecipeService.upsertExternal(command)
         );
     }
 }

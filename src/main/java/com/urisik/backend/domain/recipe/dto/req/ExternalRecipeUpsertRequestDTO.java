@@ -3,46 +3,36 @@ package com.urisik.backend.domain.recipe.dto.req;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class ExternalRecipeUpsertRequestDTO {
 
-    /**
-     * 외부 레시피 ID (RCP_SEQ)
-     */
     @NotBlank
     private String rcpSeq;
 
-    /**
-     * 레시피 이름 (RCP_NM)
-     */
     @NotBlank
     private String rcpNm;
 
-    /**
-     * 외부 API 원본 재료 문자열
-     */
     @NotBlank
     private String ingredientsRaw;
 
-    /**
-     * 외부 API 원본 조리법 문자열
-     */
     @NotBlank
     private String instructionsRaw;
 
-    /**
-     * 외부 메타데이터 (영양 / 이미지 / 카테고리)
-     */
     @Valid
     @NotNull
     private Metadata metadata;
 
+    /* ================= Metadata ================= */
+
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class Metadata {
 
         private String category;
@@ -56,6 +46,53 @@ public class ExternalRecipeUpsertRequestDTO {
 
         private String imageSmallUrl;
         private String imageLargeUrl;
+    }
+
+
+    /* ================= Factory ================= */
+
+    public static ExternalRecipeUpsertRequestDTO from(
+            ExternalRecipeSnapshotDTO s
+    ) {
+        return new ExternalRecipeUpsertRequestDTO(
+                s.getRcpSeq(),
+                s.getRcpNm(),
+                s.getIngredientsRaw(),
+                s.getInstructionsRaw(),
+                new Metadata(
+                        trimToNull(s.getCategory()),
+                        normalizeServingWeight(s.getServingWeight()),
+                        safeInt(s.getCalorie()),
+                        safeInt(s.getCarbohydrate()),
+                        safeInt(s.getProtein()),
+                        safeInt(s.getFat()),
+                        safeInt(s.getSodium()),
+                        trimToNull(s.getImageSmall()),
+                        trimToNull(s.getImageLarge())
+                )
+        );
+    }
+
+    /* ================= 내부 유틸 ================= */
+
+    private static Integer safeInt(String s) {
+        try {
+            if (s == null || s.isBlank()) return null;
+            return (int) Double.parseDouble(s.trim());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static String trimToNull(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        return t.isBlank() ? null : t;
+    }
+
+    private static String normalizeServingWeight(String w) {
+        // FoodSafety API는 사실상 전부 1인분
+        return "1인분";
     }
 }
 
