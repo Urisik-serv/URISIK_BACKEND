@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.mealplan.ai.service;
 
-import com.urisik.backend.domain.mealplan.ai.client.AiClient;
+import com.urisik.backend.global.ai.AiClient;
 import com.urisik.backend.domain.mealplan.ai.parser.MealPlanAiResponseParser;
 import com.urisik.backend.domain.mealplan.ai.prompt.MealPlanPromptBuilder;
 import com.urisik.backend.domain.mealplan.ai.validation.MealPlanGenerationValidator;
@@ -26,7 +26,7 @@ public class MealPlanAiService {
             List<Long> candidateRecipeIds
     ) {
         String prompt = promptBuilder.build(selectedSlots, candidateRecipeIds);
-        String json = aiClient.generate(prompt);
+        String json = aiClient.generateJson(prompt);
 
         Map<MealPlan.SlotKey, Long> assignments = responseParser.parse(json, selectedSlots, candidateRecipeIds);
 

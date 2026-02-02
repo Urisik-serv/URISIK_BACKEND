@@ -1,5 +1,5 @@
 
-package com.urisik.backend.domain.mealplan.ai.client;
+package com.urisik.backend.global.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,14 +16,14 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * OpenAI Responses API client for MealPlan generation.
- * - model: gpt-5.0-mini
- * - temperature: 0~0.3
+ * Shared OpenAI Responses API client.
+ * - model: openai.model.default (fallback: gpt-5.0-mini)
+ * - temperature: openai.temperature.default (fallback: 0.2)
  * - JSON only (uses Responses API text.format json_object)
  */
 @ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${openai.api-key:}')")
 @Component
-public class Gpt5MiniClient implements AiClient {
+public class OpenAiClient implements AiClient {
 
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
 
@@ -32,13 +32,13 @@ public class Gpt5MiniClient implements AiClient {
     private final String model;
     private final double temperature;
 
-    public Gpt5MiniClient(
+    public OpenAiClient(
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
             @Value("${openai.api-key:}") String apiKey,
             @Value("${openai.base-url:https://api.openai.com}") String baseUrl,
-            @Value("${openai.model.mealplan:gpt-5.0-mini}") String model,
-            @Value("${openai.temperature.mealplan:0.2}") double temperature
+            @Value("${openai.model.default:gpt-5.0-mini}") String model,
+            @Value("${openai.temperature.default:0.2}") double temperature
     ) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException("openai.api-key is required");
@@ -54,19 +54,11 @@ public class Gpt5MiniClient implements AiClient {
     }
 
     @Override
-    public String generate(String prompt) {
+    public String generateJson(String prompt) {
         if (prompt == null || prompt.isBlank()) {
             throw new IllegalArgumentException("prompt must not be blank");
         }
 
-        // Responses API request
-        // POST /v1/responses
-        // {
-        //   "model": "gpt-5.0-mini",
-        //   "input": [{"role":"user","content":"..."}],
-        //   "temperature": 0.2,
-        //   "text": {"format": {"type": "json_object"}}
-        // }
         ResponseCreateRequest req = new ResponseCreateRequest(
                 model,
                 List.of(new InputMessage("user", prompt)),
@@ -93,8 +85,9 @@ public class Gpt5MiniClient implements AiClient {
                     .bodyToMono(String.class)
                     .block(DEFAULT_TIMEOUT);
         } catch (WebClientResponseException e) {
-            // network/protocol-level errors
-            throw new IllegalStateException("OpenAI call failed: HTTP " + e.getStatusCode().value() + " " + e.getResponseBodyAsString(), e);
+            throw new IllegalStateException(
+                    "OpenAI call failed: HTTP " + e.getStatusCode().value() + " " + e.getResponseBodyAsString(), e
+            );
         } catch (Exception e) {
             throw new IllegalStateException("OpenAI call failed", e);
         }
@@ -103,8 +96,6 @@ public class Gpt5MiniClient implements AiClient {
             throw new IllegalStateException("OpenAI returned empty response");
         }
 
-        // Prefer `output_text` convenience field if present.
-        // Otherwise, fall back to extracting from output[].
         try {
             JsonNode root = objectMapper.readTree(rawJson);
 
@@ -113,7 +104,6 @@ public class Gpt5MiniClient implements AiClient {
                 return outputText.asText();
             }
 
-            // Fallback: try to locate the first assistant message content text
             JsonNode output = root.get("output");
             if (output != null && output.isArray()) {
                 for (JsonNode item : output) {
@@ -124,15 +114,15 @@ public class Gpt5MiniClient implements AiClient {
                     if (content == null || !content.isArray()) continue;
 
                     for (JsonNode c : content) {
-                        // According to Responses API, assistant text parts use type "output_text" with a "text" field.
                         if (c == null) continue;
+
                         if ("output_text".equals(c.path("type").asText())) {
                             String text = c.path("text").asText(null);
                             if (text != null && !text.isBlank()) {
                                 return text;
                             }
                         }
-                        // Defensive fallback if the API changes naming
+
                         String maybeText = c.path("text").asText(null);
                         if (maybeText != null && !maybeText.isBlank()) {
                             return maybeText;
@@ -150,28 +140,24 @@ public class Gpt5MiniClient implements AiClient {
     // ====== DTOs for Responses API ======
 
     /** Request body for POST /v1/responses */
-    public record ResponseCreateRequest(
+    private record ResponseCreateRequest(
             String model,
             List<InputMessage> input,
             Double temperature,
             TextConfig text
-    ) {
-    }
+    ) {}
 
     /** Input item (message) */
-    public record InputMessage(
+    private record InputMessage(
             String role,
             String content
-    ) {
-    }
+    ) {}
 
-    public record TextConfig(
+    private record TextConfig(
             TextFormat format
-    ) {
-    }
+    ) {}
 
-    public record TextFormat(
+    private record TextFormat(
             String type
-    ) {
-    }
+    ) {}
 }
