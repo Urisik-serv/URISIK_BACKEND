@@ -77,3 +77,7 @@ processResources {
 	}
 	duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-parameters']
+}
