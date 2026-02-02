@@ -10,7 +10,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class MealPlanDefaultCandidateProvider implements MealPlanCandidateProvider {
+public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider {
 
     private final TransformedRecipeRepository transformedRecipeRepository;
 

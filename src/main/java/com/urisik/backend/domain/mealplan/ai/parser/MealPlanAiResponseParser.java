@@ -58,6 +58,9 @@ public class MealPlanAiResponseParser {
                 allowedKeys.add(toCanonicalKey(sk));
             }
 
+            // Reject duplicate canonical keys (e.g., LUNCH_MONDAY and MONDAY_LUNCH)
+            Set<String> seenCanonicals = new HashSet<>();
+
             // Reject unknown keys and convert
             Map<MealPlan.SlotKey, Long> result = new HashMap<>();
             for (Map.Entry<String, Long> entry : raw.entrySet()) {
@@ -66,6 +69,11 @@ public class MealPlanAiResponseParser {
 
                 MealPlan.SlotKey slotKey = parseSlotKey(rawKey);
                 String canonical = toCanonicalKey(slotKey);
+
+                // Reject duplicate canonical keys (e.g., LUNCH_MONDAY and MONDAY_LUNCH)
+                if (!seenCanonicals.add(canonical)) {
+                    throw fail();
+                }
 
                 if (!allowedKeys.contains(canonical)) {
                     throw fail();

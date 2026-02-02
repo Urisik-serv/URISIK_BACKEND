@@ -4,6 +4,8 @@ import com.urisik.backend.domain.mealplan.entity.MealPlan;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class MealPlanPromptBuilder {
@@ -12,6 +14,14 @@ public class MealPlanPromptBuilder {
             List<MealPlan.SlotKey> slots,
             List<Long> candidateRecipeIds
     ) {
+        String slotKeys = slots.stream()
+                .map(MealPlanPromptBuilder::toCanonicalPromptKey)
+                .collect(Collectors.joining(", "));
+
+        String candidateIds = candidateRecipeIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(", "));
+
         return """
         You are a meal plan generator.
 
@@ -22,11 +32,53 @@ public class MealPlanPromptBuilder {
         - Values must be chosen from candidateRecipeIds
         - Do not explain anything
 
-        Slots:
-        %s
+        Slots (allowed keys):
+        [%s]
 
         candidateRecipeIds:
-        %s
-        """.formatted(slots, candidateRecipeIds);
+        [%s]
+        """.formatted(slotKeys, candidateIds);
+    }
+
+    private static final Set<String> MEAL_TYPES = Set.of("LUNCH", "DINNER");
+
+    /**
+     * Convert various slot key renderings into the canonical prompt key format: MEALTYPE_DAYOFWEEK.
+     * Examples:
+     * - LUNCH_MONDAY -> LUNCH_MONDAY
+     * - MONDAY_LUNCH -> LUNCH_MONDAY
+     */
+    private static String toCanonicalPromptKey(MealPlan.SlotKey slotKey) {
+        if (slotKey == null) {
+            return "";
+        }
+
+        String raw = slotKey.toString();
+        if (raw == null) {
+            return "";
+        }
+
+        String s = raw.trim().toUpperCase().replace('-', '_');
+        String[] parts = s.split("_");
+        if (parts.length != 2) {
+            // Fall back to the normalized string; parser/validator will still guard
+            return s;
+        }
+
+        String a = parts[0];
+        String b = parts[1];
+
+        // If already MEALTYPE_DAYOFWEEK
+        if (MEAL_TYPES.contains(a)) {
+            return a + "_" + b;
+        }
+
+        // If DAYOFWEEK_MEALTYPE, swap to MEALTYPE_DAYOFWEEK
+        if (MEAL_TYPES.contains(b)) {
+            return b + "_" + a;
+        }
+
+        // Unknown pattern: return normalized
+        return s;
     }
 }
