@@ -42,6 +42,8 @@ public interface MemberWishListRepository extends JpaRepository<MemberWishList, 
 
     long deleteByFamilyMemberProfile_IdAndRecipe_IdIn(Long profileId, List<Long> recipeIds);
 
+    // ✅ 검증용: 요청 recipeIds 중 내 위시에 존재하는 개수
+    long countByFamilyMemberProfile_IdAndRecipe_IdIn(Long profileId, List<Long> recipeIds);
 
     // 위시리스트 갯수 낮추기
     @Modifying

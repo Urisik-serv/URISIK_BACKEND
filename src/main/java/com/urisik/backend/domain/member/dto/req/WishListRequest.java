@@ -13,11 +13,11 @@ public class WishListRequest {
     @NoArgsConstructor
     public static class PostWishes {
 
-        @NotEmpty
-        private List<@NotNull(message = "recipeId 안에는 null이 올 수 없습니다.") Long> recipeId; // foodName 리스트
 
-        @NotEmpty
-        private List<@NotNull(message = "transformedRecipeId 안에는 null이 올 수 없습니다.") Long> transformedRecipeId; // foodName 리스트
+        private List<Long> recipeId; // foodName 리스트
+
+
+        private List<Long> transformedRecipeId; // foodName 리스트
 
 
     }
@@ -25,11 +25,10 @@ public class WishListRequest {
     @NoArgsConstructor
     public static class DeleteWishes {
 
-        @NotEmpty
-        private List<@NotNull(message = "recipeId 안에는 null이 올 수 없습니다.") Long> recipeId; // foodName 리스트
+        private List<Long> recipeId; // foodName 리스트
 
-        @NotEmpty
-        private List<@NotNull(message = "transformedRecipeId 안에는 null이 올 수 없습니다.") Long> transformedRecipeId; // foodName 리스트
+
+        private List<Long> transformedRecipeId; // foodName 리스트
 
 
     }

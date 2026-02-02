@@ -26,6 +26,9 @@ public class TransformedRecipe {
     @JoinColumn(name = "recipe_id", nullable = false)
     private Recipe recipe;
 
+    @Column(nullable = false)
+    private String title;
+
     // FamilyRoom 엔티티를 직접 연결해도 되지만, 구조상 profile->familyRoom 이 있고, familyRoomId만 써도 충분해서 FK ID만 저장하는 방식으로 구현
     @Column(name = "family_room_id", nullable = false)
     private Long familyRoomId;

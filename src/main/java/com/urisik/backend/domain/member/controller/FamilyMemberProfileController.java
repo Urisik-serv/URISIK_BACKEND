@@ -118,6 +118,22 @@ public class FamilyMemberProfileController {
 
         return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_GET, result);
     }
+
+    @GetMapping("/{familyRoomId}/profile-wishes-trans")
+    public ApiResponse<WishListResponse.GetTransWishes> getMyTransWishes(
+            @PathVariable Long familyRoomId,
+            @AuthenticationPrincipal Long memberId,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        WishListResponse.GetTransWishes result =
+                memberWishListService.getMyTransWishes(familyRoomId, memberId, cursor, size);
+
+        return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_GET, result);
+    }
+
+
+
     @DeleteMapping("/{familyRoomId}/profile-wishes")
     public ApiResponse<WishListResponse.DeleteWishes> deleteWishItems(
             @PathVariable Long familyRoomId,
