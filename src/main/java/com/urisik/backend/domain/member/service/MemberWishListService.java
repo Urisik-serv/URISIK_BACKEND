@@ -10,6 +10,7 @@ import com.urisik.backend.domain.member.entity.MemberWishList;
 import com.urisik.backend.domain.member.exception.MemberException;
 import com.urisik.backend.domain.member.exception.code.MemberErrorCode;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
+import com.urisik.backend.domain.member.repo.MemberTransformedRecipeWishRepository;
 import com.urisik.backend.domain.member.repo.MemberWishListRepository;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
@@ -31,6 +32,7 @@ public class MemberWishListService {
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final FamilyWishListExclusionRepository familyWishListExclusionRepository;
     private final TransformedRecipeRepository transformedRecipeRepository;
+    private final MemberTransformedRecipeWishRepository memberTransformedRecipeWishRepository;
 
     @Transactional
     public WishListResponse.PostWishes addWishItems
@@ -46,6 +48,7 @@ public class MemberWishListService {
                     .orElseThrow(() -> new MemberException(MemberErrorCode.NO_RECIPE));//수정 요청 음식 없음
 
             profile.addWish(MemberWishList.of(recipe));//
+            recipe.incrementWishCount();
 
             // 가족 위시리스트 삭제DB 업데이트
             familyWishListExclusionRepository.deleteByFamilyRoom_IdAndRecipeId(
@@ -58,6 +61,7 @@ public class MemberWishListService {
                     .orElseThrow(() -> new MemberException(MemberErrorCode.NO_RECIPE));//수정 요청 음식 없음
 
             profile.addTransWish(MemberTransformedRecipeWish.of(recipe));//
+            recipe.incrementWishCount();
 
             // 가족 위시리스트 삭제DB 업데이트
             /*
@@ -85,7 +89,8 @@ public class MemberWishListService {
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NO_MEMBER));
 
         // req.getRecipeId()가 null/empty면 바로 성공 처리(정책에 따라 에러로 바꿔도 됨)
-        if (req.getRecipeId() == null || req.getRecipeId().isEmpty()) {
+        if ((req.getRecipeId() == null&&req.getTransformedRecipeId()==null)||
+                (req.getRecipeId().isEmpty()&&req.getTransformedRecipeId().isEmpty())) {
             return WishListResponse.DeleteWishes.builder()
                     .isSuccess(true)
                     .build();
@@ -96,10 +101,18 @@ public class MemberWishListService {
                 profile.getId(),
                 req.getRecipeId()
         );
+        memberWishListRepository.decreaseWishCount(req.getRecipeId());
+        long deletedTrans =
+        memberTransformedRecipeWishRepository.deleteByFamilyMemberProfile_IdAndRecipe_IdIn(
+                profile.getId(),
+                req.getTransformedRecipeId()
+        );
+        memberTransformedRecipeWishRepository.decreaseWishCount(req.getTransformedRecipeId());
 
         return WishListResponse.DeleteWishes.builder()
                 .isSuccess(true)
                 .deletedNum(deleted)
+                .deletedTransNum(deletedTrans)
                 .build();
     }
 

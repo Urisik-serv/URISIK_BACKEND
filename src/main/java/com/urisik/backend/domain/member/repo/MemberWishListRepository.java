@@ -3,6 +3,7 @@ package com.urisik.backend.domain.member.repo;
 import com.urisik.backend.domain.member.entity.MemberWishList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -40,5 +41,16 @@ public interface MemberWishListRepository extends JpaRepository<MemberWishList, 
     List<MemberWishList> findAllByFamilyRoomIdWithRecipe(Long familyRoomId);
 
     long deleteByFamilyMemberProfile_IdAndRecipe_IdIn(Long profileId, List<Long> recipeIds);
+
+
+    // 위시리스트 갯수 낮추기
+    @Modifying
+    @Query("""
+        update Recipe r
+        set r.wishCount = r.wishCount - 1
+        where r.id in :recipeIds
+    """)
+    int decreaseWishCount(@Param("recipeIds") List<Long> recipeIds);
+
 
 }

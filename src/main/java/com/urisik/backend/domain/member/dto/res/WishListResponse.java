@@ -19,6 +19,7 @@ public class WishListResponse {
     public static class DeleteWishes {
         private Boolean isSuccess;
         private long deletedNum;
+        private long deletedTransNum;
     }
 
 
