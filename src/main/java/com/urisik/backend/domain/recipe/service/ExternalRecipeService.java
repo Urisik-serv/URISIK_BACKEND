@@ -22,34 +22,65 @@ public class ExternalRecipeService {
 
     private final RecipeRepository recipeRepository;
     private final RecipeExternalMetadataRepository metadataRepository;
-    private final ExternalRecipeConverter converter;
 
     @Transactional
     public ExternalRecipeUpsertResponseDTO upsertExternal(ExternalRecipeUpsertRequestDTO req) {
 
-        Optional<Recipe> existing =
-                recipeRepository.findBySourceRef(req.getRcpSeq());
-
+        // 1) 이미 저장된 외부 레시피면 그대로 반환
+        Optional<Recipe> existing = recipeRepository.findBySourceRef(req.getRcpSeq());
         if (existing.isPresent()) {
-            return new ExternalRecipeUpsertResponseDTO(
-                    existing.get().getId(),
-                    false
-            );
+            return new ExternalRecipeUpsertResponseDTO(existing.get().getId(), false);
         }
 
-        Recipe recipe = recipeRepository.save(
-                converter.toRecipe(req)
+        // 2) 없으면 새로 저장
+        Recipe recipe = new Recipe(
+                required(req.getRcpNm(), "rcpNm"),
+                required(req.getIngredientsRaw(), "ingredientsRaw"),
+                required(req.getInstructionsRaw(), "instructionsRaw"),
+                SourceType.EXTERNAL_API,
+                required(req.getRcpSeq(), "rcpSeq")
         );
+        Recipe saved = recipeRepository.save(recipe);
 
-        metadataRepository.save(
-                converter.toMetadata(recipe, req)
+        RecipeExternalMetadata meta = new RecipeExternalMetadata(
+                saved,
+                trimToNull(req.getCategory()),
+                trimToNull(req.getServingWeight()),
+                safeInt(req.getCalorie()),
+                safeInt(req.getCarbohydrate()),
+                safeInt(req.getProtein()),
+                safeInt(req.getFat()),
+                safeInt(req.getSodium()),
+                trimToNull(req.getImageSmallUrl()),
+                trimToNull(req.getImageLargeUrl())
         );
+        metadataRepository.save(meta);
 
-        return new ExternalRecipeUpsertResponseDTO(
-                recipe.getId(),
-                true
-        );
+        return new ExternalRecipeUpsertResponseDTO(saved.getId(), true);
+    }
+
+    private String required(String s, String field) {
+        if (s == null || s.trim().isBlank()) {
+            throw new GeneralException(RecipeErrorCode.EXTERNAL_RECIPE_NOT_FOUND, field + " is blank");
+        }
+        return s.trim();
+    }
+
+    private String trimToNull(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        return t.isBlank() ? null : t;
+    }
+
+    private Integer safeInt(String s) {
+        try {
+            if (s == null || s.isBlank()) return null;
+            return (int) Double.parseDouble(s.trim());
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
+
 
 
