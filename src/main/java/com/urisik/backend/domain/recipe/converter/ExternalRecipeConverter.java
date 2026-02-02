@@ -5,6 +5,7 @@ import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
 import com.urisik.backend.domain.recipe.enums.RecipeErrorCode;
 import com.urisik.backend.domain.recipe.enums.SourceType;
+import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.dto.FoodSafetyRecipeResponse;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +36,25 @@ public class ExternalRecipeConverter {
                 trimToNull(req.getImageLargeUrl())
         );
     }
+
+    public RecipeExternalMetadata toMetadata(
+            Recipe recipe,
+            FoodSafetyRecipeResponse.Row row
+    ) {
+        return new RecipeExternalMetadata(
+                recipe,
+                trimToNull(row.getCategory()),        // RCP_PAT2
+                trimToNull(row.getServingWeight()),   // INFO_WGT
+                safeInt(row.getCalorie()),             // INFO_ENG
+                safeInt(row.getCarbohydrate()),        // INFO_CAR
+                safeInt(row.getProtein()),             // INFO_PRO
+                safeInt(row.getFat()),                  // INFO_FAT
+                safeInt(row.getSodium()),               // INFO_NA
+                trimToNull(row.getImageSmall()),        // ATT_FILE_NO_MK
+                trimToNull(row.getImageLarge())         // ATT_FILE_NO_MAIN
+        );
+    }
+
 
     /* ===== 내부 유틸 ===== */
 
