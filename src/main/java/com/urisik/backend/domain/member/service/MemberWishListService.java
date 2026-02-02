@@ -85,13 +85,10 @@ public class MemberWishListService {
                 recipe.incrementWishCount();
 
                 // 가족 위시리스트 삭제DB 업데이트
-            /*
-            familyWishListExclusionRepository.deleteByFamilyRoom_IdAndRecipeId(
-                    profile.getFamilyRoom().getId(),
-                    recipeId
-
-            );
-             */
+                familyWishListExclusionRepository.deleteByFamilyRoom_IdAndTransformedRecipeId(
+                        profile.getFamilyRoom().getId(),
+                        recipeId
+                );
             }
         }
 

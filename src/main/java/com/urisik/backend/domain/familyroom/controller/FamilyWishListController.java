@@ -48,7 +48,7 @@ public class FamilyWishListController {
         if (memberId == null) {
             throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
-        familyWishListQueryService.deleteFamilyWishListItems(memberId, familyRoomId, request.recipeIds());
+        familyWishListQueryService.deleteFamilyWishListItems(memberId, familyRoomId, request.recipeId(), request.transformedRecipeId());
         return ApiResponse.onSuccess(FamilyRoomSuccessCode.FAMILY_WISHLIST_DELETE, null);
     }
 }

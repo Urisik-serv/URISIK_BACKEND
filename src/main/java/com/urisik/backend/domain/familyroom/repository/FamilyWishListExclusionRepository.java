@@ -16,8 +16,20 @@ public interface FamilyWishListExclusionRepository extends JpaRepository<FamilyW
         select e.recipeId
         from FamilyWishListExclusion e
         where e.familyRoom.id = :familyRoomId
+          and e.recipeId is not null
     """)
     Set<Long> findExcludedRecipeIdsByFamilyRoomId(Long familyRoomId);
+
+    /**
+     * 해당 가족방에서 제외된 transformedRecipeId 목록
+     */
+    @Query("""
+        select e.transformedRecipeId
+        from FamilyWishListExclusion e
+        where e.familyRoom.id = :familyRoomId
+          and e.transformedRecipeId is not null
+    """)
+    Set<Long> findExcludedTransformedRecipeIdsByFamilyRoomId(Long familyRoomId);
 
     /**
      * 개인이 다시 담았을 때 exclusion 해제
@@ -28,4 +40,8 @@ public interface FamilyWishListExclusionRepository extends JpaRepository<FamilyW
      * 필요 시 bulk 해제용
      */
     void deleteByFamilyRoom_IdAndRecipeIdIn(Long familyRoomId, List<Long> recipeIds);
+
+    void deleteByFamilyRoom_IdAndTransformedRecipeId(Long familyRoomId, Long transformedRecipeId);
+
+    void deleteByFamilyRoom_IdAndTransformedRecipeIdIn(Long familyRoomId, List<Long> transformedRecipeIds);
 }

@@ -1,7 +1,6 @@
 package com.urisik.backend.domain.member.repo;
 
 import com.urisik.backend.domain.member.entity.MemberTransformedRecipeWish;
-import com.urisik.backend.domain.member.entity.MemberWishList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -44,6 +43,18 @@ public interface MemberTransformedRecipeWishRepository extends JpaRepository<Mem
     List<MemberTransformedRecipeWish> findNextPage(@Param("profileId") Long profileId,
                                       @Param("cursor") Long cursor,
                                       Pageable pageable);
+
+    @Query("""
+            select distinct w
+            from MemberTransformedRecipeWish w
+            join fetch w.familyMemberProfile p
+            join fetch w.recipe r
+            join p.familyRoom fr
+            where fr.id = :familyRoomId
+            """)
+    List<MemberTransformedRecipeWish> findAllByFamilyRoomIdWithRecipe(
+            @Param("familyRoomId") Long familyRoomId
+    );
 
 
 }

@@ -9,21 +9,19 @@ import java.util.List;
 public class FamilyWishListItemResDTO {
 
     private final Long recipeId;
+    private final Long transformedRecipeId;
     private final String recipeName;
     private final String foodImageUrl;
     private final Double score;
     private final FoodCategory foodCategory;
-    /**
-     * 주간식단 후보로 사용 가능 여부 (가족 전체 기준)
-     * - 저장하지 않고 조회 시점에 계산해서 내려주는 값이다.
-     */
-    private final boolean usableForMealPlan;
 
-    // 이 레시피를 위시한 사람들(개인 위시리스트 집계 결과)
+    private final boolean usableForMealPlan;
+    // 이 레시피를 위시한 가족원 (개인 위시리스트 집계 결과)
     private final SourceProfile sourceProfile;
 
     public FamilyWishListItemResDTO(
             Long recipeId,
+            Long transformedRecipeId,
             String recipeName,
             String foodImageUrl,
             Double score,
@@ -32,6 +30,7 @@ public class FamilyWishListItemResDTO {
             SourceProfile sourceProfile
     ) {
         this.recipeId = recipeId;
+        this.transformedRecipeId = transformedRecipeId;
         this.recipeName = recipeName;
         this.foodImageUrl = foodImageUrl;
         this.score = score;
@@ -42,6 +41,10 @@ public class FamilyWishListItemResDTO {
 
     public Long getRecipeId() {
         return recipeId;
+    }
+
+    public Long getTransformedRecipeId() {
+        return transformedRecipeId;
     }
 
     public String getRecipeName() {
