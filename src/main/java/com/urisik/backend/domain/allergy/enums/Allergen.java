@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 public enum Allergen {
 
-        EGG("알류"),
+        EGG("달걀"),
         MILK("우유"),
         BUCKWHEAT("메밀"),
         PEANUT("땅콩"),
