@@ -46,10 +46,13 @@ public enum MemberErrorCode implements BaseErrorCode {
     NO_PROFILE_IN_FAMILY(HttpStatus.GONE,
             "AUTH_200",
             "가족방 안의 유저의 프로필이 없습니다."),
-
+    NO_RECIPE(HttpStatus.GONE,
+            "AUTH_200",
+            "해당 레시피가 없습니다."),
     NO_MEMBER(HttpStatus.GONE,
             "AUTH_200",
             "해당하는 사용자가 없습니다.");
+
 
 
     private final HttpStatus httpStatus;

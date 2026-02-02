@@ -39,17 +39,16 @@ public class MemberWishListService {
         // ✅ 추가: 기존 것은 유지하고, 요청으로 들어온 것들을 append
         for (Long recipeId : req.getRecipeId()) {
             Recipe recipe= recipeRepository.findById(recipeId)
-                    .orElseThrow(() -> new MemberException(MemberErrorCode.NO_MEMBER));//수정 요청 음식 없음
+                    .orElseThrow(() -> new MemberException(MemberErrorCode.NO_RECIPE));//수정 요청 음식 없음
 
-            profile.addWish(MemberWishList.of(recipe));// 추후에 recipe와 memberWishList 매핑 로직 구현. 현재 recipe가 없음.
+            profile.addWish(MemberWishList.of(recipe));//
 
+            // 가족 위시리스트 삭제DB 업데이트
             familyWishListExclusionRepository.deleteByFamilyRoom_IdAndRecipeId(
                     profile.getFamilyRoom().getId(),
                     recipeId
             );
         }
-
-
 
         return WishListResponse.PostWishes.builder()
                 .isSuccess(true)
