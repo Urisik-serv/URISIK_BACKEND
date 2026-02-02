@@ -35,7 +35,7 @@ public class FamilyAllergyController {
                 familyAllergyQueryService.getFamilyAllergies(loginUserId);
 
         return ApiResponse.onSuccess(
-                AllergySuccessCode.ALLERGY_LIST_OK,
+                AllergySuccessCode.FAMILY_ALLERGY_LIST_OK,
                 result
         );
     }

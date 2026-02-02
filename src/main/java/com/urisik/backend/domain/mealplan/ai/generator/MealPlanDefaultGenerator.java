@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @Component
-public class DefaultMealPlanGenerator implements MealPlanGenerator {
+public class MealPlanDefaultGenerator implements MealPlanGenerator {
 
     @Override
     public Map<MealPlan.SlotKey, Long> generateRecipeAssignments(
