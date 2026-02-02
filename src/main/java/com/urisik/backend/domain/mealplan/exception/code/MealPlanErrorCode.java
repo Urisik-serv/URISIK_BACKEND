@@ -34,6 +34,10 @@ public enum MealPlanErrorCode implements BaseErrorCode {
             "MEAL_PLAN_400",
             "가족 기준으로 안전하지 않은 레시피입니다."),
 
+    MEAL_PLAN_AI_RESPONSE_PARSE_FAILED(HttpStatus.BAD_REQUEST,
+            "MEAL_PLAN_400",
+            "AI 응답 파싱에 실패했습니다."),
+
     MEAL_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND,
             "MEAL_PLAN_404",
             "식단을 찾을 수 없습니다."),

@@ -28,6 +28,12 @@ public class MealPlanGenerationValidator {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
+        // Reject extra keys that were not requested
+        Set<MealPlan.SlotKey> requestedSet = new HashSet<>(selectedSlots);
+        if (!recipeAssignments.keySet().equals(requestedSet)) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+        }
+
         for (MealPlan.SlotKey slot : selectedSlots) {
             if (!recipeAssignments.containsKey(slot)) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
