@@ -3,7 +3,6 @@ package com.urisik.backend.domain.recipe.service;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
-import com.urisik.backend.domain.recipe.converter.ExternalRecipeConverter;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
 import com.urisik.backend.domain.recipe.dto.res.AllergyWarningDTO;
 import com.urisik.backend.domain.recipe.dto.res.RecipeDetailResponseDTO;
@@ -33,8 +32,6 @@ public class RecipeReadService {
     private final RecipeExternalMetadataRepository metadataRepository;
     private final FoodSafetyRecipeClient foodSafetyRecipeClient;
 
-    private final ExternalRecipeConverter externalRecipeConverter;
-
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final AllergyRiskService allergyRiskService;
 
@@ -43,7 +40,7 @@ public class RecipeReadService {
      * - 로그인 사용자 기준
      * - 가족방 알레르기 판별 포함
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public RecipeDetailResponseDTO getRecipeDetail(
             Long recipeId,
             Long loginUserId
@@ -59,21 +56,12 @@ public class RecipeReadService {
                         .orElse(null);
 
         if (meta == null && recipe.getSourceType() == SourceType.EXTERNAL_API) {
+            // 외부 레시피인데 메타가 없으면 강제 보완
+            loadOrCreateByExternalId(recipe.getSourceRef());
 
-            FoodSafetyRecipeResponse.Row row =
-                    foodSafetyRecipeClient.fetchOneByRcpSeq(
-                            recipe.getSourceRef()
-                    );
-
-            if (row == null) {
-                throw new GeneralException(
-                        RecipeErrorCode.EXTERNAL_RECIPE_NOT_FOUND
-                );
-            }
-
-            meta = metadataRepository.save(
-                    externalRecipeConverter.toMetadata(recipe, row)
-            );
+            // 다시 조회
+            meta = metadataRepository.findByRecipe_Id(recipe.getId())
+                    .orElse(null);
         }
 
         // 3️. 로그인 사용자 → 가족방 조회
