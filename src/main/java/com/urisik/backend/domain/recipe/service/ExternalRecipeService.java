@@ -25,31 +25,28 @@ public class ExternalRecipeService {
     private final ExternalRecipeConverter converter;
 
     @Transactional
-    public ExternalRecipeUpsertResponseDTO upsertExternal(ExternalRecipeUpsertRequestDTO req) {
+    public ExternalRecipeUpsertResponseDTO upsertExternal(
+            ExternalRecipeUpsertRequestDTO req
+    ) {
+        Recipe recipe = recipeRepository.findBySourceRef(req.getRcpSeq())
+                .orElseGet(() -> recipeRepository.save(
+                        converter.toRecipe(req)
+                ));
 
-        Optional<Recipe> existing =
-                recipeRepository.findBySourceRef(req.getRcpSeq());
-
-        if (existing.isPresent()) {
-            return new ExternalRecipeUpsertResponseDTO(
-                    existing.get().getId(),
-                    false
-            );
-        }
-
-        Recipe recipe = recipeRepository.save(
-                converter.toRecipe(req)
-        );
-
-        metadataRepository.save(
-                converter.toMetadata(recipe, req)
-        );
+        // ⭐ 핵심: metadata는 항상 보장
+        metadataRepository.findByRecipe_Id(recipe.getId())
+                .orElseGet(() ->
+                        metadataRepository.save(
+                                converter.toMetadata(recipe, req)
+                        )
+                );
 
         return new ExternalRecipeUpsertResponseDTO(
                 recipe.getId(),
                 true
         );
     }
+
 }
 
 
