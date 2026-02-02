@@ -7,9 +7,11 @@ import com.urisik.backend.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/recipes")
@@ -22,14 +24,15 @@ public class RecipeController {
     @Operation(summary = "레시피 상세 조회 API", description = "외부 Recipe API 또는 AI로부터 수집된 레시피를 조회 api 입니다.")
     public ApiResponse<RecipeDetailResponseDTO> getDetail(
             @PathVariable Long recipeId,
-            @AuthenticationPrincipal(expression = "username") String userId
+            @AuthenticationPrincipal Long loginUserId
     ) {
-        Long loginUserId = Long.parseLong(userId);
-
         RecipeDetailResponseDTO result =
                 recipeReadService.getRecipeDetail(recipeId, loginUserId);
 
-        return ApiResponse.onSuccess(RecipeSuccessCode.RECIPE_DETAIL_OK, result);
+        return ApiResponse.onSuccess(
+                RecipeSuccessCode.RECIPE_DETAIL_OK,
+                result
+        );
     }
 }
 
