@@ -55,6 +55,15 @@ public class RecipeReadService {
                 metadataRepository.findByRecipe_Id(recipe.getId())
                         .orElse(null);
 
+        if (meta == null && recipe.getSourceType() == SourceType.EXTERNAL_API) {
+            // 외부 레시피인데 메타가 없으면 강제 보완
+            loadOrCreateByExternalId(recipe.getSourceRef());
+
+            // 다시 조회
+            meta = metadataRepository.findByRecipe_Id(recipe.getId())
+                    .orElse(null);
+        }
+
         // 3️. 로그인 사용자 → 가족방 조회
         FamilyMemberProfile profile =
                 familyMemberProfileRepository.findByMember_Id(loginUserId)
