@@ -8,9 +8,12 @@ import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomErrorCode;
 import com.urisik.backend.domain.familyroom.repository.FamilyWishListExclusionRepository;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.entity.MemberWishList;
+import com.urisik.backend.domain.member.entity.MemberTransformedRecipeWish;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberWishListRepository;
+import com.urisik.backend.domain.member.repo.MemberTransformedRecipeWishRepository;
 import com.urisik.backend.domain.recipe.entity.Recipe;
+import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,7 @@ import java.util.*;
 public class FamilyWishListQueryService {
 
     private final MemberWishListRepository memberWishListRepository;
+    private final MemberTransformedRecipeWishRepository memberTransformedRecipeWishRepository;
     private final FamilyWishListExclusionRepository familyWishListExclusionRepository;
     private final FamilyRoomService familyRoomService;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
@@ -46,6 +50,8 @@ public class FamilyWishListQueryService {
         // 방장 제외 목록 조회 (exclusion)
         Set<Long> excludedRecipeIds =
                 familyWishListExclusionRepository.findExcludedRecipeIdsByFamilyRoomId(familyRoomId);
+        Set<Long> excludedTransformedRecipeIds =
+                familyWishListExclusionRepository.findExcludedTransformedRecipeIdsByFamilyRoomId(familyRoomId);
 
         // 가족방 전체 알레르기 조회
         List<Allergen> familyAllergens =
@@ -63,14 +69,16 @@ public class FamilyWishListQueryService {
 
         // 가족방 내 전체 개인 위시리스트 조회 (recipe + profile join fetch)
         List<MemberWishList> all = memberWishListRepository.findAllByFamilyRoomIdWithRecipe(familyRoomId);
-        if (all == null || all.isEmpty()) return List.of();
+        List<MemberTransformedRecipeWish> allTrans = memberTransformedRecipeWishRepository.findAllByFamilyRoomIdWithRecipe(familyRoomId);
+        boolean emptyCanonical = (all == null || all.isEmpty());
+        boolean emptyTrans = (allTrans == null || allTrans.isEmpty());
+        if (emptyCanonical && emptyTrans) return List.of();
 
-        // exclusion 반영 + recipeId 기준 집계
-        // - 인원 수는 distinct profile 기준
-        // - 최신 기준은 max(wishId)
-        Map<Long, Agg> grouped = new LinkedHashMap<>();
+        // exclusion 반영 + recipeId 기준 집계 (canonical + transformed)
+        Map<WishKey, Agg> grouped = new LinkedHashMap<>();
 
-        for (MemberWishList w : all) {
+        // canonical wishes
+        for (MemberWishList w : (all == null ? List.<MemberWishList>of() : all)) {
             if (w == null || w.getRecipe() == null || w.getFamilyMemberProfile() == null) continue;
 
             Long recipeId = w.getRecipe().getId();
@@ -78,8 +86,23 @@ public class FamilyWishListQueryService {
 
             if (excludedRecipeIds != null && excludedRecipeIds.contains(recipeId)) continue;
 
-            Agg agg = grouped.computeIfAbsent(recipeId, id -> new Agg(w.getRecipe()));
-            agg.add(w);
+            WishKey key = WishKey.canonical(recipeId);
+            Agg agg = grouped.computeIfAbsent(key, k -> Agg.fromRecipe(w.getRecipe()));
+            agg.addCanonical(w);
+        }
+
+        // transformed wishes
+        for (MemberTransformedRecipeWish w : (allTrans == null ? List.<MemberTransformedRecipeWish>of() : allTrans)) {
+            if (w == null || w.getRecipe() == null || w.getFamilyMemberProfile() == null) continue;
+
+            Long transId = w.getRecipe().getId();
+            if (transId == null) continue;
+
+            if (excludedTransformedRecipeIds != null && excludedTransformedRecipeIds.contains(transId)) continue;
+
+            WishKey key = WishKey.transformed(transId);
+            Agg agg = grouped.computeIfAbsent(key, k -> Agg.fromTransformed(w.getRecipe()));
+            agg.addTransformed(w);
         }
 
         if (grouped.isEmpty()) return List.of();
@@ -87,7 +110,7 @@ public class FamilyWishListQueryService {
         // 정렬
         // - 개인 위시리스트에 담은 인원 수 많은 순 (DESC)
         // - 최신순 (latest wish id DESC)
-        List<Map.Entry<Long, Agg>> sortedEntries = new ArrayList<>(grouped.entrySet());
+        List<Map.Entry<WishKey, Agg>> sortedEntries = new ArrayList<>(grouped.entrySet());
 
         sortedEntries.sort((e1, e2) -> {
             int cmp = Integer.compare(e2.getValue().getWisherCount(), e1.getValue().getWisherCount());
@@ -98,11 +121,11 @@ public class FamilyWishListQueryService {
         // DTO 변환
         List<FamilyWishListItemResDTO> result = new ArrayList<>();
 
-        for (Map.Entry<Long, Agg> entry : sortedEntries) {
-            Long recipeId = entry.getKey();
+        for (Map.Entry<WishKey, Agg> entry : sortedEntries) {
+            WishKey key = entry.getKey();
             Agg agg = entry.getValue();
 
-            String recipeName = agg.getRecipeTitle();
+            String recipeName = agg.getTitle();
 
             // 가족 알레르기 기준으로 unsafe면 가족 위시리스트 결과에서 제외
             boolean usableForMealPlan = isUsableForMealPlan(
@@ -111,13 +134,17 @@ public class FamilyWishListQueryService {
             );
             if (!usableForMealPlan) continue;
 
+            Long recipeId = (key.type() == WishKey.Type.CANONICAL) ? key.id() : null;
+            Long transformedRecipeId = (key.type() == WishKey.Type.TRANSFORMED) ? key.id() : null;
+
             result.add(new FamilyWishListItemResDTO(
                     recipeId,
+                    transformedRecipeId,
                     recipeName,
-                    "https://cdn.example.com/foods/" + recipeId + "/thumbnail.jpg",
+                    "https://cdn.example.com/foods/" + key.id() + "/thumbnail.jpg",
                     4.5,
                     new FamilyWishListItemResDTO.FoodCategory("TEMP", "임시 카테고리"),
-                    true,
+                    usableForMealPlan,
                     new FamilyWishListItemResDTO.SourceProfile(new ArrayList<>(agg.getProfiles().values()))
             ));
         }
@@ -130,7 +157,12 @@ public class FamilyWishListQueryService {
      * - 개인이 해당 항목을 삭제했다가 다시 담으면 exclusion 해제 (로직은 개인 위시리스트 add 시점에서 수행)
      */
     @Transactional
-    public void deleteFamilyWishListItems(Long memberId, Long familyRoomId, List<Long> recipeId) {
+    public void deleteFamilyWishListItems(
+            Long memberId,
+            Long familyRoomId,
+            List<Long> recipeId,
+            List<Long> transformedRecipeId
+    ) {
 
         // 가족방 구성원만 가능
         validateFamilyRoomMember(memberId, familyRoomId);
@@ -138,11 +170,28 @@ public class FamilyWishListQueryService {
         // 방장 검증
         familyRoomService.validateLeader(memberId, familyRoomId);
 
-        if (recipeId == null || recipeId.isEmpty()) {
+        boolean hasCanonical = recipeId != null && !recipeId.isEmpty();
+        boolean hasTransformed = transformedRecipeId != null && !transformedRecipeId.isEmpty();
+
+        if (!hasCanonical && !hasTransformed) {
             return;
         }
 
-        familyWishListExclusionRepository.excludeRecipes(familyRoomId, recipeId);
+        if (hasCanonical) {
+            Set<Long> existing = memberWishListRepository.findExistingRecipeIds(familyRoomId, recipeId);
+            if (existing.size() != new HashSet<>(recipeId).size()) {
+                throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_WISHLIST_NOT_FOUND);
+            }
+            familyWishListExclusionRepository.excludeRecipes(familyRoomId, recipeId);
+        }
+
+        if (hasTransformed) {
+            Set<Long> existing = memberTransformedRecipeWishRepository.findExistingTransformedRecipeIds(familyRoomId, transformedRecipeId);
+            if (existing.size() != new HashSet<>(transformedRecipeId).size()) {
+                throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_WISHLIST_NOT_FOUND);
+            }
+            familyWishListExclusionRepository.excludeTransformedRecipes(familyRoomId, transformedRecipeId);
+        }
     }
 
     private void validateFamilyRoomMember(Long memberId, Long familyRoomId) {
@@ -206,33 +255,66 @@ public class FamilyWishListQueryService {
         return tokens;
     }
 
+    // Typed key to distinguish canonical and transformed wishes
+    private record WishKey(Type type, Long id) {
+        enum Type { CANONICAL, TRANSFORMED }
+
+        static WishKey canonical(Long id) {
+            return new WishKey(Type.CANONICAL, id);
+        }
+
+        static WishKey transformed(Long id) {
+            return new WishKey(Type.TRANSFORMED, id);
+        }
+    }
+
     /**
      * recipeId별 집계용 내부 클래스
      * - distinct profiles (인원 수)
      * - latest wish id (최신)
-     * - recipeTitle, ingredientsRaw
+     * - title, ingredientsRaw (알레르기 필터링용)
      */
-    private class Agg {
-        private final String recipeTitle;
+    private static class Agg {
+        private final String title;
         private final String ingredientsRaw;
         private final Map<Long, FamilyWishListItemResDTO.Profile> profiles = new LinkedHashMap<>();
         private long latestWishId = 0L;
 
-        private Agg(Recipe recipe) {
-            this.recipeTitle = (recipe == null) ? null : recipe.getTitle();
-            this.ingredientsRaw = (recipe == null) ? null : recipe.getIngredientsRaw();
+        private Agg(String title, String ingredientsRaw) {
+            this.title = title;
+            this.ingredientsRaw = ingredientsRaw;
         }
 
-        private void add(MemberWishList w) {
-            if (w == null) return;
+        private static Agg fromRecipe(Recipe recipe) {
+            String t = (recipe == null) ? null : recipe.getTitle();
+            String ing = (recipe == null) ? null : recipe.getIngredientsRaw();
+            return new Agg(t, ing);
+        }
 
+        private static Agg fromTransformed(TransformedRecipe recipe) {
+            String t = (recipe == null) ? null : recipe.getTitle();
+            String ing = (recipe == null) ? null : recipe.getIngredientsTransformed();
+            return new Agg(t, ing);
+        }
+
+        private void addCanonical(MemberWishList w) {
+            if (w == null) return;
             if (w.getId() != null) {
                 latestWishId = Math.max(latestWishId, w.getId());
             }
+            addProfile(w.getFamilyMemberProfile());
+        }
 
-            FamilyMemberProfile p = w.getFamilyMemberProfile();
+        private void addTransformed(MemberTransformedRecipeWish w) {
+            if (w == null) return;
+            if (w.getId() != null) {
+                latestWishId = Math.max(latestWishId, w.getId());
+            }
+            addProfile(w.getFamilyMemberProfile());
+        }
+
+        private void addProfile(FamilyMemberProfile p) {
             if (p == null || p.getId() == null) return;
-
             profiles.putIfAbsent(
                     p.getId(),
                     new FamilyWishListItemResDTO.Profile(p.getId(), p.getNickname())
@@ -247,8 +329,8 @@ public class FamilyWishListQueryService {
             return latestWishId;
         }
 
-        private String getRecipeTitle() {
-            return recipeTitle;
+        private String getTitle() {
+            return title;
         }
 
         private Map<Long, FamilyWishListItemResDTO.Profile> getProfiles() {
