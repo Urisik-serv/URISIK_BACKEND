@@ -45,6 +45,11 @@ public class Recipe {
     @Column(nullable = false)
     private int reviewCount = 0;
 
+    //위시리스트 갯수
+    @Column(nullable = false)
+    private int wishCount = 0;
+
+
     @Column(nullable = false)
     private double avgScore = 0.0;
 
@@ -76,6 +81,13 @@ public class Recipe {
         this.avgScore =
                 ((this.avgScore * (this.reviewCount - 1)) + newScore)
                         / this.reviewCount;
+    }
+    public void incrementWishCount() {
+        wishCount++;
+    }
+
+    public void decrementWishCount() {
+        wishCount--;
     }
 }
 

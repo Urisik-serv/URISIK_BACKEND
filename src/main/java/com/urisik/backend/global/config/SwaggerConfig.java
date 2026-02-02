@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
         scheme = "bearer",
         bearerFormat = "JWT"
 )
+
 public class SwaggerConfig {
 
 
@@ -31,7 +32,7 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .addServersItem(new Server().url("https://api.urisik.com"));
     }
-
+    
     /*
      * 각 API 도메인 별로 그룹화하여 Swagger UI에 표시합니다.
      * */
@@ -88,7 +89,7 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("06. wishList")
                 .displayName("06. 개인 위시리스트 API")     // UI 드롭다운에 보일 이름
-                .pathsToMatch("/api/family-rooms/*/profile-wishes") // 이 그룹에 포함될 API의 URL 패턴
+                .pathsToMatch("/api/family-rooms/*/profile-wishes","/api/family-rooms/*/profile-wishes-trans") // 이 그룹에 포함될 API의 URL 패턴
                 .build();
     }
   

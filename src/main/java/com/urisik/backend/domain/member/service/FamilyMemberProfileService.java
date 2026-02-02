@@ -286,6 +286,8 @@ public class FamilyMemberProfileService {
             throw new MemberException(MemberErrorCode.FORBIDDEN_MEMBER);
         }
 
+        // 6) 방 탈퇴
+        targetProfile.setFamilyRoom(null);
         familyMemberProfileRepository.delete(targetProfile);
 
         return FamilyMemberProfileResponse.Delete.builder().isSuccess(true).build();
