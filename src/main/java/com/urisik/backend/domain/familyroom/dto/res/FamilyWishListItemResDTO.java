@@ -11,9 +11,9 @@ public class FamilyWishListItemResDTO {
     private final Long recipeId;
     private final Long transformedRecipeId;
     private final String recipeName;
-    private final String foodImageUrl;
-    private final Double score;
-    private final FoodCategory foodCategory;
+    private final String imageUrl;
+    private final Double avgScore;
+    private final Category category;
 
     private final boolean usableForMealPlan;
     // 이 레시피를 위시한 가족원 (개인 위시리스트 집계 결과)
@@ -23,18 +23,18 @@ public class FamilyWishListItemResDTO {
             Long recipeId,
             Long transformedRecipeId,
             String recipeName,
-            String foodImageUrl,
-            Double score,
-            FoodCategory foodCategory,
+            String imageUrl,
+            Double avgScore,
+            Category category,
             boolean usableForMealPlan,
             SourceProfile sourceProfile
     ) {
         this.recipeId = recipeId;
         this.transformedRecipeId = transformedRecipeId;
         this.recipeName = recipeName;
-        this.foodImageUrl = foodImageUrl;
-        this.score = score;
-        this.foodCategory = foodCategory;
+        this.imageUrl = imageUrl;
+        this.avgScore = avgScore;
+        this.category = category;
         this.usableForMealPlan = usableForMealPlan;
         this.sourceProfile = sourceProfile;
     }
@@ -51,16 +51,16 @@ public class FamilyWishListItemResDTO {
         return recipeName;
     }
 
-    public String getFoodImageUrl() {
-        return foodImageUrl;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public Double getScore() {
-        return score;
+    public Double getAvgScore() {
+        return avgScore;
     }
 
-    public FoodCategory getFoodCategory() {
-        return foodCategory;
+    public Category getCategory() {
+        return category;
     }
 
     public boolean isUsableForMealPlan() {
@@ -71,11 +71,11 @@ public class FamilyWishListItemResDTO {
         return sourceProfile;
     }
 
-    public static class FoodCategory {
+    public static class Category {
         private final String code;
         private final String label;
 
-        public FoodCategory(String code, String label) {
+        public Category(String code, String label) {
             this.code = code;
             this.label = label;
         }

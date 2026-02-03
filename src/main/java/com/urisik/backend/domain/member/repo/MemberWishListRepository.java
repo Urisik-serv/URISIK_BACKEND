@@ -35,6 +35,7 @@ public interface MemberWishListRepository extends JpaRepository<MemberWishList, 
     @Query("""
     select w from MemberWishList w
     join fetch w.recipe r
+    left join fetch r.recipeExternalMetadata m
     join fetch w.familyMemberProfile p
     where p.familyRoom.id = :familyRoomId
     order by w.id desc

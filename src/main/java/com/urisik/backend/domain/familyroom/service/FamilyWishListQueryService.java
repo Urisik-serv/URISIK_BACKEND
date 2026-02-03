@@ -1,8 +1,15 @@
 package com.urisik.backend.domain.familyroom.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.time.Instant;
+
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO;
+import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO.Category;
+import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO.Profile;
 import com.urisik.backend.domain.familyroom.exception.FamilyRoomException;
 import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomErrorCode;
 import com.urisik.backend.domain.familyroom.repository.FamilyWishListExclusionRepository;
@@ -14,6 +21,7 @@ import com.urisik.backend.domain.member.repo.MemberWishListRepository;
 import com.urisik.backend.domain.member.repo.MemberTransformedRecipeWishRepository;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
+import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,13 +33,14 @@ import java.util.*;
 @Transactional(readOnly = true)
 public class FamilyWishListQueryService {
 
+    private static final ObjectMapper CURSOR_MAPPER = new ObjectMapper();
+    private static final long CURSOR_TTL_SECONDS = 60L * 60L * 24L * 7L; // 7 days
+
     private final MemberWishListRepository memberWishListRepository;
     private final MemberTransformedRecipeWishRepository memberTransformedRecipeWishRepository;
     private final FamilyWishListExclusionRepository familyWishListExclusionRepository;
     private final FamilyRoomService familyRoomService;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
-
-    // 가족방 전체 알레르기 집계
     private final MemberAllergyRepository memberAllergyRepository;
 
     /**
@@ -43,6 +52,18 @@ public class FamilyWishListQueryService {
      *   unsafe(알레르기 포함) 레시피는 가족 위시리스트 결과에서 제외
      */
     public List<FamilyWishListItemResDTO> getFamilyWishList(Long memberId, Long familyRoomId) {
+        return getFamilyWishList(memberId, familyRoomId, null, 20).items();
+    }
+
+    public PageResult getFamilyWishList(
+            Long memberId,
+            Long familyRoomId,
+            Cursor cursor,
+            int size
+    ) {
+
+        // size 방어
+        int pageSize = Math.max(1, Math.min(size, 50));
 
         // 가족방 구성원만 가능
         validateFamilyRoomMember(memberId, familyRoomId);
@@ -72,7 +93,7 @@ public class FamilyWishListQueryService {
         List<MemberTransformedRecipeWish> allTrans = memberTransformedRecipeWishRepository.findAllByFamilyRoomIdWithRecipe(familyRoomId);
         boolean emptyCanonical = (all == null || all.isEmpty());
         boolean emptyTrans = (allTrans == null || allTrans.isEmpty());
-        if (emptyCanonical && emptyTrans) return List.of();
+        if (emptyCanonical && emptyTrans) return PageResult.empty();
 
         // exclusion 반영 + recipeId 기준 집계 (canonical + transformed)
         Map<WishKey, Agg> grouped = new LinkedHashMap<>();
@@ -105,51 +126,253 @@ public class FamilyWishListQueryService {
             agg.addTransformed(w);
         }
 
-        if (grouped.isEmpty()) return List.of();
+        if (grouped.isEmpty()) return PageResult.empty();
 
-        // 정렬
-        // - 개인 위시리스트에 담은 인원 수 많은 순 (DESC)
-        // - 최신순 (latest wish id DESC)
+        /**
+         * 정렬
+         * - 담은 인원 수 많은 순 (DESC)
+         * - 최신순 (latest wish id DESC)
+         * - tie-breaker: type(CANONICAL 먼저) -> id DESC
+         */
         List<Map.Entry<WishKey, Agg>> sortedEntries = new ArrayList<>(grouped.entrySet());
+        sortedEntries.sort(this::compareEntryRank);
 
-        sortedEntries.sort((e1, e2) -> {
-            int cmp = Integer.compare(e2.getValue().getWisherCount(), e1.getValue().getWisherCount());
-            if (cmp != 0) return cmp;
-            return Long.compare(e2.getValue().getLatestWishId(), e1.getValue().getLatestWishId());
-        });
+        // 알레르기 필터를 먼저 적용(페이지 빈칸 방지)
+        List<Map.Entry<WishKey, Agg>> usableEntries = new ArrayList<>(sortedEntries.size());
+        for (Map.Entry<WishKey, Agg> entry : sortedEntries) {
+            Agg agg = entry.getValue();
+            boolean usableForMealPlan = isUsableForMealPlan(
+                    agg.getIngredientsRaw(),
+                    normalizedAllergens
+            );
+            if (usableForMealPlan) {
+                usableEntries.add(entry);
+            }
+        }
+
+        if (usableEntries.isEmpty()) return PageResult.empty();
+
+        // 커서 적용: cursor 이후 항목부터
+        int startIdx = 0;
+        if (cursor != null && cursor.isValid()) {
+            for (int i = 0; i < usableEntries.size(); i++) {
+                Map.Entry<WishKey, Agg> e = usableEntries.get(i);
+                // e 가 cursor 이후면(compareEntryToCursor > 0) 시작점
+                if (compareEntryToCursor(e, cursor) > 0) {
+                    startIdx = i;
+                    break;
+                }
+                // 끝까지 다 cursor 이전/동일이면 결과 없음
+                startIdx = usableEntries.size();
+            }
+        }
+
+        if (startIdx >= usableEntries.size()) {
+            return PageResult.empty();
+        }
+
+        // page slice (+1개를 더 가져와 hasNext 판단)
+        int endExclusive = Math.min(usableEntries.size(), startIdx + pageSize + 1);
+        List<Map.Entry<WishKey, Agg>> window = usableEntries.subList(startIdx, endExclusive);
+
+        boolean hasNext = window.size() > pageSize;
+        List<Map.Entry<WishKey, Agg>> pageEntries = hasNext ? window.subList(0, pageSize) : window;
 
         // DTO 변환
-        List<FamilyWishListItemResDTO> result = new ArrayList<>();
-
-        for (Map.Entry<WishKey, Agg> entry : sortedEntries) {
+        List<FamilyWishListItemResDTO> items = new ArrayList<>(pageEntries.size());
+        for (Map.Entry<WishKey, Agg> entry : pageEntries) {
             WishKey key = entry.getKey();
             Agg agg = entry.getValue();
 
             String recipeName = agg.getTitle();
 
-            // 가족 알레르기 기준으로 unsafe면 가족 위시리스트 결과에서 제외
-            boolean usableForMealPlan = isUsableForMealPlan(
-                    agg.getIngredientsRaw(),
-                    normalizedAllergens
-            );
-            if (!usableForMealPlan) continue;
-
             Long recipeId = (key.type() == WishKey.Type.CANONICAL) ? key.id() : null;
             Long transformedRecipeId = (key.type() == WishKey.Type.TRANSFORMED) ? key.id() : null;
 
-            result.add(new FamilyWishListItemResDTO(
+            items.add(new FamilyWishListItemResDTO(
                     recipeId,
                     transformedRecipeId,
                     recipeName,
-                    "https://cdn.example.com/foods/" + key.id() + "/thumbnail.jpg",
-                    4.5,
-                    new FamilyWishListItemResDTO.FoodCategory("TEMP", "임시 카테고리"),
-                    usableForMealPlan,
+                    agg.getImageUrl(),
+                    agg.getAvgScore(),
+                    agg.getCategory(),
+                    true,
                     new FamilyWishListItemResDTO.SourceProfile(new ArrayList<>(agg.getProfiles().values()))
             ));
         }
 
-        return result;
+        Cursor nextCursor = null;
+        if (hasNext && !pageEntries.isEmpty()) {
+            Map.Entry<WishKey, Agg> last = pageEntries.get(pageEntries.size() - 1);
+            nextCursor = Cursor.from(last.getKey(), last.getValue());
+        }
+
+        return new PageResult(items, hasNext, nextCursor);
+    }
+
+    private int compareEntryRank(Map.Entry<WishKey, Agg> e1, Map.Entry<WishKey, Agg> e2) {
+        Agg a1 = e1.getValue();
+        Agg a2 = e2.getValue();
+
+        // wisherCount DESC
+        int cmp = Integer.compare(a2.getWisherCount(), a1.getWisherCount());
+        if (cmp != 0) return cmp;
+
+        // latestWishId DESC
+        cmp = Long.compare(a2.getLatestWishId(), a1.getLatestWishId());
+        if (cmp != 0) return cmp;
+
+        // type: CANONICAL 먼저
+        cmp = Integer.compare(typeOrder(e1.getKey().type()), typeOrder(e2.getKey().type()));
+        if (cmp != 0) return cmp;
+
+        // id DESC
+        return Long.compare(
+                e2.getKey().id() == null ? 0L : e2.getKey().id(),
+                e1.getKey().id() == null ? 0L : e1.getKey().id()
+        );
+    }
+
+    private int compareEntryToCursor(Map.Entry<WishKey, Agg> entry, Cursor cursor) {
+        if (cursor == null) return 1;
+
+        Agg a = entry.getValue();
+        WishKey k = entry.getKey();
+
+        // wisherCount DESC
+        int cmp = Integer.compare(cursor.wisherCount, a.getWisherCount());
+        if (cmp != 0) return cmp;
+
+        // latestWishId DESC
+        cmp = Long.compare(cursor.latestWishId, a.getLatestWishId());
+        if (cmp != 0) return cmp;
+
+        // type: CANONICAL 먼저
+        cmp = Integer.compare(typeOrder(k.type()), typeOrder(cursor.type));
+        if (cmp != 0) return cmp;
+
+        // id DESC
+        long cursorId = cursor.id == null ? 0L : cursor.id;
+        long entryId = k.id() == null ? 0L : k.id();
+        return Long.compare(cursorId, entryId);
+    }
+
+    private int typeOrder(WishKey.Type type) {
+        // CANONICAL 먼저
+        return (type == WishKey.Type.CANONICAL) ? 0 : 1;
+    }
+
+    public record PageResult(
+            List<FamilyWishListItemResDTO> items,
+            boolean hasNext,
+            Cursor nextCursor
+    ) {
+        static PageResult empty() {
+            return new PageResult(List.of(), false, null);
+        }
+    }
+
+    public static class Cursor {
+        private final int wisherCount;
+        private final long latestWishId;
+        private final WishKey.Type type;
+        private final Long id;
+
+        public Cursor(int wisherCount, long latestWishId, WishKey.Type type, Long id) {
+            this.wisherCount = wisherCount;
+            this.latestWishId = latestWishId;
+            this.type = type;
+            this.id = id;
+        }
+
+        public int getWisherCount() {
+            return wisherCount;
+        }
+
+        public long getLatestWishId() {
+            return latestWishId;
+        }
+
+        public WishKey.Type getType() {
+            return type;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public boolean isValid() {
+            return wisherCount >= 0 && latestWishId >= 0 && type != null && id != null;
+        }
+
+        static Cursor from(WishKey key, Agg agg) {
+            return new Cursor(
+                    agg == null ? 0 : agg.getWisherCount(),
+                    agg == null ? 0L : agg.getLatestWishId(),
+                    key == null ? WishKey.Type.CANONICAL : key.type(),
+                    key == null ? null : key.id()
+            );
+        }
+
+        public static Cursor of(Integer wisherCount, Long latestWishId, String type, Long id) {
+            if (wisherCount == null || latestWishId == null || type == null || id == null) return null;
+            WishKey.Type t;
+            try {
+                t = WishKey.Type.valueOf(type.trim().toUpperCase(Locale.ROOT));
+            } catch (Exception e) {
+                return null;
+            }
+            return new Cursor(wisherCount, latestWishId, t, id);
+        }
+
+        public String encode() {
+            try {
+                long exp = Instant.now().getEpochSecond() + CURSOR_TTL_SECONDS;
+
+                ObjectNode node = CURSOR_MAPPER.createObjectNode();
+                node.put("w", wisherCount);
+                node.put("l", latestWishId);
+                node.put("t", type == WishKey.Type.CANONICAL ? "C" : "T");
+                node.put("id", id);
+                node.put("exp", exp);
+
+                byte[] jsonBytes = CURSOR_MAPPER.writeValueAsBytes(node);
+                return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(jsonBytes);
+            } catch (Exception e) {
+                // encode 실패 시 커서 미제공
+                return null;
+            }
+        }
+
+        public static Cursor decode(String token) {
+            if (token == null || token.isBlank()) return null;
+
+            try {
+                byte[] decoded = java.util.Base64.getUrlDecoder().decode(token);
+                JsonNode node = CURSOR_MAPPER.readTree(decoded);
+
+                int w = node.path("w").asInt(-1);
+                long l = node.path("l").asLong(-1L);
+                String tRaw = node.path("t").asText(null);
+                long id = node.path("id").asLong(-1L);
+                long exp = node.path("exp").asLong(-1L);
+
+                if (w < 0 || l < 0 || id < 0 || tRaw == null || exp < 0) return null;
+
+                long now = Instant.now().getEpochSecond();
+                if (exp < now) return null; // expired
+
+                WishKey.Type type;
+                if ("C".equalsIgnoreCase(tRaw)) type = WishKey.Type.CANONICAL;
+                else if ("T".equalsIgnoreCase(tRaw)) type = WishKey.Type.TRANSFORMED;
+                else return null;
+
+                Cursor cursor = new Cursor(w, l, type, id);
+                return cursor.isValid() ? cursor : null;
+            } catch (Exception e) {
+                return null;
+            }
+        }
     }
 
     /**
@@ -273,28 +496,58 @@ public class FamilyWishListQueryService {
      * - distinct profiles (인원 수)
      * - latest wish id (최신)
      * - title, ingredientsRaw (알레르기 필터링용)
+     * - foodImageUrl, score, foodCategory (추가)
      */
     private static class Agg {
         private final String title;
         private final String ingredientsRaw;
-        private final Map<Long, FamilyWishListItemResDTO.Profile> profiles = new LinkedHashMap<>();
+        private final String imageUrl;
+        private final Double avgScore;
+        private final Category category;
+
+        private final Map<Long, Profile> profiles = new LinkedHashMap<>();
         private long latestWishId = 0L;
 
-        private Agg(String title, String ingredientsRaw) {
+        private Agg(String title,
+                    String ingredientsRaw,
+                    String imageUrl,
+                    Double avgScore,
+                    Category category) {
             this.title = title;
             this.ingredientsRaw = ingredientsRaw;
+            this.imageUrl = imageUrl;
+            this.avgScore = avgScore;
+            this.category = category;
         }
 
         private static Agg fromRecipe(Recipe recipe) {
             String t = (recipe == null) ? null : recipe.getTitle();
             String ing = (recipe == null) ? null : recipe.getIngredientsRaw();
-            return new Agg(t, ing);
+
+            RecipeExternalMetadata meta = (recipe == null) ? null : recipe.getRecipeExternalMetadata();
+
+            String imageUrl = (meta == null) ? null : meta.getImageSmallUrl();
+            Double avgScore = (recipe == null) ? null : recipe.getAvgScore();
+
+            Category category = null;
+            if (meta != null && meta.getCategory() != null) {
+                category = new Category(
+                        meta.getCategory(),
+                        meta.getCategory()
+                );
+            }
+
+            return new Agg(t, ing, imageUrl, avgScore, category);
         }
 
         private static Agg fromTransformed(TransformedRecipe recipe) {
             String t = (recipe == null) ? null : recipe.getTitle();
             String ing = (recipe == null) ? null : recipe.getIngredientsTransformed();
-            return new Agg(t, ing);
+            String imageUrl = null;
+            Double avgScore = (recipe == null) ? null : recipe.getAvgScore();
+            Category category = null;
+
+            return new Agg(t, ing, imageUrl, avgScore, category);
         }
 
         private void addCanonical(MemberWishList w) {
@@ -317,7 +570,7 @@ public class FamilyWishListQueryService {
             if (p == null || p.getId() == null) return;
             profiles.putIfAbsent(
                     p.getId(),
-                    new FamilyWishListItemResDTO.Profile(p.getId(), p.getNickname())
+                    new Profile(p.getId(), p.getNickname())
             );
         }
 
@@ -333,12 +586,24 @@ public class FamilyWishListQueryService {
             return title;
         }
 
-        private Map<Long, FamilyWishListItemResDTO.Profile> getProfiles() {
+        private Map<Long, Profile> getProfiles() {
             return profiles;
         }
 
         private String getIngredientsRaw() {
             return ingredientsRaw;
+        }
+
+        private String getImageUrl() {
+            return imageUrl;
+        }
+
+        private Double getAvgScore() {
+            return avgScore;
+        }
+
+        private Category getCategory() {
+            return category;
         }
     }
 }

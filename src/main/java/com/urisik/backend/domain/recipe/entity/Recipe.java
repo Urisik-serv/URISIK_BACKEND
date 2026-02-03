@@ -25,6 +25,9 @@ public class Recipe {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @OneToOne(mappedBy = "recipe", fetch = FetchType.LAZY)
+    private RecipeExternalMetadata recipeExternalMetadata;
+
     @Column(nullable = false)
     private String title;
 
