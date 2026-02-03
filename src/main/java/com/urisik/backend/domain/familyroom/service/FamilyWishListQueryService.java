@@ -248,7 +248,7 @@ public class FamilyWishListQueryService {
         if (cmp != 0) return cmp;
 
         // type: CANONICAL 먼저
-        cmp = Integer.compare(typeOrder(cursor.type), typeOrder(k.type()));
+        cmp = Integer.compare(typeOrder(k.type()), typeOrder(cursor.type));
         if (cmp != 0) return cmp;
 
         // id DESC
