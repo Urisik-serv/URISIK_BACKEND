@@ -8,6 +8,8 @@ import java.time.Instant;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO;
+import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO.Category;
+import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO.Profile;
 import com.urisik.backend.domain.familyroom.exception.FamilyRoomException;
 import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomErrorCode;
 import com.urisik.backend.domain.familyroom.repository.FamilyWishListExclusionRepository;
@@ -19,6 +21,7 @@ import com.urisik.backend.domain.member.repo.MemberWishListRepository;
 import com.urisik.backend.domain.member.repo.MemberTransformedRecipeWishRepository;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
+import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -190,9 +193,9 @@ public class FamilyWishListQueryService {
                     recipeId,
                     transformedRecipeId,
                     recipeName,
-                    "https://cdn.example.com/foods/" + key.id() + "/thumbnail.jpg",
-                    4.5,
-                    new FamilyWishListItemResDTO.FoodCategory("TEMP", "임시 카테고리"),
+                    agg.getImageUrl(),
+                    agg.getAvgScore(),
+                    agg.getCategory(),
                     true,
                     new FamilyWishListItemResDTO.SourceProfile(new ArrayList<>(agg.getProfiles().values()))
             ));
@@ -493,28 +496,58 @@ public class FamilyWishListQueryService {
      * - distinct profiles (인원 수)
      * - latest wish id (최신)
      * - title, ingredientsRaw (알레르기 필터링용)
+     * - foodImageUrl, score, foodCategory (추가)
      */
     private static class Agg {
         private final String title;
         private final String ingredientsRaw;
-        private final Map<Long, FamilyWishListItemResDTO.Profile> profiles = new LinkedHashMap<>();
+        private final String imageUrl;
+        private final Double avgScore;
+        private final Category category;
+
+        private final Map<Long, Profile> profiles = new LinkedHashMap<>();
         private long latestWishId = 0L;
 
-        private Agg(String title, String ingredientsRaw) {
+        private Agg(String title,
+                    String ingredientsRaw,
+                    String imageUrl,
+                    Double avgScore,
+                    Category category) {
             this.title = title;
             this.ingredientsRaw = ingredientsRaw;
+            this.imageUrl = imageUrl;
+            this.avgScore = avgScore;
+            this.category = category;
         }
 
         private static Agg fromRecipe(Recipe recipe) {
             String t = (recipe == null) ? null : recipe.getTitle();
             String ing = (recipe == null) ? null : recipe.getIngredientsRaw();
-            return new Agg(t, ing);
+
+            RecipeExternalMetadata meta = (recipe == null) ? null : recipe.getRecipeExternalMetadata();
+
+            String imageUrl = (meta == null) ? null : meta.getImageSmallUrl();
+            Double avgScore = (recipe == null) ? null : recipe.getAvgScore();
+
+            Category category = null;
+            if (meta != null && meta.getCategory() != null) {
+                category = new Category(
+                        meta.getCategory(),
+                        meta.getCategory()
+                );
+            }
+
+            return new Agg(t, ing, imageUrl, avgScore, category);
         }
 
         private static Agg fromTransformed(TransformedRecipe recipe) {
             String t = (recipe == null) ? null : recipe.getTitle();
             String ing = (recipe == null) ? null : recipe.getIngredientsTransformed();
-            return new Agg(t, ing);
+            String imageUrl = null;
+            Double avgScore = (recipe == null) ? null : recipe.getAvgScore();
+            Category category = null;
+
+            return new Agg(t, ing, imageUrl, avgScore, category);
         }
 
         private void addCanonical(MemberWishList w) {
@@ -537,7 +570,7 @@ public class FamilyWishListQueryService {
             if (p == null || p.getId() == null) return;
             profiles.putIfAbsent(
                     p.getId(),
-                    new FamilyWishListItemResDTO.Profile(p.getId(), p.getNickname())
+                    new Profile(p.getId(), p.getNickname())
             );
         }
 
@@ -553,12 +586,24 @@ public class FamilyWishListQueryService {
             return title;
         }
 
-        private Map<Long, FamilyWishListItemResDTO.Profile> getProfiles() {
+        private Map<Long, Profile> getProfiles() {
             return profiles;
         }
 
         private String getIngredientsRaw() {
             return ingredientsRaw;
+        }
+
+        private String getImageUrl() {
+            return imageUrl;
+        }
+
+        private Double getAvgScore() {
+            return avgScore;
+        }
+
+        private Category getCategory() {
+            return category;
         }
     }
 }

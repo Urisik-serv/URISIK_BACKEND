@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
@@ -25,6 +28,7 @@ import java.util.List;
 public class FamilyWishListController {
 
     private final FamilyWishListQueryService familyWishListQueryService;
+    private static final Logger log = LoggerFactory.getLogger(FamilyWishListController.class);
 
     @GetMapping("/family-rooms/{familyRoomId}/family-wishlist")
     @Operation(summary = "가족 위시리스트 조회 API")
@@ -49,13 +53,25 @@ public class FamilyWishListController {
                 ApiResponse.onSuccess(FamilyRoomSuccessCode.FAMILY_WISHLIST, page.items());
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("X-Has-Next", String.valueOf(page.hasNext()));
+
+        boolean hasNext = page.hasNext();
+        String nextToken = null;
 
         if (page.nextCursor() != null) {
-            String next = page.nextCursor().encode();
-            if (next != null) {
-                headers.add("X-Next-Cursor", next);
-            }
+            nextToken = page.nextCursor().encode();
+        }
+
+        // Defensive: if we claim hasNext but cannot provide a cursor, the client cannot fetch next data.
+        if (hasNext && (nextToken == null || nextToken.isBlank())) {
+            log.warn("Cursor encoding failed while hasNext=true. familyRoomId={}, memberId={}, size={}, cursorPresent={}",
+                    familyRoomId, memberId, size, (cursor != null && !cursor.isBlank()));
+            hasNext = false;
+        }
+
+        headers.add("X-Has-Next", String.valueOf(hasNext));
+
+        if (hasNext && nextToken != null && !nextToken.isBlank()) {
+            headers.add("X-Next-Cursor", nextToken);
         }
 
         return ResponseEntity.ok()
