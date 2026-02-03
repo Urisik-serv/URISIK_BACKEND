@@ -56,12 +56,18 @@ public class FamilyMemberProfileService {
             throw new MemberException(MemberErrorCode.FORBIDDEN_ROOM); // 403 성격 에러코드
         }
 
+        boolean exist = familyMemberProfileRepository.existsByMember_Id(memberId);
+        if (exist) {
+            throw new MemberException(MemberErrorCode.ALREADY_HAVE_PROFILE);
+        }
+
 
         // 2단계 familyRoom에 속한 FamilyMemberProfile의 리스트를 가져온다. 프로필들중 Mom, Father역할을 식별한다
         //Mom과 father 은 한명밖에 없으니 요청과 현재 부모상태 체크하고 통과되면 프로필을 등록한다.
 
         List<FamilyMemberProfile> familyMemberProfiles = familyMemberProfileRepository.findAllByFamilyRoom_Id(familyRoom.getId());
         FamilyRole requestedRole = req.getRole();
+
 
         // 엄마/아빠만 중복 제한
         if (requestedRole == FamilyRole.MOM || requestedRole == FamilyRole.DAD) {

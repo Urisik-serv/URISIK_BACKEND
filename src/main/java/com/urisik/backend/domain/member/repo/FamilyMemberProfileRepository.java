@@ -13,6 +13,7 @@ public interface FamilyMemberProfileRepository extends JpaRepository<FamilyMembe
 
 
     Optional<FamilyMemberProfile> findByMember_Id(Long memberId);
+    boolean existsByMember_Id(Long memberId);
 
     List<FamilyMemberProfile> findAllByFamilyRoom_Id(Long FamilyRoomId);
 
