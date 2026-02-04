@@ -122,28 +122,30 @@ public class FamilyMemberProfileController {
         return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_CREATE,result);
     }
 
-    @GetMapping("/{familyRoomId}/profile-wishes/")
+    @GetMapping("/{familyRoomId}/profile-wishes/{profileId}")
     public ApiResponse<WishListResponse.GetWishes> getMyWishes(
             @PathVariable Long familyRoomId,
             @AuthenticationPrincipal Long memberId,
+            @PathVariable Long profileId,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size
     ) {
         WishListResponse.GetWishes result =
-                memberWishListService.getMyWishes(familyRoomId, memberId, cursor, size);
+                memberWishListService.getMyWishes(familyRoomId, memberId, profileId, cursor, size);
 
         return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_GET, result);
     }
 
-    @GetMapping("/{familyRoomId}/profile-wishes-trans")
+    @GetMapping("/{familyRoomId}/profile-wishes-trans/{profileId}")
     public ApiResponse<WishListResponse.GetTransWishes> getMyTransWishes(
             @PathVariable Long familyRoomId,
             @AuthenticationPrincipal Long memberId,
+            @PathVariable Long profileId,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size
     ) {
         WishListResponse.GetTransWishes result =
-                memberWishListService.getMyTransWishes(familyRoomId, memberId, cursor, size);
+                memberWishListService.getMyTransWishes(familyRoomId, memberId,profileId, cursor, size);
 
         return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_GET, result);
     }

@@ -27,7 +27,7 @@ public interface MemberTransformedRecipeWishRepository extends JpaRepository<Mem
 
 
     @Query("""
-    select w from MemberWishList w
+    select w from MemberTransformedRecipeWish w
     join fetch w.recipe r
     where w.familyMemberProfile.id = :profileId
     order by w.id desc
@@ -35,7 +35,7 @@ public interface MemberTransformedRecipeWishRepository extends JpaRepository<Mem
     List<MemberTransformedRecipeWish> findFirstPage(@Param("profileId") Long profileId, Pageable pageable);
 
     @Query("""
-    select w from MemberWishList w
+    select w from MemberTransformedRecipeWish w
     join fetch w.recipe r
     where w.familyMemberProfile.id = :profileId
       and w.id < :cursor
