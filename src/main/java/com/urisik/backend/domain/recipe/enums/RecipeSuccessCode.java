@@ -15,7 +15,8 @@ public enum RecipeSuccessCode implements BaseSuccessCode {
     RECIPE_DETAIL_OK(HttpStatus.OK, "RECIPE_200_002", "레시피 상세 조회 성공"),
     TRANSFORMED_RECIPE_DETAIL_OK(HttpStatus.OK, "RECIPE_200_003", "변형 레시피 조회 성공"),
     RECIPE_TRANSFORM_OK(HttpStatus.OK, "RECIPE_201_001", "레시피 생성 성공"),
-    EXTERNAL_RECIPE_UPSERT_OK(HttpStatus.OK, "RECIPE_201_002", "외부 레시피 upsert 성공");
+    EXTERNAL_RECIPE_UPSERT_OK(HttpStatus.OK, "RECIPE_201_002", "외부 레시피 upsert 성공"),
+    RECIPE_TRANSFORM_CREATED(HttpStatus.OK, "RECIPE_201_003", "변형 레시피 생성 성공");
 
     private final HttpStatus httpStatus;
     private final String code;

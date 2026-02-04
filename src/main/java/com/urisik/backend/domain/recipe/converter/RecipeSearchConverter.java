@@ -36,7 +36,7 @@ public class RecipeSearchConverter {
         return new RecipeSearchResponseDTO.Item(
                 tr.getId().toString(),
                 "TRANSFORMED",
-                tr.getRecipe().getTitle(),
+                tr.getBaseRecipe().getTitle(),
                 meta != null ? meta.getCategory() : null,
                 meta != null ? meta.getImageSmallUrl() : null,
                 tr.getAvgScore(),

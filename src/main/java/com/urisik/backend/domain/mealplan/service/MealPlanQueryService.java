@@ -245,7 +245,7 @@ public class MealPlanQueryService {
         // recipe 조회(변환본이 가리키는 recipe 포함)
         Set<Long> allRecipeIdsToLoad = new HashSet<>(recipeIdsStored);
         trById.values().stream()
-                .map(tr -> tr.getRecipe() == null ? null : tr.getRecipe().getId())
+                .map(tr -> tr.getBaseRecipe() == null ? null : tr.getBaseRecipe().getId())
                 .filter(Objects::nonNull)
                 .forEach(allRecipeIdsToLoad::add);
 
@@ -256,10 +256,10 @@ public class MealPlanQueryService {
         // recipeId로 저장된 케이스는 transformedRecipeId도 내려주기 위해 조회
         Map<Long, Long> transformedIdByRecipeId = new HashMap<>();
         if (!recipeIdsStored.isEmpty()) {
-            transformedRecipeRepository.findByFamilyRoomIdAndRecipe_IdIn(familyRoomId, recipeIdsStored)
+            transformedRecipeRepository.findByFamilyRoomIdAndBaseRecipe_IdIn(familyRoomId, recipeIdsStored)
                     .stream()
-                    .filter(tr -> tr.getRecipe() != null)
-                    .forEach(tr -> transformedIdByRecipeId.put(tr.getRecipe().getId(), tr.getId()));
+                    .filter(tr -> tr.getBaseRecipe() != null)
+                    .forEach(tr -> transformedIdByRecipeId.put(tr.getBaseRecipe().getId(), tr.getId()));
         }
 
         Map<Long, ResolvedRecipe> resolved = new HashMap<>();
@@ -269,7 +269,7 @@ public class MealPlanQueryService {
             Long storedId = en.getKey();
             TransformedRecipe tr = en.getValue();
 
-            Recipe base = (tr.getRecipe() == null) ? null : recipeById.get(tr.getRecipe().getId());
+            Recipe base = (tr.getBaseRecipe() == null) ? null : recipeById.get(tr.getBaseRecipe().getId());
             if (base == null) continue;
 
             resolved.put(storedId, new ResolvedRecipe(
@@ -299,12 +299,12 @@ public class MealPlanQueryService {
     }
 
     private String pickIngredients(TransformedRecipe tr, Recipe base) {
-        String v = tr.getIngredientsTransformed();
+        String v = tr.getInstructionsRaw();
         return (v == null || v.isBlank()) ? base.getIngredientsRaw() : v;
     }
 
     private String pickInstructions(TransformedRecipe tr, Recipe base) {
-        String v = tr.getInstructionsTransformed();
+        String v = tr.getInstructionsRaw();
         return (v == null || v.isBlank()) ? base.getInstructionsRaw() : v;
     }
 

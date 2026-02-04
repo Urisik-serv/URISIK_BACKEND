@@ -51,7 +51,7 @@ public class RecipeSearchService {
                 transformedRecipeRepository.findPublicByRecipeTitleLike(keyword, Visibility.PUBLIC, pageable);
 
         for (TransformedRecipe tr : trs) {
-            RecipeExternalMetadata meta = metadataRepository.findByRecipe_Id(tr.getRecipe().getId()).orElse(null);
+            RecipeExternalMetadata meta = metadataRepository.findByRecipe_Id(tr.getBaseRecipe().getId()).orElse(null);
             items.add(RecipeSearchConverter.fromTransformed(tr, meta));
         }
 

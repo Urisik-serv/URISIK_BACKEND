@@ -542,7 +542,7 @@ public class FamilyWishListQueryService {
 
         private static Agg fromTransformed(TransformedRecipe recipe) {
             String t = (recipe == null) ? null : recipe.getTitle();
-            String ing = (recipe == null) ? null : recipe.getIngredientsTransformed();
+            String ing = (recipe == null) ? null : recipe.getIngredientsRaw();
             String imageUrl = null;
             Double avgScore = (recipe == null) ? null : recipe.getAvgScore();
             Category category = null;
