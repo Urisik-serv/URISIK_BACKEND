@@ -355,7 +355,7 @@ public class FamilyMemberProfileService {
         }
 
         // 6) 방 탈퇴
-        targetProfile.setFamilyRoom(null);
+        targetProfile.getMember().setFamilyRoom(null);
         familyMemberProfileRepository.delete(targetProfile);
 
         return FamilyMemberProfileResponse.Delete.builder().isSuccess(true).build();

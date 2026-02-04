@@ -68,7 +68,7 @@ public enum MemberErrorCode implements BaseErrorCode {
             "해당 레시피가 없습니다."),
     ALREADY_HAVE_PROFILE(HttpStatus.GONE,
             "AUTH_200",
-            "해당하는 사용자가 없습니다."),
+            "이미 프로필이 존재합니다."),
     NO_MEMBER(HttpStatus.GONE,
             "AUTH_200",
             "해당하는 사용자가 없습니다.");
