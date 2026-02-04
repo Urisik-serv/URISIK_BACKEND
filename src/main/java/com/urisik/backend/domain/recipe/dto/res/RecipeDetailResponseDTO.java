@@ -25,6 +25,12 @@ public class RecipeDetailResponseDTO {
 
     private AllergyWarningDTO allergyWarning;
 
+    private int reviewCount;
+
+    private int wishCount;
+
+    private double avgScore;
+
     @Getter
     @AllArgsConstructor
     public static class NutritionDTO {

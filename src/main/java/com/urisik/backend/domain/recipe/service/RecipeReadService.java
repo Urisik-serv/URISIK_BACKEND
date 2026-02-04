@@ -178,7 +178,10 @@ public class RecipeReadService {
                 RecipeTextParser.parseIngredients(recipe.getIngredientsRaw()),
                 RecipeTextParser.parseSteps(recipe.getInstructionsRaw()),
                 recipe.getSourceType().name(),
-                warning
+                warning,
+                recipe.getReviewCount(),
+                recipe.getWishCount(),
+                recipe.getAvgScore()
         );
     }
 
