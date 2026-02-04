@@ -27,10 +27,8 @@ public class HomeRecommendationController {
             description = "위시리스트가 많은 레시피 중 로그인 사용자의 가족 알레르기 기준으로 안전한 레시피 Top 3를 추천합니다."
     )
     public ApiResponse<HomeSafeRecipeResponse> getSafeRecipeRecommendations(
-            @AuthenticationPrincipal(expression = "username") String userId
+            @AuthenticationPrincipal Long loginUserId
     ) {
-        Long loginUserId = Long.parseLong(userId);
-
         HomeSafeRecipeResponse result =
                 homeRecommendationService.recommendSafeRecipes(loginUserId);
 
