@@ -19,8 +19,8 @@ public class RecipeSearchConverter {
                 recipe.getId().toString(),
                 "RECIPE",
                 recipe.getTitle(),
-                meta != null ? meta.getCategory() : null,
                 meta != null ? meta.getImageSmallUrl() : null,
+                meta != null ? meta.getCategory() : null,
                 recipe.getAvgScore(),
                 recipe.getReviewCount(),
                 null
@@ -37,8 +37,8 @@ public class RecipeSearchConverter {
                 tr.getId().toString(),
                 "TRANSFORMED",
                 tr.getBaseRecipe().getTitle(),
-                meta != null ? meta.getCategory() : null,
                 meta != null ? meta.getImageSmallUrl() : null,
+                meta != null ? meta.getCategory() : null,
                 tr.getAvgScore(),
                 tr.getReviewCount(),
                 null
