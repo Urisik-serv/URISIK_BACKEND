@@ -4,7 +4,6 @@ import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
-import com.urisik.backend.domain.member.enums.AlarmPolicy;
 import com.urisik.backend.domain.member.enums.FamilyRole;
 import com.urisik.backend.domain.member.converter.FamilyMemberProfileConverter;
 import com.urisik.backend.domain.member.dto.req.FamilyMemberProfileRequest;
@@ -241,26 +240,89 @@ public class FamilyMemberProfileService {
      */
 
 
-    public FamilyMemberProfileResponse.Detail getMyProfile
-            (Long familyRoomId, Long memberId) {
+    public FamilyMemberProfileResponse.Detail getMemberProfile
+            (Long familyRoomId, Long profileId, Long memberId) {
+
+        // 요청자가 자신의 프로필을 요청하는 경우
+        if (profileId == -1) {
+            FamilyMemberProfile mine = familyMemberProfileRepository.findByMember_Id(memberId).orElseThrow(
+                    () -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY)
+            );
+            profileId = mine.getId();
+        }
+
+
+        // 요청 대상의 프로필이 있는가?
+        boolean exists_req_pro = familyMemberProfileRepository.existsById(profileId);
+        if (!exists_req_pro) {
+            throw new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY);
+        }
+
+        // 요청자가 방안에 있는지?
+        boolean exists = familyMemberProfileRepository.existsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId);
+        if (!exists) {
+            throw new MemberException(MemberErrorCode.NOT_YOUR_ROOM);
+        }
 
         // 방안에 있는 맴버 찾기.
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
+                .findByFamilyRoom_IdAndId(familyRoomId,profileId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
-        Long profileId = profile.getId();
+        Long targetProfileId = profile.getId();
 
         // 2) 알러지 목록 조회
-        List<MemberAllergy> allergies = memberAllergyRepository.findByFamilyMemberProfile_Id(profileId);
+        List<MemberAllergy> allergies = memberAllergyRepository.findByFamilyMemberProfile_Id(targetProfileId);
 
         // 3) 식단선호 목록 조회
-        List<DietPreference> diets = dietPreferenceRepository.findAllByFamilyMemberProfile_Id(profileId);
+        List<DietPreference> diets = dietPreferenceRepository.findAllByFamilyMemberProfile_Id(targetProfileId);
 
 
         return FamilyMemberProfileConverter.toDetail(profile,allergies,diets);
 
     }
+
+
+    public FamilyMemberProfileResponse.getFamilyProfilesResponse getFamilyProfiles
+            (Long familyRoomId, Long memberId) {
+
+
+        // 프로필이 존재하는지 여부
+        boolean exists_mem = familyMemberProfileRepository.existsByMember_Id(memberId);
+        if (!exists_mem) {
+            throw new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY);
+        }
+
+        // 방안에 있는 맴버 찾기.
+
+        boolean exists = familyMemberProfileRepository.existsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId);
+        if (!exists) {
+            throw new MemberException(MemberErrorCode.NOT_YOUR_ROOM);
+        }
+
+        // 방안에 모든 맴버들 반환
+        List<FamilyMemberProfile> profiles =
+                familyMemberProfileRepository.findAllByFamilyRoomId(familyRoomId);
+
+        //각 맴버 들의 id, 프로필 url, 이름, 역할
+        List<FamilyMemberProfileResponse.familyDetail> details = profiles.stream()
+                .map(p -> FamilyMemberProfileResponse.familyDetail.builder()
+                        .profileId(p.getId())
+                        .nickname(p.getNickname())
+                        .role(p.getFamilyRole())          // 네 DTO는 FamilyRole role
+                        .profilePicUrl(p.getProfilePicUrl())
+                        .build())
+                .toList();
+
+        return FamilyMemberProfileResponse.getFamilyProfilesResponse.builder()
+                .isSuccess(true)
+                .familyDetails(details)
+                .build();
+
+    }
+
+
+
     /*
     --------------------------------------------------------------------
     delete

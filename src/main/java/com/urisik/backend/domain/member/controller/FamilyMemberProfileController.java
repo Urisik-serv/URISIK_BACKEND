@@ -42,16 +42,32 @@ public class FamilyMemberProfileController {
 
 
 
-    @GetMapping("/{familyRoomId}/profiles")
+    @GetMapping("/{familyRoomId}/profiles/{profileId}")
     public ApiResponse<FamilyMemberProfileResponse.Detail> getMyProfile(
+            @PathVariable Long familyRoomId,
+            @PathVariable Long profileId,
+            @AuthenticationPrincipal Long memberId
+    ) {
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_PROFILE_GET,
+                familyMemberProfileService.getMemberProfile(familyRoomId, profileId, memberId)
+        );
+    }
+
+    //가족방 내 모두의 정보 얻기
+    @GetMapping("/{familyRoomId}/all-profiles")
+    public ApiResponse<FamilyMemberProfileResponse.getFamilyProfilesResponse> getMyFamilyProfile(
             @PathVariable Long familyRoomId,
             @AuthenticationPrincipal Long memberId
     ) {
         return ApiResponse.onSuccess(
                 MemberSuccessCode.MEMBER_PROFILE_GET,
-                familyMemberProfileService.getMyProfile(familyRoomId, memberId)
+                familyMemberProfileService.getFamilyProfiles(familyRoomId, memberId)
         );
     }
+
+
+
     @PatchMapping("/{familyRoomId}/profiles")
     public ApiResponse<FamilyMemberProfileResponse.Update> updateMyProfile(
             @PathVariable Long familyRoomId,
@@ -106,7 +122,7 @@ public class FamilyMemberProfileController {
         return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_CREATE,result);
     }
 
-    @GetMapping("/{familyRoomId}/profile-wishes")
+    @GetMapping("/{familyRoomId}/profile-wishes/")
     public ApiResponse<WishListResponse.GetWishes> getMyWishes(
             @PathVariable Long familyRoomId,
             @AuthenticationPrincipal Long memberId,
