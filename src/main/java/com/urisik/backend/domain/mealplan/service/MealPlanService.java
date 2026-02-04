@@ -160,7 +160,7 @@ public class MealPlanService {
             }
 
             Long chosenId = transformedRecipeRepository
-                    .findByRecipe_IdAndFamilyRoomId(recipeId, familyRoomId)
+                    .findByBaseRecipe_IdAndFamilyRoomId(recipeId, familyRoomId)
                     .map(TransformedRecipe::getId)
                     .orElse(recipeId);
 
@@ -281,7 +281,7 @@ public class MealPlanService {
                                 new MealPlanException(MealPlanErrorCode.MEAL_PLAN_TRANSFORMED_RECIPE_NOT_FOUND)
                         );
                 chosenId = tr.getId();
-                title = tr.getRecipe() == null ? "UNKNOWN" : tr.getRecipe().getTitle();
+                title = tr.getBaseRecipe() == null ? "UNKNOWN" : tr.getBaseRecipe().getTitle();
             }
 
             default -> throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);

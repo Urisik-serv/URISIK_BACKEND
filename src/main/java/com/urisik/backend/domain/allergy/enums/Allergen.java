@@ -3,6 +3,9 @@ package com.urisik.backend.domain.allergy.enums;
 
 import java.util.Arrays;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
 public enum Allergen {
 
         EGG("달걀"),
@@ -38,23 +41,70 @@ public enum Allergen {
                 return koreanName;
         }
 
+        // ===== 캐시 맵: Enum name 기반 (EGG 등) =====
+        private static final Map<String, Allergen> BY_ENUM_NAME =
+                Arrays.stream(values())
+                        .collect(Collectors.toUnmodifiableMap(
+                                a -> normalizeUpper(a.name()),
+                                a -> a
+                        ));
+
+        // ===== 캐시 맵: 한글명 기반 ("달걀" 등) =====
+        private static final Map<String, Allergen> BY_KOREAN =
+                Arrays.stream(values())
+                        .collect(Collectors.toUnmodifiableMap(
+                                a -> normalize(a.koreanName),
+                                a -> a
+                        ));
+
+        // ===== Alias: 입력이 흔들릴 때 대응 (필요한 만큼 추가) =====
+        private static final Map<String, Allergen> ALIASES = Map.ofEntries(
+                Map.entry(normalize("계란"), EGG),              // "계란"도 달걀로 취급
+                Map.entry(normalize("달걀 "), EGG),             // 공백
+                Map.entry(normalize("소고기"), BEEF),           // "소고기" -> BEEF (koreanName은 쇠고기)
+                Map.entry(normalize("추출성분"), EXTRACTED_INGREDIENTS) // 괄호 없는 버전
+        );
+
+        /** "EGG" 같은 enum name 문자열을 받는 경우 */
         public static Allergen from(String name) {
-                return Arrays.stream(values())
-                        .filter(a -> a.name().equalsIgnoreCase(name))
-                        .findFirst()
-                        .orElseThrow(() ->
-                                new IllegalArgumentException("Unknown allergen: " + name));
+                if (name == null || name.isBlank()) {
+                        throw new IllegalArgumentException("Allergen name is blank");
+                }
+                Allergen a = BY_ENUM_NAME.get(normalizeUpper(name));
+                if (a == null) {
+                        throw new IllegalArgumentException("Unknown allergen: " + name);
+                }
+                return a;
         }
 
-
+        /** "달걀", "계란", "소고기" 같은 한글 문자열을 받는 경우 */
         public static Allergen fromKorean(String koreanName) {
-                return Arrays.stream(values())
-                        .filter(a -> a.koreanName.equals(koreanName))
-                        .findFirst()
-                        .orElseThrow(() ->
-                                new IllegalArgumentException("Unknown allergen (korean): " + koreanName));
+                if (koreanName == null || koreanName.isBlank()) {
+                        throw new IllegalArgumentException("Allergen koreanName is blank");
+                }
+
+                String key = normalize(koreanName);
+
+                // 1) alias 우선
+                Allergen alias = ALIASES.get(key);
+                if (alias != null) return alias;
+
+                // 2) 정식 한글명
+                Allergen a = BY_KOREAN.get(key);
+                if (a == null) {
+                        throw new IllegalArgumentException("Unknown allergen (korean): " + koreanName);
+                }
+                return a;
         }
 
+        private static String normalize(String s) {
+                return s == null ? "" : s.trim();
+        }
+
+        private static String normalizeUpper(String s) {
+                return normalize(s).toUpperCase(Locale.ROOT);
+        }
 }
+
 
 

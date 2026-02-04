@@ -8,11 +8,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "transformed_recipe",
+@Table(
+        name = "transformed_recipe",
         indexes = {
-                @Index(name = "idx_tr_recipe", columnList = "recipe_id"),
-                @Index(name = "idx_tr_family", columnList = "family_room_id")
-        })
+                @Index(name = "idx_tr_base_recipe", columnList = "base_recipe_id"),
+                @Index(name = "idx_tr_family_room", columnList = "family_room_id"),
+                @Index(name = "idx_tr_visibility", columnList = "visibility")
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TransformedRecipe {
@@ -21,98 +24,81 @@ public class TransformedRecipe {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 기준 원본 레시피
+    /** 원본 레시피 */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipe_id", nullable = false)
-    private Recipe recipe;
+    @JoinColumn(name = "base_recipe_id", nullable = false)
+    private Recipe baseRecipe;
 
-    @Column(nullable = false)
-    private String title;
-
-    // FamilyRoom 엔티티를 직접 연결해도 되지만, 구조상 profile->familyRoom 이 있고, familyRoomId만 써도 충분해서 FK ID만 저장하는 방식으로 구현
+    /** 가족방 기준 */
     @Column(name = "family_room_id", nullable = false)
     private Long familyRoomId;
 
+    /** AI가 생성한 제목 */
+    @Column(nullable = false)
+    private String title;
+
+    /** 공개 여부 (기본 PUBLIC) */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Visibility visibility = Visibility.PUBLIC;
 
-    // 서버가 감지한 알레르기 목록(JSON string)
-    @Lob
-    private String detectedAllergens;
-
-    // 서버가 결정한 대체규칙(대체재/이유)(JSON string)
-    @Lob
-    private String substitutions;
-
-    // AI가 재작성한 결과
-    @Lob
+    /** 알레르기 안전성 재검증 결과 */
     @Column(nullable = false)
-    private String ingredientsTransformed;
+    private boolean validationStatus = false;
 
-    @Lob
-    @Column(nullable = false)
-    private String instructionsTransformed;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ValidationStatus validationStatus = ValidationStatus.VALID;
-
+    /** 리뷰 / 평점 / 위시리스트 */
     @Column(nullable = false)
     private int reviewCount = 0;
-
-    //위시리스트 선택개수
-    @Column(nullable = false)
-    private int wishCount = 0;
 
     @Column(nullable = false)
     private double avgScore = 0.0;
 
-    private TransformedRecipe(
-            Recipe recipe,
+    @Column(nullable = false)
+    private int wishCount = 0;
+
+    /** 변형된 재료 / 조리법 */
+    @Lob
+    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
+    private String ingredientsRaw;
+
+    @Lob
+    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
+    private String instructionsRaw;
+
+    /** 알레르기 대체 요약(JSON) */
+    @Lob
+    @Column(columnDefinition = "MEDIUMTEXT")
+    private String substitutionSummaryJson;
+
+    /* =========================
+       생성자
+       ========================= */
+    public TransformedRecipe(
+            Recipe baseRecipe,
             Long familyRoomId,
+            String title,
             Visibility visibility,
-            String detectedAllergens,
-            String substitutions,
-            String ingredientsTransformed,
-            String instructionsTransformed,
-            ValidationStatus validationStatus
+            String ingredientsRaw,
+            String instructionsRaw,
+            String substitutionSummaryJson
     ) {
-        this.recipe = recipe;
+        this.baseRecipe = baseRecipe;
         this.familyRoomId = familyRoomId;
-        this.visibility = visibility;
-        this.detectedAllergens = detectedAllergens;
-        this.substitutions = substitutions;
-        this.ingredientsTransformed = ingredientsTransformed;
-        this.instructionsTransformed = instructionsTransformed;
-        this.validationStatus = validationStatus;
+        this.title = title;
+        this.visibility = visibility == null ? Visibility.PUBLIC : visibility;
+        this.ingredientsRaw = ingredientsRaw;
+        this.instructionsRaw = instructionsRaw;
+        this.substitutionSummaryJson = substitutionSummaryJson;
     }
 
-    public static TransformedRecipe createPublicValid(
-            Recipe recipe,
-            Long familyRoomId,
-            String detectedAllergensJson,
-            String substitutionsJson,
-            String ingredientsTransformed,
-            String instructionsTransformed
-    ) {
-        return new TransformedRecipe(
-                recipe,
-                familyRoomId,
-                Visibility.PUBLIC,
-                detectedAllergensJson,
-                substitutionsJson,
-                ingredientsTransformed,
-                instructionsTransformed,
-                ValidationStatus.VALID
-        );
-    }
+    /* =========================
+       도메인 행위 (후속 API에서 사용)
+       ========================= */
 
     public void updateReviewCount() {
         this.reviewCount++;
     }
 
-    /** 평균 점수 갱신 */
     public void updateAvgScore(int newScore) {
         this.avgScore =
                 ((this.avgScore * (this.reviewCount - 1)) + newScore)
@@ -120,13 +106,20 @@ public class TransformedRecipe {
     }
 
     public void incrementWishCount() {
-        wishCount++;
+        this.wishCount++;
     }
 
     public void decrementWishCount() {
-        wishCount--;
+        this.wishCount--;
     }
 
+    public void changeVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
 
+    public void updateValidationStatus(boolean status) {
+        this.validationStatus = status;
+    }
 }
+
 

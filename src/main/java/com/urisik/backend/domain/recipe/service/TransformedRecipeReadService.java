@@ -39,13 +39,13 @@ public class TransformedRecipeReadService {
 
         Long myFamilyRoomId = profile.getFamilyRoom().getId();
 
-        List<String> ingredients = RecipeTextParser.parseIngredients(tr.getIngredientsTransformed());
+        List<String> ingredients = RecipeTextParser.parseIngredients(tr.getIngredientsRaw());
         List<Allergen> risky = allergyRiskService.detectRiskAllergens(myFamilyRoomId, ingredients);
 
         boolean createdByFamily = tr.getFamilyRoomId().equals(myFamilyRoomId);
 
         List<TransformedRecipeDetailResponseDTO.SubstitutionSummaryDTO> subs =
-                parseSubstitutionSummary(tr.getSubstitutions());
+                parseSubstitutionSummary(tr.getSubstitutionSummaryJson());
 
         TransformedRecipeDetailResponseDTO.WarningDTO warning =
                 risky.isEmpty()
@@ -54,10 +54,10 @@ public class TransformedRecipeReadService {
 
         return new TransformedRecipeDetailResponseDTO(
                 tr.getId(),
-                tr.getRecipe().getTitle(), // 원하면 변형 title 필드 따로 두고 관리 가능
-                tr.getRecipe().getId(),
+                tr.getBaseRecipe().getTitle(), // 원하면 변형 title 필드 따로 두고 관리 가능
+                tr.getBaseRecipe().getId(),
                 ingredients,
-                RecipeTextParser.parseSteps(tr.getInstructionsTransformed()),
+                RecipeTextParser.parseSteps(tr.getInstructionsRaw()),
                 subs,
                 warning,
                 createdByFamily

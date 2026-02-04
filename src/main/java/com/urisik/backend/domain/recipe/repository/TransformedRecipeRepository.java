@@ -15,14 +15,20 @@ public interface TransformedRecipeRepository extends JpaRepository<TransformedRe
     @Query("""
         select tr
         from TransformedRecipe tr
-        join fetch tr.recipe r
+        join fetch tr.baseRecipe r
         where tr.visibility = :visibility
           and r.title like %:keyword%
     """)
     List<TransformedRecipe> findPublicByRecipeTitleLike(String keyword, Visibility visibility, Pageable pageable);
 
-    Optional<TransformedRecipe> findByRecipe_IdAndFamilyRoomId(Long recipeId, Long familyRoomId);
+    Optional<TransformedRecipe> findByBaseRecipe_IdAndFamilyRoomId(
+            Long recipeId,
+            Long familyRoomId
+    );
     List<TransformedRecipe> findByFamilyRoomId(Long familyRoomId);
     List<TransformedRecipe> findByVisibility(Visibility visibility);
-    List<TransformedRecipe> findByFamilyRoomIdAndRecipe_IdIn(Long familyRoomId, Collection<Long> recipeIds);
+    List<TransformedRecipe> findByFamilyRoomIdAndBaseRecipe_IdIn(
+            Long familyRoomId,
+            Collection<Long> recipeIds
+    );
 }
