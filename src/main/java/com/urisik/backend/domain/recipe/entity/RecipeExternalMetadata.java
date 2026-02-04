@@ -71,4 +71,11 @@ public class RecipeExternalMetadata {
         this.imageLargeUrl = imageLargeUrl;
     }
 
+    public String getThumbnailImageUrl() {
+        if (imageSmallUrl != null && !imageSmallUrl.isBlank()) {
+            return imageSmallUrl;
+        }
+        return imageLargeUrl;
+    }
+
 }
