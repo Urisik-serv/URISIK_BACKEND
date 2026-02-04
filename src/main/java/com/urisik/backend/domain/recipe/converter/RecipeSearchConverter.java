@@ -23,6 +23,7 @@ public class RecipeSearchConverter {
                 meta != null ? meta.getCategory() : null,
                 recipe.getAvgScore(),
                 recipe.getReviewCount(),
+                recipe.getWishCount(),
                 null
 
         );
@@ -41,6 +42,7 @@ public class RecipeSearchConverter {
                 meta != null ? meta.getCategory() : null,
                 tr.getAvgScore(),
                 tr.getReviewCount(),
+                tr.getWishCount(),
                 null
         );
     }
@@ -70,6 +72,7 @@ public class RecipeSearchConverter {
                 row.getRcpNm(),
                 row.getImageSmall(),
                 row.getCategory(),
+                null,
                 null,
                 null,
                 snapshot

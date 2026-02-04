@@ -21,6 +21,7 @@ public class RecipeSearchResponseDTO {
         private String category;    // 요리종류(가능한 경우)
         private Double avgScore;
         private Integer reviewCount;
+        private Integer wishCount;
 
         private ExternalSnapshot external;
     }
