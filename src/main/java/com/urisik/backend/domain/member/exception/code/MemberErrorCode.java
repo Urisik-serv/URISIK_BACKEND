@@ -24,6 +24,9 @@ public enum MemberErrorCode implements BaseErrorCode {
     TRANS_WISH_ALREADY_IN(HttpStatus.GONE,
             "AUTH_200",
             "요청한 변형 레시피 위시 중 일부가 이미 위시리스트에 존재합니다."),
+   NOT_YOUR_ROOM(HttpStatus.GONE,
+            "AUTH_200",
+            "당신은 요청하신 방에 존재하지 않습니다."),
 
     INVALID_FILE(HttpStatus.GONE,
             "AUTH_200",
@@ -63,6 +66,9 @@ public enum MemberErrorCode implements BaseErrorCode {
     NO_RECIPE(HttpStatus.GONE,
             "AUTH_200",
             "해당 레시피가 없습니다."),
+    ALREADY_HAVE_PROFILE(HttpStatus.GONE,
+            "AUTH_200",
+            "이미 프로필이 존재합니다."),
     NO_MEMBER(HttpStatus.GONE,
             "AUTH_200",
             "해당하는 사용자가 없습니다.");

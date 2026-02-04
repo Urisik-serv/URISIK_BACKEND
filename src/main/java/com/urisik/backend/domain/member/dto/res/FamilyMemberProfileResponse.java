@@ -61,6 +61,7 @@ public class FamilyMemberProfileResponse {
     public static class Detail {
         
         private Boolean isSuccess;
+        private Long profileId;
         private String nickname;
         private FamilyRole role;
 
@@ -73,10 +74,31 @@ public class FamilyMemberProfileResponse {
         private List<DietPreferenceList> dietPreferences;
     }
 
+
     @Getter
     @Builder
     public static class Delete{
         private Boolean isSuccess;
+    }
+
+    @Getter
+    @Builder
+    public static class getFamilyProfilesResponse {
+
+        private Boolean isSuccess;
+        private List<familyDetail> familyDetails;
+
+    }
+
+    @Getter
+    @Builder
+    public static class familyDetail {
+
+        private Long profileId;
+        private String nickname;
+        private FamilyRole role;
+        private String profilePicUrl;
+
     }
 
 

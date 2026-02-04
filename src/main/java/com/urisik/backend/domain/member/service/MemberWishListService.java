@@ -153,12 +153,33 @@ public class MemberWishListService {
 
 
     public WishListResponse.GetWishes getMyWishes
-            (Long familyRoomId, Long memberId, Long cursor, int size) {
+            (Long familyRoomId, Long memberId, Long profileId, Long cursor, int size) {
 
-        // 1) 토큰 memberId로 해당 familyRoom 안의 내 프로필 찾기
+        //1) 검증
+        // 요청자가 자신의 프로필을 요청하는 경우
+        if (profileId == -1) {
+            FamilyMemberProfile mine = familyMemberProfileRepository.findByMember_Id(memberId).orElseThrow(
+                    () -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY)
+            );
+            profileId = mine.getId();
+        }
+
+        // 요청 대상의 프로필이 있는가?
+        boolean exists_req_pro = familyMemberProfileRepository.existsById(profileId);
+        if (!exists_req_pro) {
+            throw new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY);
+        }
+
+        // 요청자가 방안에 있는지?
+        boolean exists = familyMemberProfileRepository.existsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId);
+        if (!exists) {
+            throw new MemberException(MemberErrorCode.NOT_YOUR_ROOM);
+        }
+
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_MEMBER));
+                .findByFamilyRoom_IdAndId(familyRoomId,profileId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
+
 
         // 2) 커서 페이징 조회 (size+1)
         int limit = Math.min(size, 50);
@@ -193,12 +214,34 @@ public class MemberWishListService {
 
 
     public WishListResponse.GetTransWishes getMyTransWishes
-            (Long familyRoomId, Long memberId, Long cursor, int size) {
+            (Long familyRoomId, Long memberId, Long profileId, Long cursor, int size) {
 
-        // 1) 토큰 memberId로 해당 familyRoom 안의 내 프로필 찾기
+    //1) 검증
+        // 요청자가 자신의 프로필을 요청하는 경우
+        if (profileId == -1) {
+            FamilyMemberProfile mine = familyMemberProfileRepository.findByMember_Id(memberId).orElseThrow(
+                    () -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY)
+            );
+            profileId = mine.getId();
+        }
+
+        // 요청 대상의 프로필이 있는가?
+        boolean exists_req_pro = familyMemberProfileRepository.existsById(profileId);
+        if (!exists_req_pro) {
+            throw new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY);
+        }
+
+        // 요청자가 방안에 있는지?
+        boolean exists = familyMemberProfileRepository.existsByFamilyRoom_IdAndMember_Id(familyRoomId, memberId);
+        if (!exists) {
+            throw new MemberException(MemberErrorCode.NOT_YOUR_ROOM);
+        }
+
         FamilyMemberProfile profile = familyMemberProfileRepository
-                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_MEMBER));
+                .findByFamilyRoom_IdAndId(familyRoomId,profileId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
+
+
 
         // 2) 커서 페이징 조회 (size+1)
         int limit = Math.min(size, 50);

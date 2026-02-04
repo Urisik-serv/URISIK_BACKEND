@@ -29,7 +29,8 @@ public enum Allergen {
         ABALONE("전복"),
         MUSSEL("홍합"),
         PINE_NUT("잣"),
-        EXTRACTED_INGREDIENTS("추출성분(젤라틴 등)");
+        EXTRACTED_INGREDIENTS("추출성분(젤라틴 등)"),
+        NONE("없음");
 
         private final String koreanName;
 

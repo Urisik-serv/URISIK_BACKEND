@@ -125,6 +125,8 @@ public class AllergyDataInitializer implements CommandLineRunner {
     // =========================
     private String reasonOf(Allergen allergen, AlternativeIngredient ingredient) {
         return switch (allergen) {
+            case NONE -> switch (ingredient.getName()) {
+                default -> "일반 음식입니다";};
 
             case EGG -> switch (ingredient.getName()) {
                 case "두부" -> "알류를 사용하지 않으면서도 부드러운 조직감으로 조리 시 결합 역할을 일부 대체할 수 있습니다.";

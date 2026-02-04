@@ -54,6 +54,7 @@ public class FamilyMemberProfileConverter {
 
         return FamilyMemberProfileResponse.Detail.builder()
                 .isSuccess(true)
+                .profileId(profile.getId())
                 .nickname(profile.getNickname())
                 .profilePicUrl(profile.getProfilePicUrl())
                 .profilePicUrl(profile.getProfilePicUrl())
