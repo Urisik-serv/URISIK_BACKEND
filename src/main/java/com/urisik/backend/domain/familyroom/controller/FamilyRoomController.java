@@ -38,7 +38,7 @@ public class FamilyRoomController {
     }
 
     @GetMapping("/family-rooms/me")
-    @Operation(summary = "가족방 조회 API")
+    @Operation(summary = "가족방 컨텍스트 조회 API")
     public ApiResponse<ReadFamilyRoomContextResDTO> readMyFamilyRoomContext(
             @AuthenticationPrincipal Long memberId
     ) {

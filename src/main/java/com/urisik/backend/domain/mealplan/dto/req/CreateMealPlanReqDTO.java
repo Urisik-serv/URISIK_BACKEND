@@ -14,7 +14,7 @@ public record CreateMealPlanReqDTO(
         boolean regenerate
 ) {
     public record SlotRequest(
-            @NotNull DayOfWeek dayOfWeek,
-            @NotNull MealType mealType
+            @NotNull MealType mealType,
+            @NotNull DayOfWeek dayOfWeek
     ) {}
 }

@@ -20,6 +20,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Comparator;
 
 @Service
 @RequiredArgsConstructor
@@ -116,10 +117,20 @@ public class MealPlanQueryService {
         ResolvedMaps resolved = resolveStoredIds(familyRoomId, storedIds);
 
         Map<String, GetMealPlanResDTO.SlotSummaryDTO> slots = new LinkedHashMap<>();
-        for (Map.Entry<MealPlan.SlotKey, Long> e : snapshot.entrySet()) {
+
+        // 응답 슬롯 순서 고정
+        // 정렬 기준: dayOfWeek(월->일) 오름차순, mealType (LUNCH -> DINNER) 순서로 고정
+        List<Map.Entry<MealPlan.SlotKey, Long>> ordered = snapshot.entrySet().stream()
+                .filter(e -> e.getKey() != null && e.getValue() != null)
+                .sorted(Comparator
+                        .comparing((Map.Entry<MealPlan.SlotKey, Long> e) -> e.getKey().dayOfWeek().getValue())
+                        .thenComparing(e -> mealTypeOrder(e.getKey().mealType()))
+                )
+                .toList();
+
+        for (Map.Entry<MealPlan.SlotKey, Long> e : ordered) {
             MealPlan.SlotKey key = e.getKey();
             Long storedId = e.getValue();
-            if (key == null || storedId == null) continue;
 
             ResolvedRecipe rr = resolved.byStoredId().get(storedId);
             if (rr == null) continue;
@@ -198,6 +209,11 @@ public class MealPlanQueryService {
                         ));
             }
 
+            // 각 요일 내 식사 순서 고정 (mealType 기준)
+            dayMap.values().forEach(list ->
+                    list.sort(Comparator.comparing(m -> mealTypeOrder(m.mealType())))
+            );
+
             List<GetMealPlanResDTO.DayHistoryDTO> days = dayMap.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .map(en -> new GetMealPlanResDTO.DayHistoryDTO(en.getKey(), en.getValue()))
@@ -223,9 +239,7 @@ public class MealPlanQueryService {
             Map<Long, ResolvedRecipe> byStoredId
     ) {}
 
-    /**
-     * recipeId/transformedRecipeId/title/ingredients/instructions
-     */
+    /** recipeId/transformedRecipeId/title/ingredients/instructions */
     private ResolvedMaps resolveStoredIds(Long familyRoomId, Collection<Long> storedIds) {
         if (storedIds == null) return new ResolvedMaps(Map.of());
 
@@ -320,6 +334,15 @@ public class MealPlanQueryService {
             return firstLine.length() <= 60 ? firstLine : firstLine.substring(0, 60);
         }
         return trimmed.length() <= 60 ? trimmed : trimmed.substring(0, 60);
+    }
+
+    /** MealType 정렬 순서 지정 (LUNCH -> DINNER) */
+    private static int mealTypeOrder(MealType mealType) {
+        if (mealType == null) return Integer.MAX_VALUE;
+        return switch (mealType) {
+            case LUNCH -> 0;
+            case DINNER -> 1;
+        };
     }
 
     private static LocalDate normalizeToMonday(LocalDate date) {

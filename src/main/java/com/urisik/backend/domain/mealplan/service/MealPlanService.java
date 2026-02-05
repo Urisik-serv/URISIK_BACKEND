@@ -245,60 +245,81 @@ public class MealPlanService {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_NOT_DRAFT);
         }
 
-        // slot 파싱
-        MealPlan.SlotKey slotKey = new MealPlan.SlotKey(
-                req.slot().mealType(),
-                req.slot().dayOfWeek()
-        );
-
-        // 선택 슬롯인지 검증
-        if (!mealPlan.isSelectedSlot(slotKey)) {
-            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_SLOT_NOT_SELECTED);
-        }
-
-        RecipeSelectionDTO selection = req.selectedRecipe();
-        if (selection == null || selection.id() == null || selection.type() == null) {
+        // 다중 수정
+        List<UpdateMealPlanReqDTO.UpdateItem> items = req.updates();
+        if (items == null || items.isEmpty()) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
-        // 선택 타입에 따라 저장할 id 결정 + title 결정
-        Long chosenId;
-        String title;
+        // 유효성 + 중복 슬롯 방지(요청 내)
+        Set<MealPlan.SlotKey> seen = new HashSet<>();
+        List<UpdateMealPlanResDTO.UpdatedSlot> updated = new ArrayList<>();
 
-        switch (selection.type()) {
-            case RECIPE -> {
-                Recipe recipe = recipeRepository.findById(selection.id())
-                        .orElseThrow(() ->
-                                new MealPlanException(MealPlanErrorCode.MEAL_PLAN_RECIPE_NOT_FOUND)
-                        );
-                chosenId = recipe.getId();
-                title = recipe.getTitle();
+        for (UpdateMealPlanReqDTO.UpdateItem item : items) {
+            if (item == null || item.selectedSlot() == null || item.selectedRecipe() == null) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
             }
 
-            case TRANSFORMED_RECIPE -> {
-                TransformedRecipe tr = transformedRecipeRepository.findById(selection.id())
-                        .orElseThrow(() ->
-                                new MealPlanException(MealPlanErrorCode.MEAL_PLAN_TRANSFORMED_RECIPE_NOT_FOUND)
-                        );
-                chosenId = tr.getId();
-                title = tr.getBaseRecipe() == null ? "UNKNOWN" : tr.getBaseRecipe().getTitle();
+            // slot 파싱
+            MealPlan.SlotKey slotKey = new MealPlan.SlotKey(
+                    item.selectedSlot().mealType(),
+                    item.selectedSlot().dayOfWeek()
+            );
+
+            // 요청 내 동일 슬롯 중복 방지
+            if (!seen.add(slotKey)) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
             }
 
-            default -> throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+            // 선택 슬롯인지 검증
+            if (!mealPlan.isSelectedSlot(slotKey)) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_SLOT_NOT_SELECTED);
+            }
+
+            RecipeSelectionDTO selection = item.selectedRecipe();
+            if (selection.id() == null || selection.type() == null) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+            }
+
+            // 선택 타입에 따라 저장할 id 결정 + title 결정
+            Long chosenId;
+            String title;
+
+            switch (selection.type()) {
+                case RECIPE -> {
+                    Recipe recipe = recipeRepository.findById(selection.id())
+                            .orElseThrow(() ->
+                                    new MealPlanException(MealPlanErrorCode.MEAL_PLAN_RECIPE_NOT_FOUND)
+                            );
+                    chosenId = recipe.getId();
+                    title = recipe.getTitle();
+                }
+
+                case TRANSFORMED_RECIPE -> {
+                    TransformedRecipe tr = transformedRecipeRepository.findById(selection.id())
+                            .orElseThrow(() ->
+                                    new MealPlanException(MealPlanErrorCode.MEAL_PLAN_TRANSFORMED_RECIPE_NOT_FOUND)
+                            );
+                    chosenId = tr.getId();
+                    title = tr.getBaseRecipe() == null ? "UNKNOWN" : tr.getBaseRecipe().getTitle();
+                }
+
+                default -> throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+            }
+
+            // 실제 슬롯 컬럼 업데이트
+            mealPlan.updateSlot(slotKey, chosenId);
+
+            String updatedSlotKeyStr = slotKey.mealType().name() + "-" + slotKey.dayOfWeek().name();
+            updated.add(new UpdateMealPlanResDTO.UpdatedSlot(
+                    updatedSlotKeyStr,
+                    new RecipeDTO(chosenId, title)
+            ));
         }
 
-        // 실제 슬롯 컬럼 업데이트
-        mealPlan.updateSlot(slotKey, chosenId);
         mealPlanRepository.save(mealPlan);
 
-        String updatedSlotKeyStr = slotKey.mealType().name() + "-" + slotKey.dayOfWeek().name();
-
-        return new UpdateMealPlanResDTO(
-                mealPlan.getId(),
-                mealPlan.getStatus(),
-                updatedSlotKeyStr,
-                new RecipeDTO(chosenId, title)
-        );
+        return UpdateMealPlanResDTO.bulk(mealPlan.getId(), mealPlan.getStatus(), updated);
     }
 
     private Map<Long, String> loadRecipeTitles(Collection<Long> recipeIds) {
