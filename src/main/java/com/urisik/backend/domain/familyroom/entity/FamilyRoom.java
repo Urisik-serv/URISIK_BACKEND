@@ -26,7 +26,7 @@ public class FamilyRoom {
 
     // 식단 생성 횟수 (가족방 온도 반영)
     @Column(name = "meal_plan_generation_count", nullable = false)
-    private int mealPlanGenerationCount = 0;
+    private Integer mealPlanGenerationCount = 0;
 
     // 연관관계 매핑 1:N
     @OneToMany(mappedBy = "familyRoom", fetch = FetchType.LAZY)

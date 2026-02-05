@@ -18,6 +18,7 @@ public class NotificationConverter {
                 .isRead(notification.isRead())
                 .type(notification.getType())
                 .createdAt(notification.getCreateAt())
+                .mealPlanGenerationCount(notification.getMealPlanGenerationCount())
                 .build();
     }
 

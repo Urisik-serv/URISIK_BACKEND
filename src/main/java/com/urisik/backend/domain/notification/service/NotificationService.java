@@ -43,11 +43,19 @@ public class NotificationService {
     public void sendNotification(List<Member> members, NotificationType type, Object data) {
 
         List<Notification> notifications = members.stream()
-                .map(member -> Notification.builder()
-                        .member(member)
-                        .type(type)
-                        .isRead(false)
-                        .build())
+                .map(member -> {
+                    Notification.NotificationBuilder builder = Notification.builder()
+                            .member(member)
+                            .type(type)
+                            .isRead(false);
+
+                    // 타입 : TEMPERATURE 이고, data 가 존재하는 경우 식단 생성 횟수 저장
+                    if (type == NotificationType.TEMPERATURE && data instanceof Integer count) {
+                        builder.mealPlanGenerationCount(count);
+                    }
+
+                    return builder.build();
+                })
                 .toList();
 
         notificationRepository.saveAll(notifications);

@@ -41,7 +41,7 @@ public class NotificationEventListener {
             notificationService.sendNotification(
                     targets,
                     NotificationType.TEMPERATURE,
-                    "식단 생성 횟수 : " + event.mealPlanGenerationCount());
+                    event.mealPlanGenerationCount()); // 식단 생성 횟수
         }
     }
 }
