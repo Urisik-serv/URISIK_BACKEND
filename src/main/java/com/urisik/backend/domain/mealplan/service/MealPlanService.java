@@ -7,6 +7,7 @@ import com.urisik.backend.domain.mealplan.ai.candidate.MealPlanCandidateProvider
 import com.urisik.backend.domain.mealplan.ai.generator.MealPlanGenerator;
 import com.urisik.backend.domain.mealplan.ai.validation.MealPlanGenerationValidator;
 import com.urisik.backend.domain.mealplan.dto.common.RecipeDTO;
+import com.urisik.backend.domain.mealplan.dto.event.MealPlanConfirmedEvent;
 import com.urisik.backend.domain.mealplan.dto.req.CreateMealPlanReqDTO;
 import com.urisik.backend.domain.mealplan.dto.req.CreateMealPlanReqDTO.SlotRequest;
 import com.urisik.backend.domain.mealplan.dto.req.RecipeSelectionDTO;
@@ -24,6 +25,7 @@ import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +47,8 @@ public class MealPlanService {
     private final MealPlanCandidateProvider candidateProvider;
     private final MealPlanGenerator generator;
     private final MealPlanGenerationValidator validator;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 식단 생성 API
@@ -382,6 +386,12 @@ public class MealPlanService {
         // 상태 변경 + 카운트 증가
         mealPlan.updateStatus(MealPlanStatus.CONFIRMED);
         mealPlan.getFamilyRoom().incrementMealPlanGenerationCount();
+
+        // 식단 확정 이벤트 발행
+        eventPublisher.publishEvent(new MealPlanConfirmedEvent(
+                familyRoomId,
+                mealPlan.getFamilyRoom().getMealPlanGenerationCount()
+        ));
 
         return new ConfirmMealPlanResDTO(
                 mealPlan.getId(),
