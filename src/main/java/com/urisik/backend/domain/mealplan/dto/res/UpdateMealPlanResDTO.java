@@ -12,6 +12,24 @@ import lombok.Getter;
 public class UpdateMealPlanResDTO {
     private Long mealPlanId;
     private MealPlanStatus status;
-    private String updatedSlotKey;
-    private RecipeDTO recipe;
+    private java.util.List<UpdatedSlot> updatedSlots;
+
+    public static UpdateMealPlanResDTO bulk(
+            Long mealPlanId,
+            MealPlanStatus status,
+            java.util.List<UpdatedSlot> updatedSlots
+    ) {
+        return UpdateMealPlanResDTO.builder()
+                .mealPlanId(mealPlanId)
+                .status(status)
+                .updatedSlots(updatedSlots)
+                .build();
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class UpdatedSlot {
+        private String slotKey;   // e.g. DINNER-MONDAY
+        private RecipeDTO recipe;
+    }
 }
