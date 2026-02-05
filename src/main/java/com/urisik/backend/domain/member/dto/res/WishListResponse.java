@@ -50,7 +50,7 @@ public class WishListResponse {
         private String category;
         private String foodImage;
         private double avgScore;
-        // private String a;// 대체재료
+        private List<String> recipeIngredients;
     }
 
     @Getter
@@ -59,6 +59,10 @@ public class WishListResponse {
         private Long wishId;       // (선택) wish 자체 삭제/페이징에 필요하면 포함
         private Long transformedRecipeId;
         private String transformedRecipeName;
+        private String category;
+        private String foodImage;
+        private double avgScore;
+        private List<String> recipeIngredients;
     }
 
 }

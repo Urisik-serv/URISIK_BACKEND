@@ -67,9 +67,16 @@ public class FamilyMemberProfileResponse {
         private String dislikedIngredients;
         private String profilePicUrl;
 
-        private List<Allergen> allergy;
+        private List<allergenAndAlterIngredient> allergyAndAlterIngredients;
 
         private List<DietPreferenceList> dietPreferences;
+    }
+    @Getter
+    @Builder
+    public static class allergenAndAlterIngredient {
+        private Allergen allergen;
+        private List<String> alteredIngredients;
+
     }
 
 

@@ -29,6 +29,8 @@ public interface MemberTransformedRecipeWishRepository extends JpaRepository<Mem
     @Query("""
     select w from MemberTransformedRecipeWish w
     join fetch w.recipe r
+    left join r.baseRecipe r2
+    left join r2.recipeExternalMetadata r3
     where w.familyMemberProfile.id = :profileId
     order by w.id desc
 """)
@@ -37,6 +39,8 @@ public interface MemberTransformedRecipeWishRepository extends JpaRepository<Mem
     @Query("""
     select w from MemberTransformedRecipeWish w
     join fetch w.recipe r
+    left join r.baseRecipe r2
+    left join r2.recipeExternalMetadata r3
     where w.familyMemberProfile.id = :profileId
       and w.id < :cursor
     order by w.id desc
