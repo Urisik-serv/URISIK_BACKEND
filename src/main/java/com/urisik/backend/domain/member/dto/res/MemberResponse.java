@@ -11,7 +11,7 @@ public class MemberResponse {
     @Getter
     @Builder
     public static class PatchAgree {
-        private Boolean isSuccess;
+
 
         private boolean serviceTermsAgreed;
         private boolean privacyPolicyAgreed;

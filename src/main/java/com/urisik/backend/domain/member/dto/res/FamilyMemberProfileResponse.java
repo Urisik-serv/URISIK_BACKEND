@@ -14,7 +14,6 @@ public class FamilyMemberProfileResponse {
     @Builder
     public static class Create {
 
-        private Boolean isSuccess;
         private String nickname;
 
         private FamilyRole role;
@@ -35,7 +34,6 @@ public class FamilyMemberProfileResponse {
         // Update는 보통 부분수정(PATCH) 고려해서 NotBlank/NotNull을 빼는 게 일반적
         // (PUT으로 전체교체 할 거면 Create와 동일하게 필수 제약 걸어도 됨)
 
-        private Boolean isSuccess;
         private String nickname;
         private FamilyRole role;
 
@@ -52,7 +50,7 @@ public class FamilyMemberProfileResponse {
     @Builder
     public static class UpdatePic {
 
-        private Boolean isSuccess;
+
         private String profilePicUrl;
     }
 
@@ -60,7 +58,7 @@ public class FamilyMemberProfileResponse {
     @Builder
     public static class Detail {
         
-        private Boolean isSuccess;
+
         private Long profileId;
         private String nickname;
         private FamilyRole role;
@@ -69,23 +67,29 @@ public class FamilyMemberProfileResponse {
         private String dislikedIngredients;
         private String profilePicUrl;
 
-        private List<Allergen> allergy;
+        private List<allergenAndAlterIngredient> allergyAndAlterIngredients;
 
         private List<DietPreferenceList> dietPreferences;
+    }
+    @Getter
+    @Builder
+    public static class allergenAndAlterIngredient {
+        private Allergen allergen;
+        private List<String> alteredIngredients;
+
     }
 
 
     @Getter
     @Builder
     public static class Delete{
-        private Boolean isSuccess;
+        private Boolean isDeleted;
     }
 
     @Getter
     @Builder
     public static class getFamilyProfilesResponse {
 
-        private Boolean isSuccess;
         private List<familyDetail> familyDetails;
 
     }

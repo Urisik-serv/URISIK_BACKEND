@@ -1,7 +1,9 @@
 package com.urisik.backend.domain.member.service;
 
+import com.urisik.backend.domain.allergy.entity.AllergenAlternative;
 import com.urisik.backend.domain.allergy.entity.MemberAllergy;
 import com.urisik.backend.domain.allergy.enums.Allergen;
+import com.urisik.backend.domain.allergy.repository.AllergenAlternativeRepository;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import com.urisik.backend.domain.member.enums.FamilyRole;
@@ -36,6 +38,7 @@ public class FamilyMemberProfileService {
     private final DietPreferenceRepository dietPreferenceRepository;
     private final S3Uploader s3Uploader;
     private final S3Remover s3Remover;
+    private final AllergenAlternativeRepository allergenAlternativeRepository;
     //
 
     //post
@@ -229,7 +232,6 @@ public class FamilyMemberProfileService {
         }
 
         return FamilyMemberProfileResponse.UpdatePic.builder()
-                .isSuccess(true)
                 .profilePicUrl(newUrl)
                 .build();
     }
@@ -277,8 +279,18 @@ public class FamilyMemberProfileService {
         // 3) 식단선호 목록 조회
         List<DietPreference> diets = dietPreferenceRepository.findAllByFamilyMemberProfile_Id(targetProfileId);
 
+        // 4) 대체 식재료 조회
+        List<Allergen> allergyEnums = allergies.stream()
+                .map(MemberAllergy::getAllergen)
+                .distinct()
+                .toList();
 
-        return FamilyMemberProfileConverter.toDetail(profile,allergies,diets);
+        List<AllergenAlternative> alternatives = allergyEnums.isEmpty()
+                ? List.of()
+                : allergenAlternativeRepository.findByAllergenIn(allergyEnums);
+
+
+        return FamilyMemberProfileConverter.toDetail(profile, allergies, diets, alternatives);
 
     }
 
@@ -315,7 +327,6 @@ public class FamilyMemberProfileService {
                 .toList();
 
         return FamilyMemberProfileResponse.getFamilyProfilesResponse.builder()
-                .isSuccess(true)
                 .familyDetails(details)
                 .build();
 
@@ -358,7 +369,7 @@ public class FamilyMemberProfileService {
         targetProfile.getMember().setFamilyRoom(null);
         familyMemberProfileRepository.delete(targetProfile);
 
-        return FamilyMemberProfileResponse.Delete.builder().isSuccess(true).build();
+        return FamilyMemberProfileResponse.Delete.builder().isDeleted(true).build();
 
     }
 

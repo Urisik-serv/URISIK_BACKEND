@@ -14,7 +14,6 @@ public class MemberConverter {
                         || !member.isAiNoticeAgreed();
 
         return MemberResponse.PatchAgree.builder()
-                .isSuccess(true)
                 .serviceTermsAgreed(member.isServiceTermsAgreed())
                 .privacyPolicyAgreed(member.isPrivacyPolicyAgreed())
                 .familyInfoAgreed(member.isFamilyInfoAgreed())

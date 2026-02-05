@@ -12,6 +12,7 @@ import com.urisik.backend.domain.member.exception.code.MemberErrorCode;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberTransformedRecipeWishRepository;
 import com.urisik.backend.domain.member.repo.MemberWishListRepository;
+import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
@@ -79,7 +80,7 @@ public class MemberWishListService {
         if(req.getTransformedRecipeId() != null) {
             for (Long recipeId : req.getTransformedRecipeId()) {
                 TransformedRecipe recipe = transformedRecipeRepository.findById(recipeId)
-                        .orElseThrow(() -> new MemberException(MemberErrorCode.NO_RECIPE));//수정 요청 음식 없음
+                        .orElseThrow(() -> new MemberException(MemberErrorCode.NO_TRANS_RECIPE));//수정 요청 음식 없음
 
                 profile.addTransWish(MemberTransformedRecipeWish.of(recipe));//
                 recipe.incrementWishCount();
@@ -94,7 +95,7 @@ public class MemberWishListService {
 
 
         return WishListResponse.PostWishes.builder()
-                .isSuccess(true)
+                .isPosted(true)
                 .build();
     }
 
@@ -145,7 +146,7 @@ public class MemberWishListService {
             memberTransformedRecipeWishRepository.decreaseWishCount(req.getTransformedRecipeId());
         }
         return WishListResponse.DeleteWishes.builder()
-                .isSuccess(true)
+                .isDeleted(true)
                 .deletedNum(deleted)
                 .deletedTransNum(deletedTrans)
                 .build();
@@ -195,17 +196,21 @@ public class MemberWishListService {
         Long nextCursor = rows.isEmpty() ? null : rows.get(rows.size() - 1).getId();
 
         // 3) DTO 변환 (WishItem 리스트)
+
         List<WishListResponse.WishItem> items = rows.stream()
                 .map(w -> WishListResponse.WishItem.builder()
                         .wishId(w.getId())
                         .recipeId(w.getRecipe().getId())
                         .recipeName(w.getRecipe().getTitle())
+                        .foodImage(w.getRecipe().getRecipeExternalMetadata().getImageSmallUrl())
+                        .category(w.getRecipe().getRecipeExternalMetadata().getCategory())
+                        .avgScore(w.getRecipe().getAvgScore())
+                        .recipeIngredients(RecipeTextParser.parseIngredients(w.getRecipe().getIngredientsRaw()))
                         .build())
                 .toList();
 
         // 4) 응답
         return WishListResponse.GetWishes.builder()
-                .isSuccess(true)
                 .items(items)
                 .nextCursor(hasNext ? nextCursor : null)
                 .hasNext(hasNext)
@@ -261,13 +266,16 @@ public class MemberWishListService {
                 .map(w -> WishListResponse.TransWishItem.builder()
                         .wishId(w.getId())
                         .transformedRecipeId(w.getRecipe().getId())
+                        .avgScore(w.getRecipe().getAvgScore())
+                        .category(w.getRecipe().getBaseRecipe().getRecipeExternalMetadata().getCategory())
+                        .foodImage(w.getRecipe().getBaseRecipe().getRecipeExternalMetadata().getImageSmallUrl())
                         .transformedRecipeName(w.getRecipe().getTitle())
+                        .recipeIngredients(RecipeTextParser.parseIngredients(w.getRecipe().getIngredientsRaw()))
                         .build())
                 .toList();
 
         // 4) 응답
         return WishListResponse.GetTransWishes.builder()
-                .isSuccess(true)
                 .items(items)
                 .nextCursor(hasNext ? nextCursor : null)
                 .hasNext(hasNext)
