@@ -29,7 +29,6 @@ public class FamilyMemberProfileConverter {
                 .toList();
 
         return FamilyMemberProfileResponse.Create.builder()
-                .isSuccess(true)
                 .nickname(profile.getNickname())
                 .role(profile.getFamilyRole())
                 .likedIngredients(profile.getLikedIngredients())
@@ -53,7 +52,6 @@ public class FamilyMemberProfileConverter {
                 .toList();
 
         return FamilyMemberProfileResponse.Detail.builder()
-                .isSuccess(true)
                 .profileId(profile.getId())
                 .nickname(profile.getNickname())
                 .profilePicUrl(profile.getProfilePicUrl())
@@ -80,7 +78,6 @@ public class FamilyMemberProfileConverter {
                 .toList();
 
         return FamilyMemberProfileResponse.Update.builder()
-                .isSuccess(true)
                 .nickname(profile.getNickname())
                 .role(profile.getFamilyRole())
                 .likedIngredients(profile.getLikedIngredients())

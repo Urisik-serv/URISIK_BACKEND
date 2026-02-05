@@ -16,6 +16,7 @@ public interface MemberWishListRepository extends JpaRepository<MemberWishList, 
     @Query("""
     select w from MemberWishList w
     join fetch w.recipe r
+    left join fetch r.recipeExternalMetadata m
     where w.familyMemberProfile.id = :profileId
     order by w.id desc
 """)
@@ -24,6 +25,7 @@ public interface MemberWishListRepository extends JpaRepository<MemberWishList, 
     @Query("""
     select w from MemberWishList w
     join fetch w.recipe r
+    left join fetch r.recipeExternalMetadata m
     where w.familyMemberProfile.id = :profileId
       and w.id < :cursor
     order by w.id desc

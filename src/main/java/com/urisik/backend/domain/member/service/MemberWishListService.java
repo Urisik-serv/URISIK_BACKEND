@@ -94,7 +94,7 @@ public class MemberWishListService {
 
 
         return WishListResponse.PostWishes.builder()
-                .isSuccess(true)
+                .isPosted(true)
                 .build();
     }
 
@@ -145,7 +145,7 @@ public class MemberWishListService {
             memberTransformedRecipeWishRepository.decreaseWishCount(req.getTransformedRecipeId());
         }
         return WishListResponse.DeleteWishes.builder()
-                .isSuccess(true)
+                .isDeleted(true)
                 .deletedNum(deleted)
                 .deletedTransNum(deletedTrans)
                 .build();
@@ -200,12 +200,14 @@ public class MemberWishListService {
                         .wishId(w.getId())
                         .recipeId(w.getRecipe().getId())
                         .recipeName(w.getRecipe().getTitle())
+                        .foodImage(w.getRecipe().getRecipeExternalMetadata().getImageSmallUrl())
+                        .category(w.getRecipe().getRecipeExternalMetadata().getCategory())
+                        .avgScore(w.getRecipe().getAvgScore())
                         .build())
                 .toList();
 
         // 4) 응답
         return WishListResponse.GetWishes.builder()
-                .isSuccess(true)
                 .items(items)
                 .nextCursor(hasNext ? nextCursor : null)
                 .hasNext(hasNext)
@@ -267,7 +269,6 @@ public class MemberWishListService {
 
         // 4) 응답
         return WishListResponse.GetTransWishes.builder()
-                .isSuccess(true)
                 .items(items)
                 .nextCursor(hasNext ? nextCursor : null)
                 .hasNext(hasNext)

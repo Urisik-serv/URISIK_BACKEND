@@ -12,12 +12,12 @@ public class WishListResponse {
     @Getter
     @Builder
     public static class PostWishes {
-        private Boolean isSuccess;
+        private Boolean isPosted;
     }
     @Getter
     @Builder
     public static class DeleteWishes {
-        private Boolean isSuccess;
+        private Boolean isDeleted;
         private long deletedNum;
         private long deletedTransNum;
     }
@@ -27,7 +27,6 @@ public class WishListResponse {
     @Builder
     public static class GetWishes {
 
-        private Boolean isSuccess;
         private List<WishItem> items;
         private Long nextCursor;   // 다음 요청에 넣을 cursor(마지막 아이템 id)
         private Boolean hasNext;
@@ -37,7 +36,6 @@ public class WishListResponse {
     @Builder
     public static class GetTransWishes {
 
-        private Boolean isSuccess;
         private List<TransWishItem> items;
         private Long nextCursor;   // 다음 요청에 넣을 cursor(마지막 아이템 id)
         private Boolean hasNext;
@@ -49,6 +47,10 @@ public class WishListResponse {
         private Long wishId;       // (선택) wish 자체 삭제/페이징에 필요하면 포함
         private Long recipeId;
         private String recipeName;
+        private String category;
+        private String foodImage;
+        private double avgScore;
+        // private String a;// 대체재료
     }
 
     @Getter

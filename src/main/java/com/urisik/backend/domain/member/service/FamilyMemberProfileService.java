@@ -229,7 +229,6 @@ public class FamilyMemberProfileService {
         }
 
         return FamilyMemberProfileResponse.UpdatePic.builder()
-                .isSuccess(true)
                 .profilePicUrl(newUrl)
                 .build();
     }
@@ -315,7 +314,6 @@ public class FamilyMemberProfileService {
                 .toList();
 
         return FamilyMemberProfileResponse.getFamilyProfilesResponse.builder()
-                .isSuccess(true)
                 .familyDetails(details)
                 .build();
 
@@ -358,7 +356,7 @@ public class FamilyMemberProfileService {
         targetProfile.getMember().setFamilyRoom(null);
         familyMemberProfileRepository.delete(targetProfile);
 
-        return FamilyMemberProfileResponse.Delete.builder().isSuccess(true).build();
+        return FamilyMemberProfileResponse.Delete.builder().isDeleted(true).build();
 
     }
 
