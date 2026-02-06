@@ -18,8 +18,7 @@ public class HomeSafeRecipeConverter {
         return new HomeSafeRecipeDTO(
                 c.getId().toString(),
                 c.getTitle(),
-                c.getImageSmallUrl(),
-                c.getImageLargeUrl(),
+                c.getImageUrl(),
                 c.getCategory(),
                 c.getAvgScore(),
                 c.getReviewCount(),

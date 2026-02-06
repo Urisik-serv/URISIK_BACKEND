@@ -5,8 +5,7 @@ public interface HomeRecipeCandidate {
     Long getId();
     String getTitle();
 
-    String getImageSmallUrl();
-    String getImageLargeUrl();
+    String getImageUrl();
     String getCategory();
 
     double getAvgScore();

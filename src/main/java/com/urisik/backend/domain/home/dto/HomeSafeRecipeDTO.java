@@ -10,8 +10,7 @@ public class HomeSafeRecipeDTO {
     private String id;
     private String title;
 
-    private String imageSmallUrl;
-    private String imageLargeUrl;
+    private String imageUrl;
     private String category;
 
     private double avgScore;

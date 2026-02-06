@@ -12,14 +12,7 @@ public class RecipeCandidate implements HomeRecipeCandidate {
     @Override public String getTitle() { return recipe.getTitle(); }
 
     @Override
-    public String getImageSmallUrl() {
-        return recipe.getRecipeExternalMetadata() != null
-                ? recipe.getRecipeExternalMetadata().getImageSmallUrl()
-                : null;
-    }
-
-    @Override
-    public String getImageLargeUrl() {
+    public String getImageUrl() {
         return recipe.getRecipeExternalMetadata() != null
                 ? recipe.getRecipeExternalMetadata().getImageLargeUrl()
                 : null;

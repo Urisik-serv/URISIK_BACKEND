@@ -12,14 +12,7 @@ public class TransformedRecipeCandidate implements HomeRecipeCandidate {
     @Override public String getTitle() { return tr.getTitle(); }
 
     @Override
-    public String getImageSmallUrl() {
-        return tr.getBaseRecipe().getRecipeExternalMetadata() != null
-                ? tr.getBaseRecipe().getRecipeExternalMetadata().getImageSmallUrl()
-                : null;
-    }
-
-    @Override
-    public String getImageLargeUrl() {
+    public String getImageUrl() {
         return tr.getBaseRecipe().getRecipeExternalMetadata() != null
                 ? tr.getBaseRecipe().getRecipeExternalMetadata().getImageLargeUrl()
                 : null;
