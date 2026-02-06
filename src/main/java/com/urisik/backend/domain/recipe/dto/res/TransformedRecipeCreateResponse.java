@@ -1,7 +1,5 @@
 package com.urisik.backend.domain.recipe.dto.res;
 
-import com.urisik.backend.domain.allergy.enums.Allergen;
-import com.urisik.backend.domain.recipe.enums.Visibility;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -9,13 +7,13 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class TransformedRecipeResponseDTO {
+public class TransformedRecipeCreateResponse {
 
     private Long transformedRecipeId;
     private String title;
+    private String imageUrl;
     private Long baseRecipeId;
-    private Visibility visibility;
-    private boolean validation_status;
+    private boolean validationStatus;
 
     private List<String> ingredients;
     private List<StepDTO> steps;
@@ -31,7 +29,7 @@ public class TransformedRecipeResponseDTO {
     @Getter
     @AllArgsConstructor
     public static class SubstitutionSummaryDTO {
-        private Allergen allergen;
+        private String allergen;
         private String replacedWith;
         private String reason;
     }

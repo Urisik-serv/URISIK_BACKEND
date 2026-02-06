@@ -55,9 +55,7 @@ public class AllergySubstitutionService {
                 familyAllergens.stream()
                         .filter(allergen ->
                                 normalizedIngredients.stream()
-                                        .anyMatch(ing ->
-                                                ing.contains(allergen.getKoreanName())
-                                        )
+                                        .anyMatch(allergen::matchesIngredient)
                         )
                         .toList();
 

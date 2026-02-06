@@ -5,7 +5,6 @@ import com.urisik.backend.domain.recipe.dto.res.RecipeSearchResponseDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
-import com.urisik.backend.domain.recipe.enums.Visibility;
 import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.FoodSafetyRecipeClient;
 import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.dto.FoodSafetyRecipeResponse;
 import com.urisik.backend.domain.recipe.repository.RecipeExternalMetadataRepository;
@@ -48,7 +47,7 @@ public class RecipeSearchService {
 
         // 2) 공개 변형 레시피
         List<TransformedRecipe> trs =
-                transformedRecipeRepository.findPublicByRecipeTitleLike(keyword, Visibility.PUBLIC, pageable);
+                transformedRecipeRepository.findByRecipeTitleLike(keyword, pageable);
 
         for (TransformedRecipe tr : trs) {
             RecipeExternalMetadata meta = metadataRepository.findByRecipe_Id(tr.getBaseRecipe().getId()).orElse(null);

@@ -15,7 +15,7 @@ public enum RecipeErrorCode implements BaseErrorCode {
     RECIPE_EXTERNAL_API_ERROR(HttpStatus.BAD_GATEWAY, "RECIPE_502_001", "외부 레시피 API 호출에 실패했습니다."),
     TRANSFORMED_RECIPE_NOT_FOUND(HttpStatus.BAD_GATEWAY, "RECIPE_404_002", "변형 레시피를 찾을 수 없습니다."),
     EXTERNAL_RECIPE_NOT_FOUND(HttpStatus.BAD_GATEWAY, "RECIPE_404_003", "외부 레시피를 찾을 수 없습니다."),
-    RECIPE_NO_ALLERGY_RISK(HttpStatus.BAD_GATEWAY, "RECIPE_404_004", "레시피에 대체할 알레르기가 없습니다"),
+    RECIPE_NO_ALLERGY_RISK(HttpStatus.BAD_GATEWAY, "RECIPE_404_004", "알레르기 대체가 필요 없는 레시피입니다."),
     ALLERGY_REPLACEMENT_NOT_FOUND(HttpStatus.BAD_GATEWAY, "RECIPE_404_005", "레시피에 대체할 알레르기가 없습니다"),
     AI_GENERATION_FAILED(HttpStatus.BAD_GATEWAY, "RECIPE_404_006", "AI 생성에 실패했습니다");
 
