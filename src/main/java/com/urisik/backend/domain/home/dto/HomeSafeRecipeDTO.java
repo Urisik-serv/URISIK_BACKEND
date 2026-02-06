@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.recipe.dto.res;
+package com.urisik.backend.domain.home.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,11 +9,17 @@ public class HomeSafeRecipeDTO {
 
     private String id;
     private String title;
-    private String imageUrl;
+
+    private String imageSmallUrl;
+    private String imageLargeUrl;
     private String category;
+
     private double avgScore;
     private int reviewCount;
+
     private int wishCount;
+
+    private boolean isTransformed;
     private boolean isSafe;
 
 }
