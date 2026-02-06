@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/recipes")
+@RequestMapping("/api/transformed-recipes")
 @Tag(name = "Recipes", description = "레시피 관련 API")
 public class TransformedRecipeController {
 
@@ -33,18 +33,25 @@ public class TransformedRecipeController {
         );
     }
 
-
-    @GetMapping("/transformed-recipes/{transformedRecipeId}")
-    @Operation(summary = "변형 레시피 상세 조회 API", description = "사용자들이 생성한 변형 레시피의 상세 내용을 조회하는 api 입니다.")
-    public ApiResponse<TransformedRecipeDetailResponseDTO> getTransformedRecipeDetail(
+    @GetMapping("/{transformedRecipeId}")
+    @Operation(
+            summary = "변형 레시피 상세 조회 API",
+            description = "사용자들이 생성한 변형 레시피의 상세 내용을 조회하는 api 입니다."
+    )
+    public ApiResponse<TransformedRecipeDetailResponseDTO> getDetail(
             @PathVariable Long transformedRecipeId,
-            @AuthenticationPrincipal(expression = "username") String userId
+            @AuthenticationPrincipal Long loginUserId   // ⭐ 여기
     ) {
-        Long loginUserId = Long.parseLong(userId);
+        TransformedRecipeDetailResponseDTO result =
+                transformedRecipeReadService.getTransformedRecipeDetail(
+                        transformedRecipeId,
+                        loginUserId
+                );
 
         return ApiResponse.onSuccess(
                 RecipeSuccessCode.TRANSFORMED_RECIPE_DETAIL_OK,
-                transformedRecipeReadService.getTransformedRecipeDetail(transformedRecipeId, loginUserId)
+                result
         );
     }
+
 }

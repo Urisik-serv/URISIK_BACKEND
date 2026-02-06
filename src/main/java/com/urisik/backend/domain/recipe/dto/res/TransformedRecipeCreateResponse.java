@@ -16,15 +16,8 @@ public class TransformedRecipeCreateResponse {
     private boolean validationStatus;
 
     private List<String> ingredients;
-    private List<StepDTO> steps;
+    private List<RecipeStepDTO> steps;
     private List<SubstitutionSummaryDTO> substitutionSummary;
-
-    @Getter
-    @AllArgsConstructor
-    public static class StepDTO {
-        private int order;
-        private String description;
-    }
 
     @Getter
     @AllArgsConstructor

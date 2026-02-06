@@ -214,10 +214,7 @@ public class TransformedRecipeCreateService {
                 recipe.getId(),
                 tr.isValidationStatus(),
                 result.getIngredients(),
-                result.getSteps().stream()
-                        .map(s -> new TransformedRecipeCreateResponse.StepDTO(
-                                s.getOrder(), s.getDescription()))
-                        .toList(),
+                result.getSteps(),
                 result.getSubstitutionSummary().stream()
                         .map(s -> new TransformedRecipeCreateResponse.SubstitutionSummaryDTO(
                                 s.getAllergen(), s.getReplacedWith(), s.getReason()))
