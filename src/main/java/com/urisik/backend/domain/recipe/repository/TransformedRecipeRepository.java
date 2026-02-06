@@ -5,6 +5,7 @@ import com.urisik.backend.domain.recipe.enums.Visibility;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,6 +27,19 @@ public interface TransformedRecipeRepository extends JpaRepository<TransformedRe
             Long familyRoomId
     );
     List<TransformedRecipe> findByFamilyRoomId(Long familyRoomId);
+
+    @Query("""
+        select tr
+        from TransformedRecipe tr
+        join fetch tr.baseRecipe br
+        where tr.familyRoomId = :familyRoomId
+          and tr.id in :ids
+    """)
+    List<TransformedRecipe> findAllByFamilyRoomIdAndIdIn(
+            @Param("familyRoomId") Long familyRoomId,
+            @Param("ids") Collection<Long> ids
+    );
+
     List<TransformedRecipe> findByVisibility(Visibility visibility);
     List<TransformedRecipe> findByFamilyRoomIdAndBaseRecipe_IdIn(
             Long familyRoomId,

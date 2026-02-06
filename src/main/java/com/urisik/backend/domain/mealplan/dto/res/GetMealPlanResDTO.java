@@ -9,6 +9,12 @@ import java.util.Map;
 
 public class GetMealPlanResDTO {
 
+    /** 슬롯에 저장된 선택 타입(원형/변형) */
+    public enum SlotRefType {
+        RECIPE,
+        TRANSFORMED_RECIPE
+    }
+
     /** 오늘의 식단 조회 응답 */
     public record TodayMealPlanResDTO(
             LocalDate date,
@@ -19,8 +25,8 @@ public class GetMealPlanResDTO {
 
     public record TodayMealDTO(
             MealType mealType,
-            Long recipeId,
-            Long transformedRecipeId, // 없으면 null
+            SlotRefType type,         // RECIPE / TRANSFORMED_RECIPE
+            Long id,                  // 선택된 엔티티의 id (type에 따라 Recipe.id 또는 TransformedRecipe.id)
             String title,
             String imageUrl,          // 현재 Recipe 엔티티에 없으면 null
             String ingredients,
@@ -35,8 +41,8 @@ public class GetMealPlanResDTO {
     ) {}
 
     public record SlotSummaryDTO(
-            Long recipeId,
-            Long transformedRecipeId, // 없으면 null
+            SlotRefType type,         // RECIPE / TRANSFORMED_RECIPE
+            Long id,                  // 선택된 엔티티의 id (type에 따라 Recipe.id 또는 TransformedRecipe.id)
             String title,
             String imageUrl,          // 현재 Recipe 엔티티에 없으면 null
             String description,
@@ -63,8 +69,8 @@ public class GetMealPlanResDTO {
 
     public record HistoryMealDTO(
             MealType mealType,
-            Long recipeId,
-            Long transformedRecipeId,
+            SlotRefType type,         // RECIPE / TRANSFORMED_RECIPE
+            Long id,                  // 선택된 엔티티의 id (type에 따라 Recipe.id 또는 TransformedRecipe.id)
             String title,
             String imageUrl,          // 현재 Recipe 엔티티에 없으면 null
             String description,

@@ -11,8 +11,22 @@ public record UpdateMealPlanReqDTO(
 ) {
     public record UpdateItem(
             @NotNull SlotRequest selectedSlot,
-            @NotNull RecipeSelectionDTO selectedRecipe
+            @NotNull RecipeRefDTO selectedRecipe
     ) {}
+
+    /**
+     * 수정 요청에서 사용할 레시피 참조 DTO
+     * - title/baseRecipeId 등 파생 데이터는 서버가 조회하여 결정
+     */
+    public record RecipeRefDTO(
+            @NotNull RecipeType type,
+            @NotNull Long id
+    ) {
+        public enum RecipeType {
+            RECIPE,
+            TRANSFORMED_RECIPE
+        }
+    }
 
     public record SlotRequest(
             @NotNull MealType mealType,
