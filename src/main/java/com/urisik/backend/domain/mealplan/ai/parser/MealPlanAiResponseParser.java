@@ -3,6 +3,7 @@ package com.urisik.backend.domain.mealplan.ai.parser;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.urisik.backend.domain.mealplan.dto.req.RecipeSelectionDTO;
 import com.urisik.backend.domain.mealplan.entity.MealPlan;
 import com.urisik.backend.domain.mealplan.enums.MealType;
 import com.urisik.backend.domain.mealplan.exception.MealPlanException;
@@ -28,16 +29,32 @@ public class MealPlanAiResponseParser {
 
     /**
      * AI 응답(JSON)을 SlotKey -> recipeId 맵으로 변환
-     * 요구사항(안전성):
-     * - JSON object 1개만 허용
-     * - key는 selectedSlots에 포함된 슬롯만 허용 (추가 키 금지)
-     * - selectedSlots의 모든 key가 반드시 존재해야 함 (누락 금지)
-     * - value는 candidateRecipeIds 중 하나여야 함
      */
     public Map<MealPlan.SlotKey, Long> parse(
             String json,
             List<MealPlan.SlotKey> selectedSlots,
             List<Long> candidateRecipeIds
+    ) {
+        Map<MealPlan.SlotKey, RecipeSelectionDTO> selections = parseSelections(json, selectedSlots, toCandidateSelections(candidateRecipeIds));
+        Map<MealPlan.SlotKey, Long> result = new HashMap<>();
+        for (Map.Entry<MealPlan.SlotKey, RecipeSelectionDTO> e : selections.entrySet()) {
+            result.put(e.getKey(), e.getValue().id());
+        }
+        return result;
+    }
+
+    /**
+     * AI 응답(JSON)을 SlotKey -> RecipeSelectionDTO 맵으로 변환
+     * 요구사항:
+     * - JSON object 1개만 허용
+     * - key는 selectedSlots에 포함된 슬롯만 허용 (추가 키 금지)
+     * - selectedSlots의 모든 key가 반드시 존재해야 함 (누락 금지)
+     * - value는 {id, type} 형식이어야 하며, candidateSelections 중 하나여야 함
+     */
+    public Map<MealPlan.SlotKey, RecipeSelectionDTO> parseSelections(
+            String json,
+            List<MealPlan.SlotKey> selectedSlots,
+            List<RecipeSelectionDTO> candidateSelections
     ) {
         try {
             if (json == null || json.isBlank()) {
@@ -46,11 +63,11 @@ public class MealPlanAiResponseParser {
             if (selectedSlots == null || selectedSlots.isEmpty() || selectedSlots.stream().anyMatch(Objects::isNull)) {
                 throw fail();
             }
-            if (candidateRecipeIds == null || candidateRecipeIds.isEmpty() || candidateRecipeIds.stream().anyMatch(Objects::isNull)) {
+            if (candidateSelections == null || candidateSelections.isEmpty() || candidateSelections.stream().anyMatch(Objects::isNull)) {
                 throw fail();
             }
 
-            Map<String, Long> raw = objectMapper.readValue(json, new TypeReference<>() {});
+            Map<String, AiValue> raw = objectMapper.readValue(json, new TypeReference<>() {});
 
             // Build allowed key set from selectedSlots (canonical: MEALTYPE_DAYOFWEEK)
             Set<String> allowedKeys = new HashSet<>();
@@ -61,16 +78,27 @@ public class MealPlanAiResponseParser {
             // Reject duplicate canonical keys (e.g., LUNCH_MONDAY and MONDAY_LUNCH)
             Set<String> seenCanonicals = new HashSet<>();
 
-            // Reject unknown keys and convert
-            Map<MealPlan.SlotKey, Long> result = new HashMap<>();
-            for (Map.Entry<String, Long> entry : raw.entrySet()) {
+            // Candidate set for fast validation (type+id) + baseRecipeId lookup
+            Set<String> candidateSet = new HashSet<>();
+            Map<String, Long> baseIdByKey = new HashMap<>();
+            for (RecipeSelectionDTO c : candidateSelections) {
+                if (c == null || c.type() == null || c.id() == null || c.baseRecipeId() == null) continue;
+                String key = candidateKey(c.type(), c.id());
+                candidateSet.add(key);
+                baseIdByKey.put(key, c.baseRecipeId());
+            }
+            if (candidateSet.isEmpty()) {
+                throw fail();
+            }
+
+            Map<MealPlan.SlotKey, RecipeSelectionDTO> result = new HashMap<>();
+            for (Map.Entry<String, AiValue> entry : raw.entrySet()) {
                 String rawKey = entry.getKey();
-                Long recipeId = entry.getValue();
+                AiValue value = entry.getValue();
 
                 MealPlan.SlotKey slotKey = parseSlotKey(rawKey);
                 String canonical = toCanonicalKey(slotKey);
 
-                // Reject duplicate canonical keys (e.g., LUNCH_MONDAY and MONDAY_LUNCH)
                 if (!seenCanonicals.add(canonical)) {
                     throw fail();
                 }
@@ -78,11 +106,34 @@ public class MealPlanAiResponseParser {
                 if (!allowedKeys.contains(canonical)) {
                     throw fail();
                 }
-                if (recipeId == null) {
+                if (value == null || value.id == null || value.type == null || value.type.isBlank()) {
                     throw fail();
                 }
 
-                result.put(slotKey, recipeId);
+                RecipeSelectionDTO.RecipeSelectionType selectionType;
+                try {
+                    selectionType = RecipeSelectionDTO.RecipeSelectionType.valueOf(value.type.trim().toUpperCase());
+                } catch (Exception e) {
+                    throw fail();
+                }
+
+                Long baseId = baseIdByKey.get(candidateKey(selectionType, value.id));
+                if (baseId == null) {
+                    // For RECIPE, base can default to id. For TRANSFORMED, missing base is invalid.
+                    if (selectionType == RecipeSelectionDTO.RecipeSelectionType.RECIPE) {
+                        baseId = value.id;
+                    } else {
+                        throw fail();
+                    }
+                }
+
+                RecipeSelectionDTO selection = new RecipeSelectionDTO(selectionType, value.id, baseId);
+
+                if (!candidateSet.contains(candidateKey(selection.type(), selection.id()))) {
+                    throw fail();
+                }
+
+                result.put(slotKey, selection);
             }
 
             // Ensure no missing keys
@@ -93,19 +144,10 @@ public class MealPlanAiResponseParser {
                 }
             }
 
-            // Ensure values are from candidateRecipeIds
-            Set<Long> candidateSet = new HashSet<>(candidateRecipeIds);
-            for (Map.Entry<MealPlan.SlotKey, Long> e : result.entrySet()) {
-                if (!candidateSet.contains(e.getValue())) {
-                    throw fail();
-                }
-            }
-
             return result;
         } catch (MealPlanException e) {
             throw e;
         } catch (Exception e) {
-            // Any unexpected parsing exception is treated as parse failure
             throw fail();
         }
     }
@@ -147,6 +189,27 @@ public class MealPlanAiResponseParser {
         } catch (Exception e) {
             throw fail();
         }
+    }
+
+    private static String candidateKey(RecipeSelectionDTO.RecipeSelectionType type, Long id) {
+        return type.name() + ":" + id;
+    }
+
+    private List<RecipeSelectionDTO> toCandidateSelections(List<Long> candidateRecipeIds) {
+        // Backward-compat: treat legacy candidates as canonical recipes
+        if (candidateRecipeIds == null || candidateRecipeIds.isEmpty()) {
+            return List.<RecipeSelectionDTO>of();
+        }
+        return candidateRecipeIds.stream()
+                .filter(Objects::nonNull)
+                // RECIPE: baseRecipeId == recipeId
+                .map(id -> new RecipeSelectionDTO(RecipeSelectionDTO.RecipeSelectionType.RECIPE, id, id))
+                .toList();
+    }
+
+    private static class AiValue {
+        public Long id;
+        public String type;
     }
 
     private MealPlanException fail() {

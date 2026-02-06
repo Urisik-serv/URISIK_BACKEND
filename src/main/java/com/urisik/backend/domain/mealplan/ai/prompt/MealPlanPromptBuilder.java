@@ -1,5 +1,6 @@
 package com.urisik.backend.domain.mealplan.ai.prompt;
 
+import com.urisik.backend.domain.mealplan.dto.req.RecipeSelectionDTO;
 import com.urisik.backend.domain.mealplan.entity.MealPlan;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +13,7 @@ public class MealPlanPromptBuilder {
 
     public String build(
             List<MealPlan.SlotKey> slots,
-            List<Long> candidateRecipeIds
+            List<RecipeSelectionDTO> candidateRecipeIds
     ) {
         String slotKeys = slots.stream()
                 .map(MealPlanPromptBuilder::toCanonicalPromptKey)
@@ -29,7 +30,9 @@ public class MealPlanPromptBuilder {
         - Respond in JSON only
         - Keys must be in the form MEALTYPE_DAYOFWEEK (e.g., LUNCH_MONDAY, DINNER_SUNDAY)
         - Use ONLY the provided slot keys; do not invent new keys
-        - Values must be chosen from candidateRecipeIds
+        - Each value must be an object with fields: { "type": string, "id": number }
+        - type must be one of: RECIPE or TRANSFORMED_RECIPE
+        - id must be chosen from candidateRecipeIds
         - Do not explain anything
 
         Slots (allowed keys):
