@@ -14,14 +14,6 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
     List<Recipe> findByTitleContainingIgnoreCase(String keyword, Pageable pageable);
 
-    @Query("""
-        select r
-        from Recipe r
-        left join fetch r.recipeExternalMetadata
-        order by r.wishCount desc
-    """)
-    List<Recipe> findTopForHome(Pageable pageable);
-
     /** Lightweight candidate row for meal plan generation (avoid loading full entity graph) */
     interface RecipeCandidateRow {
         Long getId();

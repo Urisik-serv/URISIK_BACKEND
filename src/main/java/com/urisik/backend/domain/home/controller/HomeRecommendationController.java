@@ -1,9 +1,8 @@
-package com.urisik.backend.domain.recipe.controller;
+package com.urisik.backend.domain.home.controller;
 
-import com.urisik.backend.domain.member.service.MemberService;
-import com.urisik.backend.domain.recipe.dto.res.HomeSafeRecipeResponse;
+import com.urisik.backend.domain.home.dto.HomeSafeRecipeResponse;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
-import com.urisik.backend.domain.recipe.service.HomeRecommendationService;
+import com.urisik.backend.domain.home.service.HomeRecommendationService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,12 +28,9 @@ public class HomeRecommendationController {
     public ApiResponse<HomeSafeRecipeResponse> getSafeRecipeRecommendations(
             @AuthenticationPrincipal Long loginUserId
     ) {
-        HomeSafeRecipeResponse result =
-                homeRecommendationService.recommendSafeRecipes(loginUserId);
-
         return ApiResponse.onSuccess(
                 RecipeSuccessCode.HOME_SAFE_RECIPE_OK,
-                result
+                homeRecommendationService.recommendSafeRecipes(loginUserId)
         );
     }
 }
