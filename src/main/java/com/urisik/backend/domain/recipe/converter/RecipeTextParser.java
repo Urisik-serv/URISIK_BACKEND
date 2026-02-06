@@ -12,18 +12,13 @@ public class RecipeTextParser {
 
     public static List<String> parseIngredients(String raw) {
         if (raw == null || raw.isBlank()) return List.of();
-        // "김치 200g, 돼지고기 150g" or 줄바꿈 혼용 대응
-        String normalized = raw.replace("\r", "\n");
-        String[] tokens = normalized.contains(",")
-                ? normalized.split(",")
-                : normalized.split("\n");
 
-        List<String> result = new ArrayList<>();
-        for (String t : tokens) {
-            String s = t.trim();
-            if (!s.isBlank()) result.add(s);
-        }
-        return result;
+        String normalized = raw.replace("\r", "\n");
+
+        return Arrays.stream(normalized.split("[,\n]"))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
     }
 
     public static List<RecipeStepDTO> parseSteps(String raw) {

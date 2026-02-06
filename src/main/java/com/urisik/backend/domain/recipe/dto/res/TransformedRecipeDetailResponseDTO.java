@@ -11,15 +11,25 @@ public class TransformedRecipeDetailResponseDTO {
 
     private Long transformedRecipeId;
     private String title;
+    private String imageUrl;
     private Long baseRecipeId;
 
     private List<String> ingredients;
     private List<RecipeStepDTO> steps;
-
     private List<SubstitutionSummaryDTO> substitutionSummary;
 
-    private WarningDTO warning;
-    private boolean createdByFamily;
+    private AllergyWarningDTO allergyWarning;
+
+    private int reviewCount;
+    private double avgScore;
+    private int wishCount;
+
+    @Getter
+    @AllArgsConstructor
+    public static class AllergyWarningDTO {
+        private boolean hasRisk;
+        private List<String> allergens;
+    }
 
     @Getter
     @AllArgsConstructor
@@ -28,14 +38,6 @@ public class TransformedRecipeDetailResponseDTO {
         private String replacedWith;
         private String reason;
     }
-
-    @Getter
-    @AllArgsConstructor
-    public static class WarningDTO {
-        private boolean hasRisk;
-        private String message;
-        private List<String> riskyAllergens;
-    }
-
 }
+
 
