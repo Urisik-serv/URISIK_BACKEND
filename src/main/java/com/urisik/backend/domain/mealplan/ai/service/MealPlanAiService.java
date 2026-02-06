@@ -62,4 +62,12 @@ public class MealPlanAiService {
         log.info("[AI][FLOW] MealPlanAiService.generate done");
         return assignments;
     }
+
+    public String getAiClient() {
+        return aiClient == null ? "NoAiClient" : aiClient.getClass().getSimpleName();
+    }
+
+    public boolean isAiUsed() {
+        return aiClient != null && !(aiClient instanceof com.urisik.backend.global.ai.NoAiClient);
+    }
 }
