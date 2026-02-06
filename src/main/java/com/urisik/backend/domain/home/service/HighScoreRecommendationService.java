@@ -6,6 +6,7 @@ import com.urisik.backend.domain.home.converter.HighScoreRecommendationConverter
 import com.urisik.backend.domain.home.dto.HighScoreRecommendationDTO;
 import com.urisik.backend.domain.home.dto.HighScoreRecommendationResponse;
 import com.urisik.backend.domain.home.policy.CategoryMapper;
+import com.urisik.backend.domain.home.policy.UnifiedCategory;
 import com.urisik.backend.domain.home.repository.HomeRepository;
 import com.urisik.backend.domain.home.repository.HomeTransformedRecipeRepository;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +36,14 @@ public class HighScoreRecommendationService {
     private final AllergyRiskService allergyRiskService;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
 
+    private static final Set<String> ALLOWED_CATEGORIES = Set.of(
+            UnifiedCategory.BOWL,     // 밥
+            UnifiedCategory.SOUP,     // 국
+            UnifiedCategory.SIDE,     // 반찬
+            UnifiedCategory.DESSERT,  // 후식
+            UnifiedCategory.ETC       // 기타
+    );
+
     /**
      * 고평점 레시피 추천
      *
@@ -46,6 +56,15 @@ public class HighScoreRecommendationService {
             Long loginUserId,
             String category
     ) {
+
+        /* 0. 통합 카테고리 검증 */
+        if (category != null && !category.isBlank()) {
+            if (!ALLOWED_CATEGORIES.contains(category)) {
+                // 허용되지 않은 카테고리 → 추천 결과 없음
+                return new HighScoreRecommendationResponse(List.of());
+            }
+        }
+
         // 1️. 로그인 사용자 → 가족방 ID 조회
         Long familyRoomId =
                 familyMemberProfileRepository.findByMember_Id(loginUserId)
