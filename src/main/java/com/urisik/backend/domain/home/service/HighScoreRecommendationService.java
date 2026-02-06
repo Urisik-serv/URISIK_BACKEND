@@ -36,48 +36,37 @@ public class HighScoreRecommendationService {
     private final AllergyRiskService allergyRiskService;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
 
-    private static final Set<String> ALLOWED_CATEGORIES = Set.of(
-            UnifiedCategory.BOWL,     // 밥
-            UnifiedCategory.SOUP,     // 국
-            UnifiedCategory.SIDE,     // 반찬
-            UnifiedCategory.DESSERT,  // 후식
-            UnifiedCategory.ETC       // 기타
-    );
-
     /**
      * 고평점 레시피 추천
      *
-     * - 카테고리 미선택: 전체 레시피 + 변형 레시피 중 고평점 추천
-     * - 카테고리 선택: 해당 카테고리 내에서 고평점 추천
-     * - 알레르기는 필터링하지 않음
-     * - 단, 평점 동점 시 알레르기 안전한 레시피 우선
+     * 정책 요약:
+     * - 카테고리 미입력: 전체 추천
+     * - 카테고리 입력:
+     *   · 밥 / 국 / 반찬 / 후식 → 그대로 사용
+     *   · 그 외 모든 값 → 기타로 자동 보정
+     * - 알레르기 필터링 X
+     * - 단, 평점 동점 시 가족 알레르기 기준 안전한 음식 우선
      */
     public HighScoreRecommendationResponse recommend(
             Long loginUserId,
             String category
     ) {
+        /* 카테고리 정규화 (모르는 값 → 기타) */
+        String normalizedCategory = normalizeCategory(category);
 
-        /* 0. 통합 카테고리 검증 */
-        if (category != null && !category.isBlank()) {
-            if (!ALLOWED_CATEGORIES.contains(category)) {
-                // 허용되지 않은 카테고리 → 추천 결과 없음
-                return new HighScoreRecommendationResponse(List.of());
-            }
-        }
-
-        // 1️. 로그인 사용자 → 가족방 ID 조회
+        /* 1️. 로그인 사용자 → 가족방 ID 조회 */
         Long familyRoomId =
                 familyMemberProfileRepository.findByMember_Id(loginUserId)
                         .orElseThrow(() -> new GeneralException(GeneralErrorCode.NOT_FOUND))
                         .getFamilyRoom()
                         .getId();
 
-        // 2️. 후보 조회 (최대 20개씩)
+        /* 2. 추천 후보 조회 (각각 최대 20개) */
         Pageable pageable = PageRequest.of(0, 20);
         List<HighScoreRecipeCandidate> candidates = new ArrayList<>();
 
-        // 2-1) 카테고리 미선택
-        if (category == null || category.isBlank()) {
+        /* 2-1) 카테고리 미선택 → 전체 추천 */
+        if (normalizedCategory == null) {
 
             candidates.addAll(
                     homeRepository.findTopByScore(pageable)
@@ -93,10 +82,10 @@ public class HighScoreRecommendationService {
                             .toList()
             );
         }
-        // 2-2) 카테고리 선택
+        /* 2-2) 카테고리 선택 → 통합 카테고리 기준 추천 */
         else {
             List<String> legacyCategories =
-                    CategoryMapper.toLegacyList(category);
+                    CategoryMapper.toLegacyList(normalizedCategory);
 
             candidates.addAll(
                     homeRepository.findTopByCategories(legacyCategories, pageable)
@@ -113,24 +102,26 @@ public class HighScoreRecommendationService {
             );
         }
 
-        // 3️. 정렬
+        /* 3️. 정렬
+         *  1차: 평균 평점 내림차순
+         *  2차: 평점 동점 시 알레르기 안전한 음식 우선
+         */
         candidates.sort(
                 Comparator
-                        // 1차: 평점 내림차순
                         .comparingDouble(HighScoreRecipeCandidate::getAvgScore)
                         .reversed()
-                        // 2차: 평점 동점 시 알레르기 안전 우선
                         .thenComparing(candidate -> {
                             List<Allergen> risks =
                                     allergyRiskService.detectRiskAllergens(
                                             familyRoomId,
                                             candidate.getIngredients()
                                     );
-                            return risks.isEmpty(); // true = 안전
-                        }).reversed()
+                            return risks.isEmpty(); // true = 알레르기 안전
+                        })
+                        .reversed()
         );
 
-        // 4️. Top 3 추출 + DTO 변환
+        /* 4. Top 3 추출 + DTO 변환 */
         List<HighScoreRecommendationDTO> result =
                 candidates.stream()
                         .limit(3)
@@ -139,5 +130,28 @@ public class HighScoreRecommendationService {
 
         return new HighScoreRecommendationResponse(result);
     }
+
+    /* 카테고리 정규화 메서드 */
+    private String normalizeCategory(String category) {
+
+        // 카테고리 미입력 → 전체 추천
+        if (category == null || category.isBlank()) {
+            return null;
+        }
+
+        // 서비스에서 명확히 구분하는 카테고리
+        return switch (category) {
+            case UnifiedCategory.BOWL,    // 밥
+                 UnifiedCategory.SOUP,    // 국
+                 UnifiedCategory.SIDE,    // 반찬
+                 UnifiedCategory.DESSERT  // 후식
+                    -> category;
+
+            // 그 외 모든 값은 기타
+            default
+                    -> UnifiedCategory.ETC;
+        };
+    }
 }
+
 
