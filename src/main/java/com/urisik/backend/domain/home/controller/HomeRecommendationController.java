@@ -1,6 +1,9 @@
 package com.urisik.backend.domain.home.controller;
 
+import com.urisik.backend.domain.home.dto.HighScoreRecommendationResponse;
 import com.urisik.backend.domain.home.dto.HomeSafeRecipeResponse;
+import com.urisik.backend.domain.home.enums.HomeSuccessCode;
+import com.urisik.backend.domain.home.service.HighScoreRecommendationService;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
 import com.urisik.backend.domain.home.service.HomeRecommendationService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
@@ -10,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -20,10 +24,10 @@ public class HomeRecommendationController {
 
     private final HomeRecommendationService homeRecommendationService;
 
-    @GetMapping("/recommendations/safe-recipes")
+    @GetMapping("/recommendations/safe-recipes-top")
     @Operation(
-            summary = "홈 안전 레시피 추천 API",
-            description = "위시리스트가 많은 레시피 중 로그인 사용자의 가족 알레르기 기준으로 안전한 레시피 Top 3를 추천합니다."
+            summary = "홈 안전 레시피 추천 API(상단)",
+            description = "위시리스트가 많은 레시피 중 로그인 사용자의 가족 알레르기 기준으로 안전한 레시피 Top 3를 추천하는 api 입니다."
     )
     public ApiResponse<HomeSafeRecipeResponse> getSafeRecipeRecommendations(
             @AuthenticationPrincipal Long loginUserId
@@ -33,4 +37,25 @@ public class HomeRecommendationController {
                 homeRecommendationService.recommendSafeRecipes(loginUserId)
         );
     }
+
+    private final HighScoreRecommendationService highScoreRecommendationService;
+
+    @GetMapping("/high-score")
+    @Operation(
+            summary = "홈 평점 순 레시피 추천 API(하단)",
+            description =  "카테고리 선택 여부에 따라 레시피 및 변형 레시피를 통합하여별점이 높은 음식 Top 3를 추천하는 api 입니다."
+    )
+    public ApiResponse<HighScoreRecommendationResponse> recommendHighScore(
+            @AuthenticationPrincipal Long loginUserId,
+            @RequestParam(required = false) String category
+    ) {
+        HighScoreRecommendationResponse result =
+                highScoreRecommendationService.recommend(loginUserId, category);
+
+        return ApiResponse.onSuccess(
+                HomeSuccessCode.RECOMMEND_HIGH_SCORE_OK,
+                result
+        );
+    }
+
 }

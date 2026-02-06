@@ -47,7 +47,7 @@ public class RecipeSearchService {
 
         // 2) 공개 변형 레시피
         List<TransformedRecipe> trs =
-                transformedRecipeRepository.findByRecipeTitleLike(keyword, pageable);
+                transformedRecipeRepository.findByTitleLike(keyword, pageable);
 
         for (TransformedRecipe tr : trs) {
             RecipeExternalMetadata meta = metadataRepository.findByRecipe_Id(tr.getBaseRecipe().getId()).orElse(null);
