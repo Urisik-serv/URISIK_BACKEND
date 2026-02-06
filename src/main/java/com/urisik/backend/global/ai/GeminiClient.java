@@ -2,6 +2,7 @@ package com.urisik.backend.global.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -28,6 +29,7 @@ public class GeminiClient implements AiClient {
     private final ObjectMapper objectMapper;
     private final String model;
     private final double temperature;
+    private final String apiKey;
 
     public GeminiClient(
             WebClient.Builder webClientBuilder,
@@ -51,8 +53,6 @@ public class GeminiClient implements AiClient {
         log.info("[AI][BOOT] GeminiClient ENABLED (model={}, temperature={}, baseUrl={})", this.model, this.temperature, baseUrl);
     }
 
-    private final String apiKey;
-
     @Override
     public String generateJson(String prompt) {
         if (prompt == null || prompt.isBlank()) {
@@ -60,9 +60,26 @@ public class GeminiClient implements AiClient {
         }
         log.info("[AI][CALL] Gemini generateJson called (model={}, promptChars={})", model, prompt.length());
 
-        // Gemini expects a JSON body as string, and API key as query parameter.
-        String req = "{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"" + prompt.replace("\"", "\\\"") + "\"}]}]," +
-                "\"generationConfig\":{\"temperature\":" + temperature + "}}";
+        // Build request body safely using ObjectMapper
+        String req;
+        try {
+            var textPart = objectMapper.createObjectNode().put("text", prompt);
+            var parts = objectMapper.createArrayNode().add(textPart);
+            var content = objectMapper.createObjectNode()
+                    .put("role", "user")
+                    .set("parts", parts);
+            var contents = objectMapper.createArrayNode().add(content);
+            var genConfig = objectMapper.createObjectNode()
+                    .put("temperature", temperature);
+
+            ObjectNode body = objectMapper.createObjectNode();
+            body.set("contents", contents);
+            body.set("generationConfig", genConfig);
+
+            req = objectMapper.writeValueAsString(body);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to build Gemini request JSON", e);
+        }
 
         String rawJson;
         try {
@@ -90,11 +107,11 @@ public class GeminiClient implements AiClient {
         try {
             JsonNode root = objectMapper.readTree(rawJson);
             JsonNode candidates = root.get("candidates");
-            if (candidates != null && candidates.isArray() && candidates.size() > 0) {
+            if (candidates != null && candidates.isArray() && !candidates.isEmpty()) {
                 JsonNode content = candidates.get(0).get("content");
                 if (content != null) {
                     JsonNode parts = content.get("parts");
-                    if (parts != null && parts.isArray() && parts.size() > 0) {
+                    if (parts != null && parts.isArray() && !parts.isEmpty()) {
                         JsonNode textNode = parts.get(0).get("text");
                         if (textNode != null && textNode.isTextual() && !textNode.asText().isBlank()) {
                             log.info("[AI][CALL] Gemini text extracted (chars={})", textNode.asText().length());
@@ -103,9 +120,9 @@ public class GeminiClient implements AiClient {
                     }
                 }
             }
-            throw new IllegalStateException("Gemini response did not contain text");
-        } catch (Exception e) {
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new IllegalStateException("Failed to parse Gemini response JSON", e);
         }
+        throw new IllegalStateException("Gemini response did not contain text");
     }
 }

@@ -22,4 +22,18 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     """)
     List<Recipe> findTopForHome(Pageable pageable);
 
+    /** Lightweight candidate row for meal plan generation (avoid loading full entity graph) */
+    interface RecipeCandidateRow {
+        Long getId();
+        String getIngredientsRaw();
+    }
+
+    /** Fetch a limited random-ish slice of recipes for candidate building. */
+    @Query("""
+        select r.id as id, r.ingredientsRaw as ingredientsRaw
+        from Recipe r
+        order by function('rand')
+    """)
+    List<RecipeCandidateRow> findRandomCandidateRows(Pageable pageable);
+
 }

@@ -10,7 +10,7 @@ import com.urisik.backend.domain.mealplan.dto.common.RecipeDTO;
 import com.urisik.backend.domain.mealplan.dto.event.MealPlanConfirmedEvent;
 import com.urisik.backend.domain.mealplan.dto.req.CreateMealPlanReqDTO;
 import com.urisik.backend.domain.mealplan.dto.req.CreateMealPlanReqDTO.SlotRequest;
-import com.urisik.backend.domain.mealplan.dto.req.RecipeSelectionDTO;
+import com.urisik.backend.domain.mealplan.dto.common.RecipeSelectionDTO;
 import com.urisik.backend.domain.mealplan.dto.req.UpdateMealPlanReqDTO;
 import com.urisik.backend.domain.mealplan.dto.res.CreateMealPlanResDTO;
 import com.urisik.backend.domain.mealplan.dto.res.UpdateMealPlanResDTO;
@@ -97,7 +97,7 @@ public class MealPlanService {
         for (var entry : generationResult.selections().entrySet()) {
             MealPlan.SlotKey slotKey = entry.getKey();
             RecipeSelectionDTO selection = entry.getValue();
-            mealPlan.updateSlot(slotKey, selection.id());
+            mealPlan.updateSlot(slotKey, toSlotRefType(selection.type()), selection.id());
         }
         mealPlanRepository.save(mealPlan);
 
@@ -198,17 +198,18 @@ public class MealPlanService {
             return new GenerationResult(assignments);
 
         } catch (Exception e) {
+            if (e instanceof MealPlanException) {
+                // Don't fallback on validation failures — they indicate a real problem
+                throw e;
+            }
             // fallback: AI 실패/비활성(NoAiClient)/파싱 실패/검증 실패 등 예외 상황에서만 사용
             log.warn("[MEALPLAN][GEN] AI failed -> fallback (errType={}, msg={})",
                     e.getClass().getSimpleName(), e.getMessage());
-
             Map<MealPlan.SlotKey, RecipeSelectionDTO> fallbackAssignments =
                     heuristicFallbackFill(shuffledSlots, wishSelections, fallbackSelections);
-
             if (fallbackAssignments.size() < requiredSize) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED);
             }
-
             log.info("[MEALPLAN][GEN] fallback assignments done (count={})", fallbackAssignments.size());
             return new GenerationResult(fallbackAssignments);
         }
@@ -405,7 +406,7 @@ public class MealPlanService {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_SLOT_NOT_SELECTED);
             }
 
-            RecipeSelectionDTO selection = item.selectedRecipe();
+            UpdateMealPlanReqDTO.RecipeRefDTO selection = item.selectedRecipe();
             if (selection.id() == null || selection.type() == null) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
             }
@@ -436,10 +437,10 @@ public class MealPlanService {
                 default -> throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
             }
 
-            // 실제 슬롯 컬럼 업데이트
-            mealPlan.updateSlot(slotKey, chosenId);
+            // 실제 슬롯 컬럼 업데이트 (slot type + id)
+            mealPlan.updateSlot(slotKey, toSlotRefType(selection.type()), chosenId);
 
-            RecipeDTO.RecipeType dtoType = (selection.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE)
+            RecipeDTO.RecipeType dtoType = (selection.type() == UpdateMealPlanReqDTO.RecipeRefDTO.RecipeType.RECIPE)
                     ? RecipeDTO.RecipeType.RECIPE
                     : RecipeDTO.RecipeType.TRANSFORMED_RECIPE;
             String updatedSlotKeyStr = slotKey.mealType().name() + "-" + slotKey.dayOfWeek().name();
@@ -545,12 +546,24 @@ public class MealPlanService {
             if (value == null) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
             }
+            // type column must exist as well
+            if (mealPlan.getSlotType(key) == null) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+            }
         }
     }
 
-    private Long resolveBaseRecipeId(
-            RecipeSelectionDTO selection
-    ) {
+    private Long resolveBaseRecipeId(RecipeSelectionDTO selection) {
+        if (selection == null || selection.type() == null || selection.id() == null) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+        }
+
+        // Prefer DTO-carrying baseRecipeId to avoid redundant DB lookups
+        if (selection.baseRecipeId() != null) {
+            return selection.baseRecipeId();
+        }
+
+        // Fallback only when baseRecipeId is not provided
         return switch (selection.type()) {
             case RECIPE -> selection.id();
             case TRANSFORMED_RECIPE -> transformedRecipeRepository.findById(selection.id())
@@ -558,6 +571,27 @@ public class MealPlanService {
                     .orElseThrow(() ->
                             new MealPlanException(MealPlanErrorCode.MEAL_PLAN_TRANSFORMED_RECIPE_NOT_FOUND)
                     );
+        };
+    }
+
+
+    private static MealPlan.SlotRefType toSlotRefType(RecipeSelectionDTO.RecipeSelectionType type) {
+        if (type == null) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+        }
+        return switch (type) {
+            case RECIPE -> MealPlan.SlotRefType.RECIPE;
+            case TRANSFORMED_RECIPE -> MealPlan.SlotRefType.TRANSFORMED_RECIPE;
+        };
+    }
+
+    private static MealPlan.SlotRefType toSlotRefType(UpdateMealPlanReqDTO.RecipeRefDTO.RecipeType type) {
+        if (type == null) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
+        }
+        return switch (type) {
+            case RECIPE -> MealPlan.SlotRefType.RECIPE;
+            case TRANSFORMED_RECIPE -> MealPlan.SlotRefType.TRANSFORMED_RECIPE;
         };
     }
 }

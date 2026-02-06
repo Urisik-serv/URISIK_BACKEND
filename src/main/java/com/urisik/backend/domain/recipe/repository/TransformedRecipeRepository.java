@@ -26,6 +26,7 @@ public interface TransformedRecipeRepository extends JpaRepository<TransformedRe
             Long familyRoomId
     );
     List<TransformedRecipe> findByFamilyRoomId(Long familyRoomId);
+    List<TransformedRecipe> findAllByFamilyRoomIdAndIdIn(Long familyRoomId, Collection<Long> ids);
     List<TransformedRecipe> findByVisibility(Visibility visibility);
     List<TransformedRecipe> findByFamilyRoomIdAndBaseRecipe_IdIn(
             Long familyRoomId,

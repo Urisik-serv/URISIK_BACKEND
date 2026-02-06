@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.mealplan.validation;
 
-import com.urisik.backend.domain.mealplan.dto.req.RecipeSelectionDTO;
+import com.urisik.backend.domain.mealplan.dto.common.RecipeSelectionDTO;
 
 public interface MealPlanSafetyValidator {
 

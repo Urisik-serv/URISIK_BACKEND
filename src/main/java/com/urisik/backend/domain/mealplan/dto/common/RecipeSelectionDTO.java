@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.mealplan.dto.req;
+package com.urisik.backend.domain.mealplan.dto.common;
 
 import jakarta.validation.constraints.NotNull;
 

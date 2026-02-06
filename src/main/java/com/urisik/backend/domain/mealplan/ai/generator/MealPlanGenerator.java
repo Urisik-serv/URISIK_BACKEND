@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.mealplan.ai.generator;
 
-import com.urisik.backend.domain.mealplan.dto.req.RecipeSelectionDTO;
+import com.urisik.backend.domain.mealplan.dto.common.RecipeSelectionDTO;
 import com.urisik.backend.domain.mealplan.entity.MealPlan;
 
 import java.util.List;

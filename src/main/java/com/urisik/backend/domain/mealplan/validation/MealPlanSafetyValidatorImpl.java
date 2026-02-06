@@ -3,12 +3,14 @@ package com.urisik.backend.domain.mealplan.validation;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.repository.FamilyWishListExclusionRepository;
-import com.urisik.backend.domain.mealplan.dto.req.RecipeSelectionDTO;
+import com.urisik.backend.domain.mealplan.dto.common.RecipeSelectionDTO;
+import com.urisik.backend.domain.mealplan.exception.code.MealPlanErrorCode;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
+import com.urisik.backend.domain.mealplan.exception.MealPlanException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,15 +37,15 @@ public class MealPlanSafetyValidatorImpl implements MealPlanSafetyValidator {
     @Override
     public void validateFamilySafe(Long familyRoomId, RecipeSelectionDTO selection) {
         if (familyRoomId == null) {
-            throw new IllegalArgumentException("familyRoomId is null");
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
         if (selection == null || selection.type() == null || selection.id() == null) {
-            throw new IllegalArgumentException("selection is invalid");
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
         // 1) exclusion(방장 제외 목록) 검증
         if (isExcluded(familyRoomId, selection)) {
-            throw new IllegalArgumentException("Excluded recipe selection: " + selection.type() + ":" + selection.id());
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
         // 2) 가족 알레르기 기준 검증 (ingredientsRaw 기반)
@@ -55,11 +57,11 @@ public class MealPlanSafetyValidatorImpl implements MealPlanSafetyValidator {
         String ingredientsRaw = loadIngredientsRaw(selection);
         if (ingredientsRaw == null || ingredientsRaw.isBlank()) {
             // 재료정보가 없으면 안전 판정 불가 -> unsafe 처리
-            throw new IllegalArgumentException("ingredientsRaw is empty for selection: " + selection.type() + ":" + selection.id());
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
         if (!isUsableForMealPlan(ingredientsRaw, normalizedAllergens)) {
-            throw new IllegalArgumentException("Unsafe selection by family allergens: " + selection.type() + ":" + selection.id());
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
     }
 
@@ -96,17 +98,17 @@ public class MealPlanSafetyValidatorImpl implements MealPlanSafetyValidator {
     private String loadIngredientsRaw(RecipeSelectionDTO selection) {
         if (selection.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE) {
             Recipe recipe = recipeRepository.findById(selection.id())
-                    .orElseThrow(() -> new IllegalArgumentException("Recipe not found: " + selection.id()));
+                    .orElseThrow(() -> new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED));
             return recipe.getIngredientsRaw();
         }
 
         if (selection.type() == RecipeSelectionDTO.RecipeSelectionType.TRANSFORMED_RECIPE) {
             TransformedRecipe tr = transformedRecipeRepository.findById(selection.id())
-                    .orElseThrow(() -> new IllegalArgumentException("TransformedRecipe not found: " + selection.id()));
+                    .orElseThrow(() -> new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED));
             return tr.getIngredientsRaw();
         }
 
-        throw new IllegalArgumentException("Unknown selection type: " + selection.type());
+        throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
     }
 
     /**

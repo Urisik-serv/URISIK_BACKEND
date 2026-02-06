@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.mealplan.ai.prompt;
 
-import com.urisik.backend.domain.mealplan.dto.req.RecipeSelectionDTO;
+import com.urisik.backend.domain.mealplan.dto.common.RecipeSelectionDTO;
 import com.urisik.backend.domain.mealplan.entity.MealPlan;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +20,7 @@ public class MealPlanPromptBuilder {
                 .collect(Collectors.joining(", "));
 
         String candidateIds = candidateRecipeIds.stream()
-                .map(String::valueOf)
+                .map(s -> "{\"type\": \"%s\", \"id\": %d}".formatted(s.type().name(), s.id()))
                 .collect(Collectors.joining(", "));
 
         return """

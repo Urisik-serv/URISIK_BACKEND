@@ -49,31 +49,41 @@ public class MealPlanQueryService {
         DayOfWeek dow = today.getDayOfWeek();
         List<MealType> mealTypes = List.of(MealType.LUNCH, MealType.DINNER);
 
-        // mealType -> storedId (slot에 저장된 값: recipeId or transformedRecipeId)
-        Map<MealType, Long> storedIdsByMealType = new LinkedHashMap<>();
+        // mealType -> storedRef (slot에 저장된 값: (type, id))
+        Map<MealType, MealPlan.SlotRef> storedRefsByMealType = new LinkedHashMap<>();
         for (MealType mt : mealTypes) {
             MealPlan.SlotKey key = new MealPlan.SlotKey(mt, dow);
-            Long storedId = mealPlan.getSlotValue(key);
-            if (storedId != null) storedIdsByMealType.put(mt, storedId);
+            MealPlan.SlotRef ref = mealPlan.getSlotRef(key);
+            if (ref != null && ref.id() != null && ref.type() != null) {
+                storedRefsByMealType.put(mt, ref);
+            }
         }
 
-        if (storedIdsByMealType.isEmpty()) {
+        if (storedRefsByMealType.isEmpty()) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_TODAY_EMPTY);
         }
 
-        ResolvedMaps resolved = resolveStoredIds(familyRoomId, storedIdsByMealType.values());
+        Map<Long, MealPlan.SlotRefType> idToType = new HashMap<>();
+        for (MealPlan.SlotRef ref : storedRefsByMealType.values()) {
+            if (ref == null || ref.id() == null || ref.type() == null) continue;
+            idToType.put(ref.id(), ref.type());
+        }
 
-        List<GetMealPlanResDTO.TodayMealDTO> meals = storedIdsByMealType.entrySet().stream()
+        ResolvedMaps resolved = resolveStoredIds(familyRoomId, idToType);
+
+        List<GetMealPlanResDTO.TodayMealDTO> meals = storedRefsByMealType.entrySet().stream()
                 .map(e -> {
-                    Long storedId = e.getValue();
+                    Long storedId = e.getValue().id();
                     ResolvedRecipe rr = resolved.byStoredId().get(storedId);
                     if (rr == null) {
                         throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_RECIPE_NOT_FOUND);
                     }
+                    MealPlan.SlotRef ref = e.getValue();
+
                     return new GetMealPlanResDTO.TodayMealDTO(
                             e.getKey(),
-                            rr.recipeId(),
-                            rr.transformedRecipeId(),
+                            toDtoSlotRefType(ref.type()),
+                            ref.id(),
                             rr.title(),
                             null,
                             rr.ingredients(),
@@ -104,41 +114,45 @@ public class MealPlanQueryService {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_NOT_CONFIRMED);
         }
 
-        Map<MealPlan.SlotKey, Long> snapshot = mealPlan.snapshotAllSlots();
+        Map<MealPlan.SlotKey, MealPlan.SlotRef> snapshot = mealPlan.snapshotAllSlotRefs();
         if (snapshot == null || snapshot.isEmpty()) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_WEEKLY_EMPTY);
         }
 
-        List<Long> storedIds = snapshot.values().stream()
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
+        Map<Long, MealPlan.SlotRefType> idToType = new HashMap<>();
+        for (MealPlan.SlotRef ref : snapshot.values()) {
+            if (ref == null || ref.id() == null || ref.type() == null) continue;
+            idToType.put(ref.id(), ref.type());
+        }
 
-        ResolvedMaps resolved = resolveStoredIds(familyRoomId, storedIds);
+        ResolvedMaps resolved = resolveStoredIds(familyRoomId, idToType);
 
         Map<String, GetMealPlanResDTO.SlotSummaryDTO> slots = new LinkedHashMap<>();
 
         // 응답 슬롯 순서 고정
         // 정렬 기준: dayOfWeek(월->일) 오름차순, mealType (LUNCH -> DINNER) 순서로 고정
-        List<Map.Entry<MealPlan.SlotKey, Long>> ordered = snapshot.entrySet().stream()
-                .filter(e -> e.getKey() != null && e.getValue() != null)
+        List<Map.Entry<MealPlan.SlotKey, MealPlan.SlotRef>> ordered = snapshot.entrySet().stream()
+                .filter(e -> e.getKey() != null && e.getValue() != null && e.getValue().id() != null && e.getValue().type() != null)
                 .sorted(Comparator
-                        .comparing((Map.Entry<MealPlan.SlotKey, Long> e) -> e.getKey().dayOfWeek().getValue())
+                        .comparing((Map.Entry<MealPlan.SlotKey, MealPlan.SlotRef> e) -> e.getKey().dayOfWeek().getValue())
                         .thenComparing(e -> mealTypeOrder(e.getKey().mealType()))
                 )
                 .toList();
 
-        for (Map.Entry<MealPlan.SlotKey, Long> e : ordered) {
+        for (Map.Entry<MealPlan.SlotKey, MealPlan.SlotRef> e : ordered) {
             MealPlan.SlotKey key = e.getKey();
-            Long storedId = e.getValue();
+            Long storedId = e.getValue().id();
 
             ResolvedRecipe rr = resolved.byStoredId().get(storedId);
             if (rr == null) continue;
 
             String k = key.mealType().name() + "-" + key.dayOfWeek().name();
+
+            MealPlan.SlotRef ref = e.getValue();
+
             slots.put(k, new GetMealPlanResDTO.SlotSummaryDTO(
-                    rr.recipeId(),
-                    rr.transformedRecipeId(),
+                    toDtoSlotRefType(ref.type()),
+                    ref.id(),
                     rr.title(),
                     null,
                     summarizeDescription(rr.instructions()),
@@ -175,24 +189,37 @@ public class MealPlanQueryService {
         // storedId 전체 수집
         Set<Long> allStoredIds = new HashSet<>();
         for (MealPlan mp : plans) {
-            Map<MealPlan.SlotKey, Long> snapshot = mp.snapshotAllSlots();
+            Map<MealPlan.SlotKey, MealPlan.SlotRef> snapshot = mp.snapshotAllSlotRefs();
             if (snapshot == null) continue;
-            snapshot.values().stream().filter(Objects::nonNull).forEach(allStoredIds::add);
+            snapshot.values().stream()
+                    .filter(Objects::nonNull)
+                    .filter(ref -> ref.id() != null && ref.type() != null)
+                    .forEach(ref -> allStoredIds.add(ref.id()));
         }
 
-        ResolvedMaps resolved = resolveStoredIds(familyRoomId, allStoredIds);
+        Map<Long, MealPlan.SlotRefType> idToType = new HashMap<>();
+        for (MealPlan mp : plans) {
+            Map<MealPlan.SlotKey, MealPlan.SlotRef> snap = mp.snapshotAllSlotRefs();
+            if (snap == null) continue;
+            for (MealPlan.SlotRef ref : snap.values()) {
+                if (ref == null || ref.id() == null || ref.type() == null) continue;
+                idToType.put(ref.id(), ref.type());
+            }
+        }
+        ResolvedMaps resolved = resolveStoredIds(familyRoomId, idToType);
 
         List<GetMealPlanResDTO.WeekHistoryDTO> weeks = new ArrayList<>();
         for (MealPlan mp : plans) {
-            Map<MealPlan.SlotKey, Long> snapshot = mp.snapshotAllSlots();
+            Map<MealPlan.SlotKey, MealPlan.SlotRef> snapshot = mp.snapshotAllSlotRefs();
             if (snapshot == null) continue;
 
             Map<DayOfWeek, List<GetMealPlanResDTO.HistoryMealDTO>> dayMap = new EnumMap<>(DayOfWeek.class);
 
-            for (Map.Entry<MealPlan.SlotKey, Long> e : snapshot.entrySet()) {
+            for (Map.Entry<MealPlan.SlotKey, MealPlan.SlotRef> e : snapshot.entrySet()) {
                 MealPlan.SlotKey key = e.getKey();
-                Long storedId = e.getValue();
-                if (key == null || storedId == null) continue;
+                MealPlan.SlotRef ref = e.getValue();
+                if (key == null || ref == null || ref.id() == null || ref.type() == null) continue;
+                Long storedId = ref.id();
 
                 ResolvedRecipe rr = resolved.byStoredId().get(storedId);
                 if (rr == null) continue;
@@ -200,8 +227,8 @@ public class MealPlanQueryService {
                 dayMap.computeIfAbsent(key.dayOfWeek(), d -> new ArrayList<>())
                         .add(new GetMealPlanResDTO.HistoryMealDTO(
                                 key.mealType(),
-                                rr.recipeId(),
-                                rr.transformedRecipeId(),
+                                toDtoSlotRefType(ref.type()),
+                                ref.id(),
                                 rr.title(),
                                 null,
                                 summarizeDescription(rr.instructions()),
@@ -239,64 +266,85 @@ public class MealPlanQueryService {
             Map<Long, ResolvedRecipe> byStoredId
     ) {}
 
-    /** recipeId/transformedRecipeId/title/ingredients/instructions */
-    private ResolvedMaps resolveStoredIds(Long familyRoomId, Collection<Long> storedIds) {
-        if (storedIds == null) return new ResolvedMaps(Map.of());
+    /** storedId(type+id) -> recipeId/transformedRecipeId/title/ingredients/instructions */
+    private ResolvedMaps resolveStoredIds(Long familyRoomId, Map<Long, MealPlan.SlotRefType> idToType) {
+        if (idToType == null || idToType.isEmpty()) return new ResolvedMaps(Map.of());
 
-        List<Long> ids = storedIds.stream().filter(Objects::nonNull).distinct().toList();
-        if (ids.isEmpty()) return new ResolvedMaps(Map.of());
+        Set<Long> recipeIds = new HashSet<>();
+        Set<Long> transformedIds = new HashSet<>();
 
-        // storedId를 transformed_recipe.id로 먼저 조회
-        Map<Long, TransformedRecipe> trById = transformedRecipeRepository.findAllById(ids)
-                .stream()
-                .collect(Collectors.toMap(TransformedRecipe::getId, tr -> tr, (a, b) -> a));
-
-        // 나머지는 recipe.id로 취급
-        List<Long> recipeIdsStored = ids.stream()
-                .filter(id -> !trById.containsKey(id))
-                .toList();
-
-        // recipe 조회(변환본이 가리키는 recipe 포함)
-        Set<Long> allRecipeIdsToLoad = new HashSet<>(recipeIdsStored);
-        trById.values().stream()
-                .map(tr -> tr.getBaseRecipe() == null ? null : tr.getBaseRecipe().getId())
-                .filter(Objects::nonNull)
-                .forEach(allRecipeIdsToLoad::add);
-
-        Map<Long, Recipe> recipeById = recipeRepository.findAllById(allRecipeIdsToLoad)
-                .stream()
-                .collect(Collectors.toMap(Recipe::getId, r -> r, (a, b) -> a));
-
-        // recipeId로 저장된 케이스는 transformedRecipeId도 내려주기 위해 조회
-        Map<Long, Long> transformedIdByRecipeId = new HashMap<>();
-        if (!recipeIdsStored.isEmpty()) {
-            transformedRecipeRepository.findByFamilyRoomIdAndBaseRecipe_IdIn(familyRoomId, recipeIdsStored)
-                    .stream()
-                    .filter(tr -> tr.getBaseRecipe() != null)
-                    .forEach(tr -> transformedIdByRecipeId.put(tr.getBaseRecipe().getId(), tr.getId()));
+        for (Map.Entry<Long, MealPlan.SlotRefType> e : idToType.entrySet()) {
+            if (e == null) continue;
+            Long id = e.getKey();
+            MealPlan.SlotRefType t = e.getValue();
+            if (id == null || t == null) continue;
+            if (t == MealPlan.SlotRefType.RECIPE) recipeIds.add(id);
+            else if (t == MealPlan.SlotRefType.TRANSFORMED_RECIPE) transformedIds.add(id);
         }
+
+        if (recipeIds.isEmpty() && transformedIds.isEmpty()) return new ResolvedMaps(Map.of());
 
         Map<Long, ResolvedRecipe> resolved = new HashMap<>();
 
-        // storedId == transformedRecipeId 케이스
-        for (Map.Entry<Long, TransformedRecipe> en : trById.entrySet()) {
-            Long storedId = en.getKey();
-            TransformedRecipe tr = en.getValue();
+        // 1) TRANSFORMED_RECIPE: 반드시 familyRoomId로 스코프
+        Map<Long, TransformedRecipe> trById = new HashMap<>();
+        if (!transformedIds.isEmpty()) {
+            List<TransformedRecipe> trs = transformedRecipeRepository.findAllByFamilyRoomIdAndIdIn(familyRoomId, transformedIds);
+            for (TransformedRecipe tr : trs) {
+                if (tr == null || tr.getId() == null) continue;
+                trById.put(tr.getId(), tr);
+            }
+        }
 
+        // base recipe ids from transformed
+        Set<Long> baseRecipeIds = new HashSet<>();
+        for (TransformedRecipe tr : trById.values()) {
+            Recipe base = tr.getBaseRecipe();
+            if (base != null && base.getId() != null) baseRecipeIds.add(base.getId());
+        }
+
+        // load recipes: direct recipe slots + transformed base recipes
+        Set<Long> allRecipeIdsToLoad = new HashSet<>(recipeIds);
+        allRecipeIdsToLoad.addAll(baseRecipeIds);
+
+        Map<Long, Recipe> recipeById = allRecipeIdsToLoad.isEmpty()
+                ? Map.of()
+                : recipeRepository.findAllById(allRecipeIdsToLoad)
+                .stream()
+                .filter(Objects::nonNull)
+                .filter(r -> r.getId() != null)
+                .collect(Collectors.toMap(Recipe::getId, r -> r, (a, b) -> a));
+
+        // recipeId로 저장된 케이스는 transformedRecipeId도 내려주기 위해 조회 (옵션 유지)
+        Map<Long, Long> transformedIdByRecipeId = new HashMap<>();
+        if (!recipeIds.isEmpty()) {
+            transformedRecipeRepository.findByFamilyRoomIdAndBaseRecipe_IdIn(familyRoomId, recipeIds)
+                    .stream()
+                    .filter(tr -> tr != null && tr.getId() != null)
+                    .filter(tr -> tr.getBaseRecipe() != null && tr.getBaseRecipe().getId() != null)
+                    .forEach(tr -> transformedIdByRecipeId.put(tr.getBaseRecipe().getId(), tr.getId()));
+        }
+
+        // resolved: storedId == transformedRecipeId
+        for (Long storedId : transformedIds) {
+            TransformedRecipe tr = trById.get(storedId);
+            if (tr == null) continue;
             Recipe base = (tr.getBaseRecipe() == null) ? null : recipeById.get(tr.getBaseRecipe().getId());
             if (base == null) continue;
+
+            String title = (tr.getTitle() == null || tr.getTitle().isBlank()) ? base.getTitle() : tr.getTitle();
 
             resolved.put(storedId, new ResolvedRecipe(
                     base.getId(),
                     tr.getId(),
-                    base.getTitle(),
+                    title,
                     pickIngredients(tr, base),
                     pickInstructions(tr, base)
             ));
         }
 
-        // storedId == recipeId 케이스
-        for (Long storedId : recipeIdsStored) {
+        // resolved: storedId == recipeId
+        for (Long storedId : recipeIds) {
             Recipe r = recipeById.get(storedId);
             if (r == null) continue;
 
@@ -313,13 +361,13 @@ public class MealPlanQueryService {
     }
 
     private String pickIngredients(TransformedRecipe tr, Recipe base) {
-        String v = tr.getInstructionsRaw();
-        return (v == null || v.isBlank()) ? base.getIngredientsRaw() : v;
+        String v = tr == null ? null : tr.getIngredientsRaw();
+        return (v == null || v.isBlank()) ? (base == null ? null : base.getIngredientsRaw()) : v;
     }
 
     private String pickInstructions(TransformedRecipe tr, Recipe base) {
-        String v = tr.getInstructionsRaw();
-        return (v == null || v.isBlank()) ? base.getInstructionsRaw() : v;
+        String v = tr == null ? null : tr.getInstructionsRaw();
+        return (v == null || v.isBlank()) ? (base == null ? null : base.getInstructionsRaw()) : v;
     }
 
     /** 카드용 한 줄 설명: 첫 줄 우선, 없으면 앞 60자 */
@@ -349,5 +397,12 @@ public class MealPlanQueryService {
         if (date == null) return normalizeToMonday(LocalDate.now());
         int diff = date.getDayOfWeek().getValue() - DayOfWeek.MONDAY.getValue();
         return date.minusDays(diff);
+    }
+
+    private static GetMealPlanResDTO.SlotRefType toDtoSlotRefType(MealPlan.SlotRefType type) {
+        if (type == null) return GetMealPlanResDTO.SlotRefType.RECIPE;
+        return (type == MealPlan.SlotRefType.TRANSFORMED_RECIPE)
+                ? GetMealPlanResDTO.SlotRefType.TRANSFORMED_RECIPE
+                : GetMealPlanResDTO.SlotRefType.RECIPE;
     }
 }

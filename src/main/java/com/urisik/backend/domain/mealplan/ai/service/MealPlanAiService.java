@@ -3,7 +3,7 @@ package com.urisik.backend.domain.mealplan.ai.service;
 import com.urisik.backend.domain.mealplan.ai.parser.MealPlanAiResponseParser;
 import com.urisik.backend.domain.mealplan.ai.prompt.MealPlanPromptBuilder;
 import com.urisik.backend.domain.mealplan.ai.validation.MealPlanGenerationValidator;
-import com.urisik.backend.domain.mealplan.dto.req.RecipeSelectionDTO;
+import com.urisik.backend.domain.mealplan.dto.common.RecipeSelectionDTO;
 import com.urisik.backend.domain.mealplan.entity.MealPlan;
 import com.urisik.backend.global.ai.AiClient;
 import lombok.RequiredArgsConstructor;

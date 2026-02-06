@@ -5,8 +5,7 @@ import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO;
 import com.urisik.backend.domain.familyroom.repository.FamilyWishListExclusionRepository;
 import com.urisik.backend.domain.familyroom.service.FamilyWishListQueryService;
-import com.urisik.backend.domain.mealplan.dto.req.RecipeSelectionDTO;
-import com.urisik.backend.domain.recipe.entity.Recipe;
+import com.urisik.backend.domain.mealplan.dto.common.RecipeSelectionDTO;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
@@ -19,6 +18,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -29,6 +30,11 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
     private final RecipeRepository recipeRepository;
     private final MemberAllergyRepository memberAllergyRepository;
     private final FamilyWishListExclusionRepository familyWishListExclusionRepository;
+
+    private static final int MAX_SLOTS = 14;
+    private static final int TARGET_POOL_SIZE = MAX_SLOTS * 8; // 112
+    private static final int DB_BATCH_SIZE = MAX_SLOTS * 5;    // 70
+    private static final int DB_MAX_ATTEMPTS = 4;
 
     /** 가족 위시리스트 후보 제공 */
     @Override
@@ -41,19 +47,38 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
             return Collections.emptyList();
         }
 
+        // Batch-load transformed recipes used in wishes to avoid N+1 lookups
+        Set<Long> wishedTransformedIds = new HashSet<>();
+        for (FamilyWishListItemResDTO item : wishItems) {
+            if (item != null && item.getTransformedRecipeId() != null) {
+                wishedTransformedIds.add(item.getTransformedRecipeId());
+            }
+        }
+
+        Map<Long, Long> baseIdByTransformedId = new HashMap<>();
+        if (!wishedTransformedIds.isEmpty()) {
+            List<TransformedRecipe> wishedTransformed = transformedRecipeRepository.findAllById(wishedTransformedIds);
+            for (TransformedRecipe tr : wishedTransformed) {
+                if (tr == null || tr.getId() == null) continue;
+                Long baseId = resolveBaseKeyForTransformedEntity(tr);
+                if (baseId != null) baseIdByTransformedId.put(tr.getId(), baseId);
+            }
+        }
+
         List<RecipeSelectionDTO> result = new ArrayList<>();
         Set<Long> usedBaseKeys = new HashSet<>();
 
         for (FamilyWishListItemResDTO item : wishItems) {
             // transformed 우선
             if (item.getTransformedRecipeId() != null) {
-                Long baseKey = resolveBaseKeyForTransformed(item.getTransformedRecipeId());
+                Long transId = item.getTransformedRecipeId();
+                Long baseKey = baseIdByTransformedId.get(transId);
                 if (baseKey == null) continue;
                 if (!usedBaseKeys.add(baseKey)) continue;
 
                 result.add(new RecipeSelectionDTO(
                         RecipeSelectionDTO.RecipeSelectionType.TRANSFORMED_RECIPE,
-                        item.getTransformedRecipeId(),
+                        transId,
                         baseKey
                 ));
                 continue;
@@ -124,24 +149,33 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
             ));
         }
 
-        // 2. 원형 레시피
-        List<Recipe> recipes = recipeRepository.findAll();
+        // 2. 원형 레시피 (DB에서 제한/샘플링해서 가져오기: findAll() 금지)
+        for (int attempt = 0; attempt < DB_MAX_ATTEMPTS && pool.size() < TARGET_POOL_SIZE; attempt++) {
+            List<RecipeRepository.RecipeCandidateRow> rows =
+                    recipeRepository.findRandomCandidateRows(org.springframework.data.domain.PageRequest.of(0, DB_BATCH_SIZE));
 
-        for (Recipe recipe : recipes) {
-            if (recipe == null || recipe.getId() == null) continue;
-            if (excludedRecipeIds != null && excludedRecipeIds.contains(recipe.getId())) continue;
+            if (rows == null || rows.isEmpty()) break;
 
-            // 알레르기 필터링: unsafe(알레르기 포함)면 제외
-            if (!isUsableForMealPlan(recipe.getIngredientsRaw(), normalizedAllergens)) continue;
+            for (RecipeRepository.RecipeCandidateRow row : rows) {
+                if (row == null || row.getId() == null) continue;
 
-            Long baseKey = recipe.getId();
-            if (excludedBaseKeys.contains(baseKey)) continue;
+                Long recipeId = row.getId();
+                if (excludedRecipeIds != null && excludedRecipeIds.contains(recipeId)) continue;
 
-            pool.add(new RecipeSelectionDTO(
-                    RecipeSelectionDTO.RecipeSelectionType.RECIPE,
-                    recipe.getId(),
-                    recipe.getId()
-            ));
+                // 알레르기 필터링: unsafe(알레르기 포함)면 제외
+                if (!isUsableForMealPlan(row.getIngredientsRaw(), normalizedAllergens)) continue;
+
+                Long baseKey = recipeId;
+                if (excludedBaseKeys.contains(baseKey)) continue;
+
+                pool.add(new RecipeSelectionDTO(
+                        RecipeSelectionDTO.RecipeSelectionType.RECIPE,
+                        recipeId,
+                        recipeId
+                ));
+
+                if (pool.size() >= TARGET_POOL_SIZE) break;
+            }
         }
 
         // 랜덤 + baseRecipe 중복 제거
@@ -178,24 +212,8 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
 
     private Long resolveBaseKey(RecipeSelectionDTO selection) {
         if (selection == null) return null;
-
-        if (selection.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE) {
-            return selection.id();
-        }
-
-        if (selection.type() == RecipeSelectionDTO.RecipeSelectionType.TRANSFORMED_RECIPE) {
-            return resolveBaseKeyForTransformed(selection.id());
-        }
-
-        return null;
-    }
-
-    private Long resolveBaseKeyForTransformed(Long transformedRecipeId) {
-        if (transformedRecipeId == null) return null;
-
-        return transformedRecipeRepository.findById(transformedRecipeId)
-                .map(this::resolveBaseKeyForTransformedEntity)
-                .orElse(null);
+        // baseRecipeId is always set when constructing RecipeSelectionDTO (RECIPE: id, TRANSFORMED: baseRecipe.id)
+        return selection.baseRecipeId();
     }
 
     private Long resolveBaseKeyForTransformedEntity(TransformedRecipe tr) {
