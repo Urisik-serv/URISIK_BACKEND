@@ -389,7 +389,7 @@ public class MealPlanQueryService {
     }
 
     private static GetMealPlanResDTO.SlotRefType toDtoSlotRefType(MealPlan.SlotRefType type) {
-        if (type == null) return GetMealPlanResDTO.SlotRefType.RECIPE;
+        if (type == null) throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_RECIPE_NOT_FOUND);
         return (type == MealPlan.SlotRefType.TRANSFORMED_RECIPE)
                 ? GetMealPlanResDTO.SlotRefType.TRANSFORMED_RECIPE
                 : GetMealPlanResDTO.SlotRefType.RECIPE;

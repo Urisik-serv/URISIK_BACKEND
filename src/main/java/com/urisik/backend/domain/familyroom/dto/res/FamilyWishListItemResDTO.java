@@ -109,10 +109,12 @@ public class FamilyWishListItemResDTO {
     public static class Profile {
         private final Long profileId;
         private final String nickname;
+        private final String profilePicUrl;
 
-        public Profile(Long profileId, String nickname) {
+        public Profile(Long profileId, String nickname, String profilePicUrl) {
             this.profileId = profileId;
             this.nickname = nickname;
+            this.profilePicUrl = profilePicUrl;
         }
 
         public Long getProfileId() {
@@ -121,6 +123,10 @@ public class FamilyWishListItemResDTO {
 
         public String getNickname() {
             return nickname;
+        }
+
+        public String getProfilePicUrl() {
+            return profilePicUrl;
         }
     }
 }

@@ -570,7 +570,7 @@ public class FamilyWishListQueryService {
             if (p == null || p.getId() == null) return;
             profiles.putIfAbsent(
                     p.getId(),
-                    new Profile(p.getId(), p.getNickname())
+                    new Profile(p.getId(), p.getNickname(), p.getProfilePicUrl())
             );
         }
 
