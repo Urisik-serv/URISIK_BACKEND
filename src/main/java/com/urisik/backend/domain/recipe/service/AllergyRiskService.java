@@ -30,7 +30,8 @@ public class AllergyRiskService {
                 ingredients.stream().map(ingredientNormalizer::normalize).toList();
 
         return familyAllergens.stream()
-                .filter(a -> normalized.stream().anyMatch(ing -> ing.contains(a.getKoreanName())))
+                .filter(a -> normalized.stream().anyMatch(a::matchesIngredient))
                 .toList();
+
     }
 }
