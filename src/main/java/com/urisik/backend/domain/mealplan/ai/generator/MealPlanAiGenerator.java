@@ -26,7 +26,6 @@ public class MealPlanAiGenerator implements MealPlanGenerator {
 
     private final MealPlanAiService mealPlanAiService;
     private final MealPlanGenerationValidator validator;
-    private final MealPlanDefaultGenerator fallbackGenerator;
 
     @Override
     public Map<MealPlan.SlotKey, RecipeSelectionDTO> generateRecipeAssignments(
@@ -39,12 +38,9 @@ public class MealPlanAiGenerator implements MealPlanGenerator {
                     candidateSelections
             );
         } catch (Exception e) {
-            // AI 실패 → fallback
-            log.warn("AI meal plan generation failed, falling back to default generator", e);
-            return fallbackGenerator.generateRecipeAssignments(
-                    selectedSlots,
-                    candidateSelections
-            );
+            // Propagate so the caller can apply fallback and report accurate metadata
+            log.warn("AI meal plan generation failed; delegating fallback handling to upper layer", e);
+            throw e;
         }
     }
 }
