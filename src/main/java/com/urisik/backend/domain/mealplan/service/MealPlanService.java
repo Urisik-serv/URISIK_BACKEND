@@ -104,19 +104,28 @@ public class MealPlanService {
         // 응답: chosenId + title
         Map<String, RecipeDTO> slots = new LinkedHashMap<>();
 
+        // Batch-load titles
+        Map<Long, String> recipeTitles = new HashMap<>();
+        Map<Long, String> trTitles = new HashMap<>();
+        Set<Long> recipeIdsToLoad = new HashSet<>();
+        Set<Long> trIdsToLoad = new HashSet<>();
+        for (RecipeSelectionDTO sel : generationResult.selections().values()) {
+            if (sel.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE) recipeIdsToLoad.add(sel.id());
+            else trIdsToLoad.add(sel.id());
+        }
+        if (!recipeIdsToLoad.isEmpty())
+            recipeRepository.findAllById(recipeIdsToLoad).forEach(r -> recipeTitles.put(r.getId(), r.getTitle()));
+        if (!trIdsToLoad.isEmpty())
+            transformedRecipeRepository.findAllById(trIdsToLoad).forEach(tr -> trTitles.put(tr.getId(), tr.getTitle()));
+
         for (MealPlan.SlotKey slot : selectedSlots) {
             RecipeSelectionDTO selection = generationResult.selections().get(slot);
-
-            String title;
-            if (selection.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE) {
-                title = recipeRepository.findById(selection.id())
-                        .map(Recipe::getTitle)
-                        .orElse("UNKNOWN");
-            } else {
-                title = transformedRecipeRepository.findById(selection.id())
-                        .map(TransformedRecipe::getTitle)
-                        .orElse("UNKNOWN");
+            if (selection == null || selection.type() == null || selection.id() == null) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED);
             }
+            String title = (selection.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE)
+                    ? recipeTitles.getOrDefault(selection.id(), "UNKNOWN")
+                    : trTitles.getOrDefault(selection.id(), "UNKNOWN");
 
             RecipeDTO.RecipeType dtoType = (selection.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE)
                     ? RecipeDTO.RecipeType.RECIPE
@@ -306,17 +315,6 @@ public class MealPlanService {
         }
 
         return result;
-    }
-
-    private Map<String, RecipeDTO> buildSlotResponse(
-            List<MealPlan.SlotKey> selectedSlots,
-            Map<MealPlan.SlotKey, Long> recipeAssignments,
-            Map<MealPlan.SlotKey, Long> chosenAssignments,
-            Map<Long, String> recipeTitles
-    ) {
-        // Deprecated, kept for compatibility. No longer used.
-        Map<String, RecipeDTO> slots = new LinkedHashMap<>();
-        return slots;
     }
 
     private static LocalDate normalizeToMonday(LocalDate date) {
@@ -567,13 +565,13 @@ public class MealPlanService {
         return switch (selection.type()) {
             case RECIPE -> selection.id();
             case TRANSFORMED_RECIPE -> transformedRecipeRepository.findById(selection.id())
+                    .filter(tr -> tr.getBaseRecipe() != null)
                     .map(tr -> tr.getBaseRecipe().getId())
                     .orElseThrow(() ->
                             new MealPlanException(MealPlanErrorCode.MEAL_PLAN_TRANSFORMED_RECIPE_NOT_FOUND)
                     );
         };
     }
-
 
     private static MealPlan.SlotRefType toSlotRefType(RecipeSelectionDTO.RecipeSelectionType type) {
         if (type == null) {

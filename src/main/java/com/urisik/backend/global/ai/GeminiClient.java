@@ -85,7 +85,8 @@ public class GeminiClient implements AiClient {
         try {
             rawJson = webClient
                     .post()
-                    .uri("/v1beta/models/" + model + ":generateContent?key=" + apiKey)
+                    .uri("/v1beta/models/" + model + ":generateContent")
+                    .header("x-goog-api-key", apiKey)
                     .accept(MediaType.APPLICATION_JSON)
                     .bodyValue(req)
                     .retrieve()

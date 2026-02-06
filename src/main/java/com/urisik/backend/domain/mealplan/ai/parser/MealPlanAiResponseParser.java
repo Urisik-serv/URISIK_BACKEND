@@ -207,10 +207,7 @@ public class MealPlanAiResponseParser {
                 .toList();
     }
 
-    private static class AiValue {
-        public Long id;
-        public String type;
-    }
+    private record AiValue(Long id, String type) {}
 
     private MealPlanException fail() {
         return new MealPlanException(MealPlanErrorCode.MEAL_PLAN_AI_RESPONSE_PARSE_FAILED);

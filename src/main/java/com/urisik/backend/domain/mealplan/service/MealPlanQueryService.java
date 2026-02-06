@@ -63,23 +63,21 @@ public class MealPlanQueryService {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_TODAY_EMPTY);
         }
 
-        Map<Long, MealPlan.SlotRefType> idToType = new HashMap<>();
-        for (MealPlan.SlotRef ref : storedRefsByMealType.values()) {
-            if (ref == null || ref.id() == null || ref.type() == null) continue;
-            idToType.put(ref.id(), ref.type());
-        }
+        Set<SlotRefKey> refKeys = storedRefsByMealType.values().stream()
+                .map(SlotRefKey::of)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
-        ResolvedMaps resolved = resolveStoredIds(familyRoomId, idToType);
+        ResolvedMaps resolved = resolveStoredRefs(familyRoomId, refKeys);
 
         List<GetMealPlanResDTO.TodayMealDTO> meals = storedRefsByMealType.entrySet().stream()
                 .map(e -> {
-                    Long storedId = e.getValue().id();
-                    ResolvedRecipe rr = resolved.byStoredId().get(storedId);
+                    MealPlan.SlotRef ref = e.getValue();
+                    SlotRefKey refKey = SlotRefKey.of(ref);
+                    ResolvedRecipe rr = (refKey == null) ? null : resolved.byRef().get(refKey);
                     if (rr == null) {
                         throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_RECIPE_NOT_FOUND);
                     }
-                    MealPlan.SlotRef ref = e.getValue();
-
                     return new GetMealPlanResDTO.TodayMealDTO(
                             e.getKey(),
                             toDtoSlotRefType(ref.type()),
@@ -119,13 +117,12 @@ public class MealPlanQueryService {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_WEEKLY_EMPTY);
         }
 
-        Map<Long, MealPlan.SlotRefType> idToType = new HashMap<>();
-        for (MealPlan.SlotRef ref : snapshot.values()) {
-            if (ref == null || ref.id() == null || ref.type() == null) continue;
-            idToType.put(ref.id(), ref.type());
-        }
+        Set<SlotRefKey> refKeys = snapshot.values().stream()
+                .map(SlotRefKey::of)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
-        ResolvedMaps resolved = resolveStoredIds(familyRoomId, idToType);
+        ResolvedMaps resolved = resolveStoredRefs(familyRoomId, refKeys);
 
         Map<String, GetMealPlanResDTO.SlotSummaryDTO> slots = new LinkedHashMap<>();
 
@@ -141,15 +138,13 @@ public class MealPlanQueryService {
 
         for (Map.Entry<MealPlan.SlotKey, MealPlan.SlotRef> e : ordered) {
             MealPlan.SlotKey key = e.getKey();
-            Long storedId = e.getValue().id();
+            MealPlan.SlotRef ref = e.getValue();
+            SlotRefKey refKey = SlotRefKey.of(ref);
 
-            ResolvedRecipe rr = resolved.byStoredId().get(storedId);
+            ResolvedRecipe rr = (refKey == null) ? null : resolved.byRef().get(refKey);
             if (rr == null) continue;
 
             String k = key.mealType().name() + "-" + key.dayOfWeek().name();
-
-            MealPlan.SlotRef ref = e.getValue();
-
             slots.put(k, new GetMealPlanResDTO.SlotSummaryDTO(
                     toDtoSlotRefType(ref.type()),
                     ref.id(),
@@ -186,27 +181,17 @@ public class MealPlanQueryService {
             return new GetMealPlanResDTO.MonthlyMealPlanResDTO(from, to, List.of());
         }
 
-        // storedId 전체 수집
-        Set<Long> allStoredIds = new HashSet<>();
-        for (MealPlan mp : plans) {
-            Map<MealPlan.SlotKey, MealPlan.SlotRef> snapshot = mp.snapshotAllSlotRefs();
-            if (snapshot == null) continue;
-            snapshot.values().stream()
-                    .filter(Objects::nonNull)
-                    .filter(ref -> ref.id() != null && ref.type() != null)
-                    .forEach(ref -> allStoredIds.add(ref.id()));
-        }
-
-        Map<Long, MealPlan.SlotRefType> idToType = new HashMap<>();
+        Set<SlotRefKey> refKeys = new HashSet<>();
         for (MealPlan mp : plans) {
             Map<MealPlan.SlotKey, MealPlan.SlotRef> snap = mp.snapshotAllSlotRefs();
             if (snap == null) continue;
             for (MealPlan.SlotRef ref : snap.values()) {
-                if (ref == null || ref.id() == null || ref.type() == null) continue;
-                idToType.put(ref.id(), ref.type());
+                SlotRefKey k = SlotRefKey.of(ref);
+                if (k != null) refKeys.add(k);
             }
         }
-        ResolvedMaps resolved = resolveStoredIds(familyRoomId, idToType);
+
+        ResolvedMaps resolved = resolveStoredRefs(familyRoomId, refKeys);
 
         List<GetMealPlanResDTO.WeekHistoryDTO> weeks = new ArrayList<>();
         for (MealPlan mp : plans) {
@@ -219,9 +204,9 @@ public class MealPlanQueryService {
                 MealPlan.SlotKey key = e.getKey();
                 MealPlan.SlotRef ref = e.getValue();
                 if (key == null || ref == null || ref.id() == null || ref.type() == null) continue;
-                Long storedId = ref.id();
+                SlotRefKey refKey = SlotRefKey.of(ref);
 
-                ResolvedRecipe rr = resolved.byStoredId().get(storedId);
+                ResolvedRecipe rr = (refKey == null) ? null : resolved.byRef().get(refKey);
                 if (rr == null) continue;
 
                 dayMap.computeIfAbsent(key.dayOfWeek(), d -> new ArrayList<>())
@@ -254,6 +239,13 @@ public class MealPlanQueryService {
 
     // ----------------- resolve helpers -----------------
 
+    private record SlotRefKey(MealPlan.SlotRefType type, Long id) {
+        static SlotRefKey of(MealPlan.SlotRef ref) {
+            if (ref == null || ref.type() == null || ref.id() == null) return null;
+            return new SlotRefKey(ref.type(), ref.id());
+        }
+    }
+
     private record ResolvedRecipe(
             Long recipeId,
             Long transformedRecipeId,
@@ -263,28 +255,25 @@ public class MealPlanQueryService {
     ) {}
 
     private record ResolvedMaps(
-            Map<Long, ResolvedRecipe> byStoredId
+            Map<SlotRefKey, ResolvedRecipe> byRef
     ) {}
 
     /** storedId(type+id) -> recipeId/transformedRecipeId/title/ingredients/instructions */
-    private ResolvedMaps resolveStoredIds(Long familyRoomId, Map<Long, MealPlan.SlotRefType> idToType) {
-        if (idToType == null || idToType.isEmpty()) return new ResolvedMaps(Map.of());
+    private ResolvedMaps resolveStoredRefs(Long familyRoomId, Set<SlotRefKey> refKeys) {
+        if (refKeys == null || refKeys.isEmpty()) return new ResolvedMaps(Map.of());
 
         Set<Long> recipeIds = new HashSet<>();
         Set<Long> transformedIds = new HashSet<>();
 
-        for (Map.Entry<Long, MealPlan.SlotRefType> e : idToType.entrySet()) {
-            if (e == null) continue;
-            Long id = e.getKey();
-            MealPlan.SlotRefType t = e.getValue();
-            if (id == null || t == null) continue;
-            if (t == MealPlan.SlotRefType.RECIPE) recipeIds.add(id);
-            else if (t == MealPlan.SlotRefType.TRANSFORMED_RECIPE) transformedIds.add(id);
+        for (SlotRefKey k : refKeys) {
+            if (k == null || k.id() == null || k.type() == null) continue;
+            if (k.type() == MealPlan.SlotRefType.RECIPE) recipeIds.add(k.id());
+            else if (k.type() == MealPlan.SlotRefType.TRANSFORMED_RECIPE) transformedIds.add(k.id());
         }
 
         if (recipeIds.isEmpty() && transformedIds.isEmpty()) return new ResolvedMaps(Map.of());
 
-        Map<Long, ResolvedRecipe> resolved = new HashMap<>();
+        Map<SlotRefKey, ResolvedRecipe> resolved = new HashMap<>();
 
         // 1) TRANSFORMED_RECIPE: 반드시 familyRoomId로 스코프
         Map<Long, TransformedRecipe> trById = new HashMap<>();
@@ -334,7 +323,7 @@ public class MealPlanQueryService {
 
             String title = (tr.getTitle() == null || tr.getTitle().isBlank()) ? base.getTitle() : tr.getTitle();
 
-            resolved.put(storedId, new ResolvedRecipe(
+            resolved.put(new SlotRefKey(MealPlan.SlotRefType.TRANSFORMED_RECIPE, storedId), new ResolvedRecipe(
                     base.getId(),
                     tr.getId(),
                     title,
@@ -348,7 +337,7 @@ public class MealPlanQueryService {
             Recipe r = recipeById.get(storedId);
             if (r == null) continue;
 
-            resolved.put(storedId, new ResolvedRecipe(
+            resolved.put(new SlotRefKey(MealPlan.SlotRefType.RECIPE, storedId), new ResolvedRecipe(
                     r.getId(),
                     transformedIdByRecipeId.get(r.getId()),
                     r.getTitle(),

@@ -31,19 +31,19 @@ public class MealPlanAiGenerator implements MealPlanGenerator {
     @Override
     public Map<MealPlan.SlotKey, RecipeSelectionDTO> generateRecipeAssignments(
             List<MealPlan.SlotKey> selectedSlots,
-            List<RecipeSelectionDTO> candidateRecipeIds
+            List<RecipeSelectionDTO> candidateSelections
     ) {
         try {
             return mealPlanAiService.generate(
                     selectedSlots,
-                    candidateRecipeIds
+                    candidateSelections
             );
         } catch (Exception e) {
             // AI 실패 → fallback
             log.warn("AI meal plan generation failed, falling back to default generator", e);
             return fallbackGenerator.generateRecipeAssignments(
                     selectedSlots,
-                    candidateRecipeIds
+                    candidateSelections
             );
         }
     }
