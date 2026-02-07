@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Comparator;
@@ -31,12 +32,14 @@ public class MealPlanQueryService {
     private final TransformedRecipeRepository transformedRecipeRepository;
     private final FamilyRoomService familyRoomService;
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     /** 오늘의 식단 조회 */
     @Transactional(readOnly = true)
     public GetMealPlanResDTO.TodayMealPlanResDTO getTodayMealPlan(Long memberId, Long familyRoomId) {
         familyRoomService.validateMember(memberId, familyRoomId);
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(KST);
         LocalDate weekStart = normalizeToMonday(today);
 
         MealPlan mealPlan = mealPlanRepository.findByFamilyRoomIdAndWeekStartDate(familyRoomId, weekStart)
@@ -51,12 +54,19 @@ public class MealPlanQueryService {
 
         // mealType -> storedRef (slot에 저장된 값: (type, id))
         Map<MealType, MealPlan.SlotRef> storedRefsByMealType = new LinkedHashMap<>();
-        for (MealType mt : mealTypes) {
-            MealPlan.SlotKey key = new MealPlan.SlotKey(mt, dow);
-            MealPlan.SlotRef ref = mealPlan.getSlotRef(key);
-            if (ref != null && ref.id() != null && ref.type() != null) {
-                storedRefsByMealType.put(mt, ref);
-            }
+        Map<MealPlan.SlotKey, MealPlan.SlotRef> snapshot = mealPlan.snapshotAllSlotRefs();
+        if (snapshot != null && !snapshot.isEmpty()) {
+            snapshot.entrySet().stream()
+                    .filter(e -> e.getKey() != null && e.getValue() != null)
+                    .filter(e -> e.getKey().dayOfWeek() == dow)
+                    .filter(e -> mealTypes.contains(e.getKey().mealType()))
+                    .sorted(Comparator.comparing(e -> mealTypeOrder(e.getKey().mealType())))
+                    .forEach(e -> {
+                        MealPlan.SlotRef ref = e.getValue();
+                        if (ref != null && ref.id() != null && ref.type() != null) {
+                            storedRefsByMealType.put(e.getKey().mealType(), ref);
+                        }
+                    });
         }
 
         if (storedRefsByMealType.isEmpty()) {
@@ -85,7 +95,7 @@ public class MealPlanQueryService {
                             toDtoSlotRefType(ref.type()),
                             ref.id(),
                             title,
-                            null,
+                            rr == null ? null : rr.imageUrl(),
                             ingredients,
                             instructions
                     );
@@ -105,7 +115,7 @@ public class MealPlanQueryService {
     public GetMealPlanResDTO.WeeklyMealPlanResDTO getThisWeekMealPlan(Long memberId, Long familyRoomId, LocalDate anyDateInWeek) {
         familyRoomService.validateMember(memberId, familyRoomId);
 
-        LocalDate weekStart = normalizeToMonday(anyDateInWeek == null ? LocalDate.now() : anyDateInWeek);
+        LocalDate weekStart = normalizeToMonday(anyDateInWeek == null ? LocalDate.now(KST) : anyDateInWeek);
 
         MealPlan mealPlan = mealPlanRepository.findByFamilyRoomIdAndWeekStartDate(familyRoomId, weekStart)
                 .orElseThrow(() -> new MealPlanException(MealPlanErrorCode.MEAL_PLAN_NOT_FOUND));
@@ -147,15 +157,13 @@ public class MealPlanQueryService {
 
             String title = (rr == null) ? "(레시피 정보를 불러올 수 없음)" : rr.title();
             String ingredients = (rr == null) ? "" : rr.ingredients();
-            String summary = (rr == null) ? "" : summarizeDescription(rr.instructions());
 
             String k = key.dayOfWeek().name() + "-" + key.mealType().name();
             slots.put(k, new GetMealPlanResDTO.SlotSummaryDTO(
                     toDtoSlotRefType(ref.type()),
                     ref.id(),
                     title,
-                    null,
-                    summary,
+                    rr == null ? null : rr.imageUrl(),
                     ingredients
             ));
         }
@@ -168,7 +176,7 @@ public class MealPlanQueryService {
     public GetMealPlanResDTO.MonthlyMealPlanResDTO getLastMonthMealPlan(Long memberId, Long familyRoomId) {
         familyRoomService.validateMember(memberId, familyRoomId);
 
-        LocalDate to = LocalDate.now();
+        LocalDate to = LocalDate.now(KST);
         LocalDate from = to.minusMonths(1);
 
         LocalDate startWeek = normalizeToMonday(from);
@@ -180,6 +188,7 @@ public class MealPlanQueryService {
                 )
                 .stream()
                 .filter(mp -> mp.getStatus() == MealPlanStatus.CONFIRMED)
+                .sorted(Comparator.comparing(MealPlan::getWeekStartDate))
                 .toList();
 
         if (plans.isEmpty()) {
@@ -215,7 +224,6 @@ public class MealPlanQueryService {
 
                 String title = (rr == null) ? "(레시피 정보를 불러올 수 없음)" : rr.title();
                 String ingredients = (rr == null) ? "" : rr.ingredients();
-                String summary = (rr == null) ? "" : summarizeDescription(rr.instructions());
 
                 dayMap.computeIfAbsent(key.dayOfWeek(), d -> new ArrayList<>())
                         .add(new GetMealPlanResDTO.HistoryMealDTO(
@@ -223,8 +231,7 @@ public class MealPlanQueryService {
                                 toDtoSlotRefType(ref.type()),
                                 ref.id(),
                                 title,
-                                null,
-                                summary,
+                                rr == null ? null : rr.imageUrl(),
                                 ingredients
                         ));
             }
@@ -258,6 +265,7 @@ public class MealPlanQueryService {
             Long recipeId,
             Long transformedRecipeId,
             String title,
+            String imageUrl,
             String ingredients,
             String instructions
     ) {}
@@ -283,7 +291,7 @@ public class MealPlanQueryService {
 
         Map<SlotRefKey, ResolvedRecipe> resolved = new HashMap<>();
 
-        // 1) TRANSFORMED_RECIPE
+        // TRANSFORMED_RECIPE
         Map<Long, TransformedRecipe> trById = new HashMap<>();
         if (!transformedIds.isEmpty()) {
             List<TransformedRecipe> trs = transformedRecipeRepository.findAllById(transformedIds);
@@ -338,10 +346,16 @@ public class MealPlanQueryService {
                 title = "(레시피 정보를 불러올 수 없음)";
             }
 
+            String imageUrl = null;
+            if (base != null && base.getRecipeExternalMetadata() != null) {
+                imageUrl = base.getRecipeExternalMetadata().getThumbnailImageUrl();
+            }
+
             resolved.put(new SlotRefKey(MealPlan.SlotRefType.TRANSFORMED_RECIPE, storedId), new ResolvedRecipe(
                     base == null ? null : base.getId(),
                     tr.getId(),
                     title,
+                    imageUrl,
                     base == null ? (tr.getIngredientsRaw() == null ? "" : tr.getIngredientsRaw()) : pickIngredients(tr, base),
                     base == null ? (tr.getInstructionsRaw() == null ? "" : tr.getInstructionsRaw()) : pickInstructions(tr, base)
             ));
@@ -352,10 +366,16 @@ public class MealPlanQueryService {
             Recipe r = recipeById.get(storedId);
             if (r == null) continue;
 
+            String imageUrl = null;
+            if (r.getRecipeExternalMetadata() != null) {
+                imageUrl = r.getRecipeExternalMetadata().getThumbnailImageUrl();
+            }
+
             resolved.put(new SlotRefKey(MealPlan.SlotRefType.RECIPE, storedId), new ResolvedRecipe(
                     r.getId(),
                     transformedIdByRecipeId.get(r.getId()),
                     r.getTitle(),
+                    imageUrl,
                     r.getIngredientsRaw(),
                     r.getInstructionsRaw()
             ));
@@ -398,7 +418,7 @@ public class MealPlanQueryService {
     }
 
     private static LocalDate normalizeToMonday(LocalDate date) {
-        if (date == null) return normalizeToMonday(LocalDate.now());
+        if (date == null) return normalizeToMonday(LocalDate.now(KST));
         int diff = date.getDayOfWeek().getValue() - DayOfWeek.MONDAY.getValue();
         return date.minusDays(diff);
     }
