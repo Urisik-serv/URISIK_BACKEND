@@ -50,13 +50,15 @@ public class MealPlanService {
     private final MealPlanGenerator generator;
     private final MealPlanGenerationValidator validator;
 
+    private final com.urisik.backend.domain.mealplan.ai.service.MealPlanAiService mealPlanAiService;
+
     private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 식단 생성 API
      */
     @Transactional
-    public CreateMealPlanResDTO createMealPlan(Long memberId, Long familyRoomId, CreateMealPlanReqDTO req) {
+    public CreateMealPlanResult createMealPlan(Long memberId, Long familyRoomId, CreateMealPlanReqDTO req) {
         LocalDate weekStart = normalizeToMonday(req.weekStartDate());
 
         // 방장 검증
@@ -135,17 +137,47 @@ public class MealPlanService {
             slots.put(key, new RecipeDTO(dtoType, selection.id(), title));
         }
 
-        return new CreateMealPlanResDTO(
+        CreateMealPlanResDTO res = new CreateMealPlanResDTO(
                 mealPlan.getId(),
                 familyRoomId,
                 mealPlan.getWeekStartDate(),
                 mealPlan.getStatus(),
                 slots
         );
+
+        return new CreateMealPlanResult(res, generationResult.aiMeta());
     }
 
     private record GenerationResult(
-            Map<MealPlan.SlotKey, RecipeSelectionDTO> selections
+            Map<MealPlan.SlotKey, RecipeSelectionDTO> selections,
+            AiMeta aiMeta
+    ) {
+    }
+
+    /**
+     * 컨트롤러에서 응답 헤더에 실어줄 메타
+     * - aiUsed: AI 호출 경로를 탔는지 여부(=fallback이 아닌지)
+     * - aiClient: 어떤 AI 클라이언트를 사용했는지 여부
+     */
+    public record AiMeta(
+            boolean aiUsed,
+            String aiClient
+    ) {
+        public static AiMeta ai(String aiClient) {
+            return new AiMeta(true, aiClient == null ? "UNKNOWN" : aiClient);
+        }
+
+        public static AiMeta fallback() {
+            return new AiMeta(false, "FALLBACK");
+        }
+    }
+
+    /**
+     * 식단 생성 결과(응답 DTO + AI 메타)
+     */
+    public record CreateMealPlanResult(
+            CreateMealPlanResDTO response,
+            AiMeta aiMeta
     ) {
     }
 
@@ -204,7 +236,8 @@ public class MealPlanService {
             }
 
             log.info("[MEALPLAN][GEN] AI assignments done (count={})", assignments.size());
-            return new GenerationResult(assignments);
+
+            return new GenerationResult(assignments, AiMeta.ai(mealPlanAiService.getAiClient()));
 
         } catch (Exception e) {
             if (e instanceof MealPlanException) {
@@ -220,7 +253,7 @@ public class MealPlanService {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED);
             }
             log.info("[MEALPLAN][GEN] fallback assignments done (count={})", fallbackAssignments.size());
-            return new GenerationResult(fallbackAssignments);
+            return new GenerationResult(fallbackAssignments, AiMeta.fallback());
         }
     }
 
@@ -451,28 +484,6 @@ public class MealPlanService {
         mealPlanRepository.save(mealPlan);
 
         return UpdateMealPlanResDTO.bulk(mealPlan.getId(), mealPlan.getStatus(), updated);
-    }
-
-    private Map<Long, String> loadRecipeTitles(Collection<Long> recipeIds) {
-        if (recipeIds == null || recipeIds.isEmpty()) {
-            return Map.of();
-        }
-
-        // null 방어 + 중복 제거
-        List<Long> ids = recipeIds.stream()
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-
-        if (ids.isEmpty()) {
-            return Map.of();
-        }
-
-        Map<Long, String> titles = new HashMap<>();
-        recipeRepository.findAllById(ids)
-                .forEach(r -> titles.put(r.getId(), r.getTitle()));
-
-        return titles;
     }
 
     /**

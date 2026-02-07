@@ -7,6 +7,7 @@ import com.urisik.backend.domain.mealplan.dto.res.CreateMealPlanResDTO;
 import com.urisik.backend.domain.mealplan.dto.res.UpdateMealPlanResDTO;
 import com.urisik.backend.domain.mealplan.exception.code.MealPlanSuccessCode;
 import com.urisik.backend.domain.mealplan.service.MealPlanService;
+import com.urisik.backend.domain.mealplan.service.MealPlanService.CreateMealPlanResult;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.auth.exception.AuthenExcetion;
 import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +29,7 @@ public class MealPlanController {
 
     @PostMapping("")
     @Operation(summary = "주간 식단 생성 API")
-    public ApiResponse<CreateMealPlanResDTO> createWeeklyMealPlan(
+    public ResponseEntity<ApiResponse<CreateMealPlanResDTO>> createWeeklyMealPlan(
             @AuthenticationPrincipal Long memberId,
             @PathVariable Long familyRoomId,
             @Valid @RequestBody CreateMealPlanReqDTO request
@@ -36,12 +38,18 @@ public class MealPlanController {
             throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
 
-        CreateMealPlanResDTO result = mealPlanService.createMealPlan(memberId, familyRoomId, request);
+        CreateMealPlanResult result =
+                mealPlanService.createMealPlan(memberId, familyRoomId, request);
 
-        if (request.regenerate()) {
-            return ApiResponse.onSuccess(MealPlanSuccessCode.MEAL_PLAN_REGENERATED, result);
-        }
-        return ApiResponse.onSuccess(MealPlanSuccessCode.MEAL_PLAN_CREATED, result);
+        ApiResponse<CreateMealPlanResDTO> body =
+                request.regenerate()
+                        ? ApiResponse.onSuccess(MealPlanSuccessCode.MEAL_PLAN_REGENERATED, result.response())
+                        : ApiResponse.onSuccess(MealPlanSuccessCode.MEAL_PLAN_CREATED, result.response());
+
+        return ResponseEntity.ok()
+                .header("X-AI-Used", String.valueOf(result.aiMeta().aiUsed()))
+                .header("X-AI-Client", result.aiMeta().aiClient())
+                .body(body);
     }
 
     @PatchMapping("/{mealPlanId}")

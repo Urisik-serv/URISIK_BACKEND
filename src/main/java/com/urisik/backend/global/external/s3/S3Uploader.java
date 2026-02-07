@@ -29,43 +29,97 @@ public class S3Uploader {
     private String bucket;
 
     /**
-     * 기능 : S3에 파일을 업로드하고, 저장된 URL을 반환함
-     * @param file : 실제 파일 이름
-     * @param dirName : 사용하는 도메인 이름 (프로필이면,,, familyMember,  음식 사진이면 아직 안 정해진 것 같긴 한데 food)
+     * 1. MultipartFile 기반 이미지 업로드
+     * 기능 : url을 통해 S3에 이미지를 업로드하고, 저장된 URL을 반환함
+     * @param file : 업로드 할 파일
+     * @param dirName : 사용하는 도메인 이름 (프로필이면 family_member_profile, 레시피면 recipe 등)
+     *
      */
-    public String upload(MultipartFile file, String dirName) {
-        // 입력 받는 이미지 파일이 빈 파일인지 검증
+    public String uploadByFile(MultipartFile file, String dirName) {
         if (file == null || file.isEmpty()) {
-            log.error("S3Uploader : File is null or empty");
             throw new S3Exception(S3ErrorCode.EMPTY_FILE);
         }
 
-        // 파일 이름 생성 및 인코딩
-        String originalFilename = file.getOriginalFilename(); // 원본 파일 이름
-        String safeFileName = URLEncoder.encode(originalFilename, StandardCharsets.UTF_8)
-                .replaceAll("\\+", "%20");
+        String originalFilename = file.getOriginalFilename();
+        String contentType = file.getContentType();
+        long contentLength = file.getSize();
 
-        // 2. S3에 저장될 최종 경로 (디렉토리/UUID_파일명)
-        String fileName = dirName + "/" + UUID.randomUUID() + "_" + safeFileName;
-
-
-        // 메타 데이터 설정 (파일 타입, 크기)
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentType(file.getContentType());
-        metadata.setContentLength(file.getSize());
-
-        // 이미지 업로드 로직
         try (InputStream inputStream = file.getInputStream()) {
-            amazonS3.putObject(new PutObjectRequest(bucket, fileName, inputStream, metadata));
-            log.info("S3Uploader: Upload successful. URL={}, bucket={}", fileName, bucket);
+            return putS3(inputStream, originalFilename, contentType, contentLength, dirName);
         } catch (IOException e) {
-            log.error("S3Uploader: Upload failed due to IO error  ", e);
             throw new S3Exception(S3ErrorCode.S3_UPLOAD_FAIL);
         }
+    }
 
-        // 업로드 된 URL 반환
+
+    /**
+     * 2.  URL 기반 이미지 업로드
+     * 기능 : url을 통해 S3에 이미지를 업로드하고, 저장된 URL을 반환함
+     * @param imageUrl
+     * @param dirName : 사용하는 도메인 이름
+     */
+    public String uploadByUrl(String imageUrl, String dirName) {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            throw new S3Exception(S3ErrorCode.EMPTY_FILE);
+        }
+
+        try {
+            java.net.URL url = new java.net.URL(imageUrl);
+            java.net.URLConnection connection = url.openConnection();
+
+            // URL 로부터 메타데이터 추출
+            String contentType = connection.getContentType();
+            long contentLength = connection.getContentLength();
+            String originalFilename = extractCleanFileName(imageUrl, contentType);
+
+            try (InputStream inputStream = connection.getInputStream()) {
+                return putS3(inputStream, originalFilename, contentType, contentLength, dirName);
+            }
+        } catch (IOException e) {
+            log.error("S3Uploader: URL upload failed", e);
+            throw new S3Exception(S3ErrorCode.S3_UPLOAD_FAIL);
+        }
+    }
+
+
+    //---------------------------
+    /**
+     S3 업로드 공통 로직
+     */
+    private String putS3(InputStream inputStream, String originalFilename, String contentType, long contentLength, String dirName) {
+        // 파일명 생성
+        String safeFileName = URLEncoder.encode(originalFilename, StandardCharsets.UTF_8)
+                .replaceAll("\\+", "%20");
+        String fileName = dirName + "/" + UUID.randomUUID() + "_" + safeFileName;
+
+        // 메타데이터 설정
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(contentType);
+        metadata.setContentLength(contentLength);
+
+        // 업로드
+        amazonS3.putObject(new PutObjectRequest(bucket, fileName, inputStream, metadata));
+        log.info("S3Uploader: Upload successful. Path={}", fileName);
+
         return amazonS3.getUrl(bucket, fileName).toString();
+    }
 
+    /**
+     * URL에서 불필요한 파라미터 제거 후 확장자를 포함한 파일명 추출
+     */
+    private String extractCleanFileName(String imageUrl, String contentType) {
+        // URL의 경로 부분만 추출 (쿼리 스트링 ? 뒤는 제거)
+        String pathOnly = imageUrl.split("\\?")[0];
+        String fileName = pathOnly.substring(pathOnly.lastIndexOf("/") + 1);
 
+        // 만약 파일명이 너무 길거나(URL 기반 업로드의 특징), 확장자가 없다면 ContentType 활용
+        if (fileName.length() > 50 || !fileName.contains(".")) {
+            String extension = ".jpg"; // 기본값
+            if (contentType != null && contentType.contains("/")) {
+                extension = "." + contentType.split("/")[1].split(";")[0];
+            }
+            fileName = "image" + extension;
+        }
+        return fileName;
     }
 }
