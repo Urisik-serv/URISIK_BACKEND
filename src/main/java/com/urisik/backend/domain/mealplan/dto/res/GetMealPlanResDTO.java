@@ -28,7 +28,7 @@ public class GetMealPlanResDTO {
             SlotRefType type,         // RECIPE / TRANSFORMED_RECIPE
             Long id,                  // 선택된 엔티티의 id (type에 따라 Recipe.id 또는 TransformedRecipe.id)
             String title,
-            String imageUrl,          // 현재 Recipe 엔티티에 없으면 null
+            String imageUrl,          // RecipeExternalMetadata#getThumbnailImageUrl() (imageSmallUrl 우선). 없으면 null
             String ingredients,
             String instructions
     ) {}
@@ -44,8 +44,7 @@ public class GetMealPlanResDTO {
             SlotRefType type,         // RECIPE / TRANSFORMED_RECIPE
             Long id,                  // 선택된 엔티티의 id (type에 따라 Recipe.id 또는 TransformedRecipe.id)
             String title,
-            String imageUrl,          // 현재 Recipe 엔티티에 없으면 null
-            String description,
+            String imageUrl,          // RecipeExternalMetadata#getThumbnailImageUrl() (imageSmallUrl 우선). 없으면 null
             String ingredients
     ) {}
 
@@ -72,8 +71,7 @@ public class GetMealPlanResDTO {
             SlotRefType type,         // RECIPE / TRANSFORMED_RECIPE
             Long id,                  // 선택된 엔티티의 id (type에 따라 Recipe.id 또는 TransformedRecipe.id)
             String title,
-            String imageUrl,          // 현재 Recipe 엔티티에 없으면 null
-            String description,
+            String imageUrl,          // RecipeExternalMetadata#getThumbnailImageUrl() (imageSmallUrl 우선). 없으면 null
             String ingredients
     ) {}
 }
