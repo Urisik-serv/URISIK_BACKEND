@@ -63,8 +63,8 @@ public class TransformedReviewService {
                 TransformedReviewConverter.toReview(familyMember, recipe, requestDto);
         reviewRepository.save(review);
 
-        recipe.updateAvgScore(review.getScore());
         recipe.updateReviewCount();
+        recipe.updateAvgScore(review.getScore());
 
         return TransformedReviewConverter.toReviewResponseDto(
                 review.getId(),

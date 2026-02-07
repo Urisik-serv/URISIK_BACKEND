@@ -51,8 +51,8 @@ public class ReviewService {
 
         // 메뉴에 대한 평균 별점 반영 + 리뷰 개수 1 증가
         Integer newScore = review.getScore();
-        recipe.updateAvgScore(newScore);
         recipe.updateReviewCount();
+        recipe.updateAvgScore(newScore);
 
         return ReviewConverter.toReviewResponseDto(review.getId(), recipe.getAvgScore());
 
