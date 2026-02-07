@@ -1,8 +1,21 @@
+## Urisik | 알레르기 가족 모두가 안전하게, 한 식탁에서 즐겁게 먹을 수 있도록 돕는 맞춤형 식단 관리 서비스
+
+## Project Introduction
+<img width="1920" height="1080" alt="Frame 2147228012" src="https://github.com/user-attachments/assets/1c3bc000-32bb-443c-9d64-23b0caef1694" />
+
+
+<br>
 
 
 ##  Architecture Diagram
 
 <img width="1536" height="1024" alt="ChatGPT Image 2026년 1월 29일 오후 03_06_54" src="https://github.com/user-attachments/assets/ba8962eb-3e53-45d6-ac7d-4050eae0dc2d" />
+
+---
+
+## ERD
+
+<img width="2460" height="2162" alt="URISIK (6)" src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" />
 
 ---
 
@@ -48,7 +61,7 @@
 ## Directory Structure
 ```
 📦 src/main/java/com/urisik/backend
- ├──📁 domain
+ ├──📁 domain          #핵심 비즈니스 로직
      ├── 📁 allergy          # 알레르기 관련 패키지
      ├── 📁 familyroom       # 가족방 관련 패키지
      ├── 📁 home             # 홈 화면 관련 패키지
@@ -57,7 +70,7 @@
      ├── 📁 notification     # 알림 관련 패키지
      ├── 📁 recipe           # 레시피 관련 패키지
      └── 📁 review           # 리뷰 관련 패키지
-├── 📁 global
+├── 📁 global          #공통 모듈
      ├── 📁 ai               # ai 연동
      ├── 📁 apiPayload       # 공통 응답, 에러 코드, 예외 처리 등 API 응답 관련 패키지
      ├── 📁 auth             # 인증/인가 
@@ -76,12 +89,6 @@
 | <img src="https://github.com/chunny-k.png" alt="서정춘" width="150"> | <img src="https://github.com/wonjun-lee-fcwj245.png" alt="이원준" width="150"> | <img src="https://github.com/euuunchae.png" alt="이은채" width="150"> | <img src="https://github.com/woo6629058.png" alt="허건우" width="150"> |
 | BE | BE | BE | BE |
 | [GitHub](https://github.com/chunny-k) | [GitHub](https://github.com/wonjun-lee-fcwj245) | [GitHub](https://github.com/euuunchae) | [GitHub](https://github.com/woo6629058) |
-
----
-
-## ERD
-
-<img width="2460" height="2162" alt="URISIK (6)" src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" />
 
 ---
 
