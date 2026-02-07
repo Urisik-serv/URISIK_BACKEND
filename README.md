@@ -52,4 +52,4 @@
 └── 📄 UrisikBackendApplication.java
 
 
-- (선택) 긴급 수정: `hotfix/#이슈번호-설명`
+
