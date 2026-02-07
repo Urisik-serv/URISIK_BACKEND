@@ -5,8 +5,6 @@ import com.urisik.backend.domain.review.dto.ReviewResponseDto;
 import com.urisik.backend.domain.review.exception.ReviewSuccessCode;
 import com.urisik.backend.domain.review.service.ReviewService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
-import com.urisik.backend.global.auth.exception.AuthenExcetion;
-import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

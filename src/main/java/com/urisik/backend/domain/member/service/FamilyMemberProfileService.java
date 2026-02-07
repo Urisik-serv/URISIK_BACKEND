@@ -224,7 +224,7 @@ public class FamilyMemberProfileService {
 
         String oldUrl = profile.getProfilePicUrl();
 
-        String newUrl = s3Uploader.upload(file, "family_member_profile"); // 폴더명 추천
+        String newUrl = s3Uploader.uploadByFile(file, "family_member_profile"); // 폴더명 추천
         profile.setProfilePicUrl(newUrl);
 
         if (oldUrl != null && !oldUrl.isBlank()) {
