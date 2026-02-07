@@ -2,6 +2,7 @@ package com.urisik.backend.domain.review.entity;
 
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.recipe.entity.Recipe;
+import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,7 +12,7 @@ import lombok.*;
 @Table(name = "recipe_review")
 @Builder
 @AllArgsConstructor
-public class Review {
+public class Review extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

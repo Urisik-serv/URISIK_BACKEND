@@ -20,10 +20,11 @@ public class ReviewConverter {
 
 
     // Review -> res
-    public static ReviewResponseDto toReviewResponseDto(Long id, Double avgScore) {
+    public static ReviewResponseDto toReviewResponseDto(Review review, Double avgScore) {
         return ReviewResponseDto.builder()
-                .reviewId(id)
+                .reviewId(review.getId())
                 .avgScore(avgScore)
+                .createdAt(review.getCreateAt())
                 .build();
     }
 

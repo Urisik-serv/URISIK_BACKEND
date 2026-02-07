@@ -54,7 +54,7 @@ public class ReviewService {
         recipe.updateReviewCount();
         recipe.updateAvgScore(newScore);
 
-        return ReviewConverter.toReviewResponseDto(review.getId(), recipe.getAvgScore());
+        return ReviewConverter.toReviewResponseDto(review, recipe.getAvgScore());
 
     }
 
