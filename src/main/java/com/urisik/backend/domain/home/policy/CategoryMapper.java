@@ -11,7 +11,7 @@ public final class CategoryMapper {
 
         return switch (legacyCategory) {
             case "밥" -> UnifiedCategory.BOWL;
-            case "국", "국/찌개" -> UnifiedCategory.SOUP;
+            case "국", "국&찌개" -> UnifiedCategory.SOUP;
             case "반찬" -> UnifiedCategory.SIDE;
             case "후식" -> UnifiedCategory.DESSERT;
             case "일품", "기타" -> UnifiedCategory.ETC;
@@ -31,7 +31,7 @@ public final class CategoryMapper {
 
         return switch (unifiedCategory) {
             case UnifiedCategory.SOUP ->
-                    List.of("국", "국/찌개");
+                    List.of("국", "국&찌개");
 
             case UnifiedCategory.ETC ->
                     List.of("일품", "기타");
