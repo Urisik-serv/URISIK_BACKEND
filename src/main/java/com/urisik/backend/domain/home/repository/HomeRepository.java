@@ -51,5 +51,30 @@ public interface HomeRepository extends JpaRepository<Recipe, Long> {
             Pageable pageable
     );
 
+    @Query("""
+        select r
+        from Recipe r
+        join r.recipeExternalMetadata rem
+        order by
+            r.wishCount desc,
+            r.avgScore desc,
+            r.reviewCount desc
+    """)
+    List<Recipe> findTopByWish(Pageable pageable);
+
+    @Query("""
+        select r
+        from Recipe r
+        join r.recipeExternalMetadata rem
+        where rem.category in :categories
+        order by
+            r.wishCount desc,
+            r.avgScore desc,
+            r.reviewCount desc
+    """)
+    List<Recipe> findTopByWishAndCategories(
+            @Param("categories") List<String> categories,
+            Pageable pageable
+    );
 
 }

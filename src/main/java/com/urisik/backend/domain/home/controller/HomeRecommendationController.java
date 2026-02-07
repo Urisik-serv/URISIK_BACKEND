@@ -5,6 +5,7 @@ import com.urisik.backend.domain.home.dto.HomeSafeRecipeResponse;
 import com.urisik.backend.domain.home.enums.HomeSuccessCode;
 import com.urisik.backend.domain.home.service.HighScoreRecommendationService;
 import com.urisik.backend.domain.home.service.SafeHighScoreRecommendationService;
+import com.urisik.backend.domain.home.service.WishHighScoreRecommendationService;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
 import com.urisik.backend.domain.home.service.HomeRecommendationService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
@@ -73,6 +74,23 @@ public class HomeRecommendationController {
         return ApiResponse.onSuccess(
                 HomeSuccessCode.RECOMMEND_SAFE_HIGH_SCORE_OK,
                 safeHighScoreRecommendationService.recommendSafeRecipes(loginUserId, category)
+        );
+    }
+
+    private WishHighScoreRecommendationService wishHighScoreRecommendationService;
+
+    @GetMapping("/wish-high-score")
+    @Operation(
+            summary = "홈 위시리스트 많은 순 레시피 추천 API(하단)",
+            description = "위시리스트 개수가 많은 순으로 정렬하되, 동일할 경우 평점·리뷰 수·알레르기 안전 여부를 기준으로 Top 3를 추천하는 api 입니다."
+    )
+    public ApiResponse<HighScoreRecommendationResponse> recommendWishHighScore(
+            @AuthenticationPrincipal Long loginUserId,
+            @RequestParam(required = false) String category
+    ) {
+        return ApiResponse.onSuccess(
+                HomeSuccessCode.RECOMMEND_WISH_HIGH_SCORE_OK,
+                wishHighScoreRecommendationService.recommend(loginUserId, category)
         );
     }
 
