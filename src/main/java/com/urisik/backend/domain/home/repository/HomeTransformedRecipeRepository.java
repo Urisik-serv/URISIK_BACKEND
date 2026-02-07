@@ -49,5 +49,32 @@ public interface HomeTransformedRecipeRepository
             Pageable pageable
     );
 
+    @Query("""
+        select tr
+        from TransformedRecipe tr
+        join tr.baseRecipe br
+        left join br.recipeExternalMetadata rem
+        order by
+            tr.wishCount desc,
+            br.avgScore desc,
+            br.reviewCount desc
+    """)
+    List<TransformedRecipe> findTopByWish(Pageable pageable);
+
+    @Query("""
+        select tr
+        from TransformedRecipe tr
+        join tr.baseRecipe br
+        join br.recipeExternalMetadata rem
+        where rem.category in :categories
+        order by
+            tr.wishCount desc,
+            br.avgScore desc,
+            br.reviewCount desc
+    """)
+    List<TransformedRecipe> findTopByWishAndCategories(
+            @Param("categories") List<String> categories,
+            Pageable pageable
+    );
 
 }
