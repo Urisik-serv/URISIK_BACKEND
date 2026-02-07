@@ -50,8 +50,8 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
         // Batch-load transformed recipes used in wishes to avoid N+1 lookups
         Set<Long> wishedTransformedIds = new HashSet<>();
         for (FamilyWishListItemResDTO item : wishItems) {
-            if (item != null && item.getTransformedRecipeId() != null) {
-                wishedTransformedIds.add(item.getTransformedRecipeId());
+            if (isTransformed(item) && item.getId() != null) {
+                wishedTransformedIds.add(item.getId());
             }
         }
 
@@ -69,9 +69,11 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
         Set<Long> usedBaseKeys = new HashSet<>();
 
         for (FamilyWishListItemResDTO item : wishItems) {
+            if (item == null || item.getId() == null) continue;
+
             // transformed 우선
-            if (item.getTransformedRecipeId() != null) {
-                Long transId = item.getTransformedRecipeId();
+            if (isTransformed(item)) {
+                Long transId = item.getId();
                 Long baseKey = baseIdByTransformedId.get(transId);
                 if (baseKey == null) continue;
                 if (!usedBaseKeys.add(baseKey)) continue;
@@ -84,14 +86,15 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
                 continue;
             }
 
-            if (item.getRecipeId() != null) {
-                Long baseKey = item.getRecipeId();
+            if (isRecipe(item)) {
+                Long recipeId = item.getId();
+                Long baseKey = recipeId;
                 if (!usedBaseKeys.add(baseKey)) continue;
 
                 result.add(new RecipeSelectionDTO(
                         RecipeSelectionDTO.RecipeSelectionType.RECIPE,
-                        item.getRecipeId(),
-                        item.getRecipeId()
+                        recipeId,
+                        recipeId
                 ));
             }
         }
@@ -288,5 +291,15 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
             if (!t.isEmpty()) tokens.add(t);
         }
         return tokens;
+    }
+
+    private boolean isTransformed(FamilyWishListItemResDTO item) {
+        if (item == null || item.getType() == null) return false;
+        return "TRANSFORMED_RECIPE".equalsIgnoreCase(item.getType().trim());
+    }
+
+    private boolean isRecipe(FamilyWishListItemResDTO item) {
+        if (item == null || item.getType() == null) return false;
+        return "RECIPE".equalsIgnoreCase(item.getType().trim());
     }
 }
