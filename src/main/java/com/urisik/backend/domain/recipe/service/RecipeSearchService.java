@@ -1,5 +1,6 @@
 package com.urisik.backend.domain.recipe.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.urisik.backend.domain.recipe.converter.RecipeSearchConverter;
 import com.urisik.backend.domain.recipe.dto.res.RecipeSearchResponseDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
@@ -62,8 +63,7 @@ public class RecipeSearchService {
                 foodSafetyRecipeClient.searchByName(keyword, startIdx, endIdx);
 
         for (FoodSafetyRecipeResponse.Row row : externals) {
-            String instructionsRaw = joinManuals(row);
-            items.add(RecipeSearchConverter.fromExternal(row, instructionsRaw));
+            items.add(RecipeSearchConverter.fromExternal(row));
         }
 
         // 4) 리뷰 높은 순 정렬
@@ -86,19 +86,6 @@ public class RecipeSearchService {
                 .thenComparing(RecipeSearchResponseDTO.Item::getTitle);
     }
 
-    private String joinManuals(FoodSafetyRecipeResponse.Row row) {
-        return Stream.of(
-                        row.getManual01(), row.getManual02(), row.getManual03(), row.getManual04(), row.getManual05(),
-                        row.getManual06(), row.getManual07(), row.getManual08(), row.getManual09(), row.getManual10(),
-                        row.getManual11(), row.getManual12(), row.getManual13(), row.getManual14(), row.getManual15(),
-                        row.getManual16(), row.getManual17(), row.getManual18(), row.getManual19(), row.getManual20()
-                )
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .filter(s -> !s.isBlank())
-                .reduce((a, b) -> a + "\n" + b)
-                .orElse("");
-    }
 }
 
 

@@ -43,7 +43,7 @@ public class HomeRecommendationController {
     @GetMapping("/high-score")
     @Operation(
             summary = "홈 평점 순 레시피 추천 API(하단)",
-            description =  "카테고리 선택 여부에 따라 레시피 및 변형 레시피를 통합하여별점이 높은 음식 Top 3를 추천하는 api 입니다."
+            description =  "카테고리 선택 여부에 따라 레시피 및 변형 레시피를 통합하여 별점이 높은 음식 Top 3를 추천하는 api 입니다."
     )
     public ApiResponse<HighScoreRecommendationResponse> recommendHighScore(
             @AuthenticationPrincipal Long loginUserId,
