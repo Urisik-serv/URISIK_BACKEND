@@ -8,8 +8,8 @@
 
 ## Tech Stack
 
+### 🛠 Backend & Framework
 <div>
-  <!-- Language / Framework -->
   <img src="https://img.shields.io/badge/Java 17-007396?style=flat-square&logo=java&logoColor=white">
   <img src="https://img.shields.io/badge/Gradle-02303A?style=flat-square&logo=gradle&logoColor=white">
   <img src="https://img.shields.io/badge/Spring Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white">
@@ -18,33 +18,29 @@
   <img src="https://img.shields.io/badge/OAuth2-000000?style=flat-square&logo=oauth&logoColor=white">
 </div>
 
+### 🗄 Database
 <div>
-  <!-- API Docs -->
-  <img src="https://img.shields.io/badge/Swagger (OpenAPI)-85EA2D?style=flat-square&logo=swagger&logoColor=black">
-</div>
-
-<div>
-  <!-- Database -->
   <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white">
   <img src="https://img.shields.io/badge/Amazon RDS-527FFF?style=flat-square&logo=amazonrds&logoColor=white">
 </div>
 
+### ☁ Cloud & Infrastructure
 <div>
-  <!-- Infra / Cloud -->
   <img src="https://img.shields.io/badge/AWS EC2-FF9900?style=flat-square&logo=amazonec2&logoColor=white">
   <img src="https://img.shields.io/badge/AWS S3-569A31?style=flat-square&logo=amazons3&logoColor=white">
   <img src="https://img.shields.io/badge/AWS Route53-FF9900?style=flat-square&logo=amazonroute53&logoColor=white">
   <img src="https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black">
 </div>
 
+### 🚀 CI/CD & Deployment
 <div>
-  <!-- CI/CD & Deployment -->
   <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white">
   <img src="https://img.shields.io/badge/GitHub Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white">
   <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white">
   <img src="https://img.shields.io/badge/Docker Hub-2496ED?style=flat-square&logo=docker&logoColor=white">
   <img src="https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white">
 </div>
+
 
 
 ---
