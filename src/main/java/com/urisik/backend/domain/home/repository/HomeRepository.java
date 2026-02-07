@@ -18,14 +18,15 @@ public interface HomeRepository extends JpaRepository<Recipe, Long> {
     """)
     List<Recipe> findTopForHome(Pageable pageable);
 
-     /**
-     * 고평점 레시피 조회
-     * - 리뷰 있는 것 우선
-     * - 평점 → 리뷰 수 → 위시 수 순 정렬
+    /**
+     * 전체 고평점 레시피
+     * - 리뷰 수 → 평점 → 위시 수
      */
     @Query("""
         select r
         from Recipe r
+        join r.recipeExternalMetadata rem
+        where rem.category in :categories
         order by
             r.reviewCount desc,
             r.avgScore desc,

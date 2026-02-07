@@ -23,8 +23,8 @@ public interface HomeTransformedRecipeRepository
     @Query("""
         select tr
         from TransformedRecipe tr
-        join fetch tr.baseRecipe br
-        left join fetch br.recipeExternalMetadata rem
+        join tr.baseRecipe br
+        left join br.recipeExternalMetadata rem
         order by
             br.reviewCount desc,
             br.avgScore desc,
@@ -35,8 +35,8 @@ public interface HomeTransformedRecipeRepository
     @Query("""
         select tr
         from TransformedRecipe tr
-        join fetch tr.baseRecipe br
-        left join fetch br.recipeExternalMetadata rem
+        join tr.baseRecipe br
+        join br.recipeExternalMetadata rem
         where rem.category in :categories
         order by
             br.reviewCount desc,
