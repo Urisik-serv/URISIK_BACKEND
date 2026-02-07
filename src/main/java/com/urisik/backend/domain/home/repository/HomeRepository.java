@@ -18,21 +18,34 @@ public interface HomeRepository extends JpaRepository<Recipe, Long> {
     """)
     List<Recipe> findTopForHome(Pageable pageable);
 
+     /**
+     * 고평점 레시피 조회
+     * - 리뷰 있는 것 우선
+     * - 평점 → 리뷰 수 → 위시 수 순 정렬
+     */
     @Query("""
-    select r
-    from Recipe r
-    join fetch r.recipeExternalMetadata m
-    order by r.avgScore desc
-""")
+        select r
+        from Recipe r
+        order by
+            r.reviewCount desc,
+            r.avgScore desc,
+            r.wishCount desc
+    """)
     List<Recipe> findTopByScore(Pageable pageable);
 
+    /**
+     * 카테고리별 고평점 레시피 조회
+     */
     @Query("""
-    select r
-    from Recipe r
-    join fetch r.recipeExternalMetadata m
-    where m.category in :categories
-    order by r.avgScore desc
-""")
+        select r
+        from Recipe r
+        join r.recipeExternalMetadata rem
+        where rem.category in :categories
+        order by
+            r.reviewCount desc,
+            r.avgScore desc,
+            r.wishCount desc
+    """)
     List<Recipe> findTopByCategories(
             @Param("categories") List<String> categories,
             Pageable pageable

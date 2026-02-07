@@ -65,7 +65,7 @@ public class HighScoreRecommendationService {
         Pageable pageable = PageRequest.of(0, 20);
         List<HighScoreRecipeCandidate> candidates = new ArrayList<>();
 
-        /* 2-1) 카테고리 미선택 → 전체 추천 */
+        //  후보 수집
         if (normalizedCategory == null) {
 
             candidates.addAll(
@@ -81,9 +81,8 @@ public class HighScoreRecommendationService {
                             .map(TransformedRecipeCandidateLow::new)
                             .toList()
             );
-        }
-        /* 2-2) 카테고리 선택 → 통합 카테고리 기준 추천 */
-        else {
+        } else {
+
             List<String> legacyCategories =
                     CategoryMapper.toLegacyList(normalizedCategory);
 
@@ -102,10 +101,7 @@ public class HighScoreRecommendationService {
             );
         }
 
-        /* 3️. 정렬
-         *  1차: 평균 평점 내림차순
-         *  2차: 평점 동점 시 알레르기 안전한 음식 우선
-         */
+        // 동점 처리
         candidates.sort(
                 Comparator
                         .comparingDouble(HighScoreRecipeCandidate::getAvgScore)
@@ -116,19 +112,17 @@ public class HighScoreRecommendationService {
                                             familyRoomId,
                                             candidate.getIngredients()
                                     );
-                            return risks.isEmpty(); // true = 알레르기 안전
+                            return risks.isEmpty();
                         })
                         .reversed()
         );
 
-        /* 4. Top 3 추출 + DTO 변환 */
-        List<HighScoreRecommendationDTO> result =
+        return new HighScoreRecommendationResponse(
                 candidates.stream()
                         .limit(3)
                         .map(converter::toDto)
-                        .toList();
-
-        return new HighScoreRecommendationResponse(result);
+                        .toList()
+        );
     }
 
     /* 카테고리 정규화 메서드 */
