@@ -1,22 +1,10 @@
-## 🥗Urisik | 알레르기 가족 모두가 안전하게, 한 식탁에서 즐겁게 먹을 수 있도록 돕는 맞춤형 식단 관리 서비스
+## 🍽️Urisik | 알레르기 가족 모두가 안전하게, 한 식탁에서 즐겁게 먹을 수 있도록 돕는 맞춤형 식단 관리 서비스
 
 ## Project Introduction
 <img width="1920" height="1080" alt="Frame 2147228012" src="https://github.com/user-attachments/assets/1c3bc000-32bb-443c-9d64-23b0caef1694" />
 
 
 <br>
-
----
-
-##  Architecture Diagram
-
-<img width="1536" height="1024" alt="ChatGPT Image 2026년 1월 29일 오후 03_06_54" src="https://github.com/user-attachments/assets/ba8962eb-3e53-45d6-ac7d-4050eae0dc2d" />
-
----
-
-## ERD
-
-<img width="2460" height="2162" alt="URISIK (6)" src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" />
 
 ---
 
@@ -55,7 +43,17 @@
   <img src="https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white">
 </div>
 
+---
 
+##  Architecture Diagram
+
+<img width="1536" height="1024" alt="ChatGPT Image 2026년 1월 29일 오후 03_06_54" src="https://github.com/user-attachments/assets/ba8962eb-3e53-45d6-ac7d-4050eae0dc2d" />
+
+---
+
+## ERD
+
+<img width="2460" height="2162" alt="URISIK (6)" src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" />
 
 ---
 
