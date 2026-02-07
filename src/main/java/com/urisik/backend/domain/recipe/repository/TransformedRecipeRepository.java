@@ -8,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 public interface TransformedRecipeRepository extends JpaRepository<TransformedRecipe, Long> {
 
@@ -40,4 +39,22 @@ public interface TransformedRecipeRepository extends JpaRepository<TransformedRe
             Long familyRoomId,
             Collection<Long> recipeIds
     );
+
+    interface TransformedCandidateRow {
+        Long getId();
+        Long getBaseRecipeId();
+        String getIngredientsRaw();
+    }
+
+    @Query("""
+        select
+            tr.id as id,
+            br.id as baseRecipeId,
+            tr.ingredientsRaw as ingredientsRaw
+        from TransformedRecipe tr
+        join tr.baseRecipe br
+        order by function('rand')
+    """)
+    List<TransformedCandidateRow> findRandomCandidateRows(Pageable pageable);
+
 }

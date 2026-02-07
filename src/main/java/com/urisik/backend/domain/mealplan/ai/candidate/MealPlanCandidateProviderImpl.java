@@ -127,26 +127,38 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
 
         List<RecipeSelectionDTO> pool = new ArrayList<>();
 
-        // 1. 가족이 만든 변형 레시피
-        List<TransformedRecipe> transformedRecipes =
-                transformedRecipeRepository.findByFamilyRoomId(familyRoomId);
+        // 1. 변형 레시피
+        for (int attempt = 0; attempt < DB_MAX_ATTEMPTS && pool.size() < TARGET_POOL_SIZE; attempt++) {
+            List<TransformedRecipeRepository.TransformedCandidateRow> rows =
+                    transformedRecipeRepository.findRandomCandidateRows(
+                            org.springframework.data.domain.PageRequest.of(0, DB_BATCH_SIZE)
+                    );
 
-        for (TransformedRecipe tr : transformedRecipes) {
-            if (tr == null || tr.getId() == null) continue;
-            if (excludedTransformedRecipeIds != null && excludedTransformedRecipeIds.contains(tr.getId())) continue;
+            if (rows == null || rows.isEmpty()) break;
 
-            // 알레르기 필터링: unsafe(알레르기 포함)면 제외
-            if (!isUsableForMealPlan(tr.getIngredientsRaw(), normalizedAllergens)) continue;
+            for (TransformedRecipeRepository.TransformedCandidateRow row : rows) {
+                if (row == null || row.getId() == null || row.getBaseRecipeId() == null) continue;
 
-            Long baseKey = resolveBaseKeyForTransformedEntity(tr);
-            if (baseKey == null) continue;
-            if (excludedBaseKeys.contains(baseKey)) continue;
+                Long transformedId = row.getId();
+                Long baseKey = row.getBaseRecipeId();
 
-            pool.add(new RecipeSelectionDTO(
-                    RecipeSelectionDTO.RecipeSelectionType.TRANSFORMED_RECIPE,
-                    tr.getId(),
-                    baseKey
-            ));
+                // 방장 exclusion(조회에서만 제외)도 후보군에서 제외
+                if (excludedTransformedRecipeIds != null && excludedTransformedRecipeIds.contains(transformedId)) continue;
+
+                // 알레르기 필터링: unsafe(알레르기 포함)면 제외
+                if (!isUsableForMealPlan(row.getIngredientsRaw(), normalizedAllergens)) continue;
+
+                // wish 후보에서 이미 사용된 baseKey는 fallback에서 제외
+                if (excludedBaseKeys.contains(baseKey)) continue;
+
+                pool.add(new RecipeSelectionDTO(
+                        RecipeSelectionDTO.RecipeSelectionType.TRANSFORMED_RECIPE,
+                        transformedId,
+                        baseKey
+                ));
+
+                if (pool.size() >= TARGET_POOL_SIZE) break;
+            }
         }
 
         // 2. 원형 레시피 (DB에서 제한/샘플링해서 가져오기: findAll() 금지)

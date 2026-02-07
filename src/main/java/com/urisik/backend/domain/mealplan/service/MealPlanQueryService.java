@@ -75,17 +75,19 @@ public class MealPlanQueryService {
                     MealPlan.SlotRef ref = e.getValue();
                     SlotRefKey refKey = SlotRefKey.of(ref);
                     ResolvedRecipe rr = (refKey == null) ? null : resolved.byRef().get(refKey);
-                    if (rr == null) {
-                        throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_RECIPE_NOT_FOUND);
-                    }
+
+                    String title = (rr == null) ? "(레시피 정보를 불러올 수 없음)" : rr.title();
+                    String ingredients = (rr == null) ? "" : rr.ingredients();
+                    String instructions = (rr == null) ? "" : rr.instructions();
+
                     return new GetMealPlanResDTO.TodayMealDTO(
                             e.getKey(),
                             toDtoSlotRefType(ref.type()),
                             ref.id(),
-                            rr.title(),
+                            title,
                             null,
-                            rr.ingredients(),
-                            rr.instructions()
+                            ingredients,
+                            instructions
                     );
                 })
                 .toList();
@@ -142,16 +144,19 @@ public class MealPlanQueryService {
             SlotRefKey refKey = SlotRefKey.of(ref);
 
             ResolvedRecipe rr = (refKey == null) ? null : resolved.byRef().get(refKey);
-            if (rr == null) continue;
 
-            String k = key.mealType().name() + "-" + key.dayOfWeek().name();
+            String title = (rr == null) ? "(레시피 정보를 불러올 수 없음)" : rr.title();
+            String ingredients = (rr == null) ? "" : rr.ingredients();
+            String summary = (rr == null) ? "" : summarizeDescription(rr.instructions());
+
+            String k = key.dayOfWeek().name() + "-" + key.mealType().name();
             slots.put(k, new GetMealPlanResDTO.SlotSummaryDTO(
                     toDtoSlotRefType(ref.type()),
                     ref.id(),
-                    rr.title(),
+                    title,
                     null,
-                    summarizeDescription(rr.instructions()),
-                    rr.ingredients()
+                    summary,
+                    ingredients
             ));
         }
 
@@ -207,17 +212,20 @@ public class MealPlanQueryService {
                 SlotRefKey refKey = SlotRefKey.of(ref);
 
                 ResolvedRecipe rr = (refKey == null) ? null : resolved.byRef().get(refKey);
-                if (rr == null) continue;
+
+                String title = (rr == null) ? "(레시피 정보를 불러올 수 없음)" : rr.title();
+                String ingredients = (rr == null) ? "" : rr.ingredients();
+                String summary = (rr == null) ? "" : summarizeDescription(rr.instructions());
 
                 dayMap.computeIfAbsent(key.dayOfWeek(), d -> new ArrayList<>())
                         .add(new GetMealPlanResDTO.HistoryMealDTO(
                                 key.mealType(),
                                 toDtoSlotRefType(ref.type()),
                                 ref.id(),
-                                rr.title(),
+                                title,
                                 null,
-                                summarizeDescription(rr.instructions()),
-                                rr.ingredients()
+                                summary,
+                                ingredients
                         ));
             }
 
@@ -275,10 +283,10 @@ public class MealPlanQueryService {
 
         Map<SlotRefKey, ResolvedRecipe> resolved = new HashMap<>();
 
-        // 1) TRANSFORMED_RECIPE: 반드시 familyRoomId로 스코프
+        // 1) TRANSFORMED_RECIPE
         Map<Long, TransformedRecipe> trById = new HashMap<>();
         if (!transformedIds.isEmpty()) {
-            List<TransformedRecipe> trs = transformedRecipeRepository.findAllByFamilyRoomIdAndIdIn(familyRoomId, transformedIds);
+            List<TransformedRecipe> trs = transformedRecipeRepository.findAllById(transformedIds);
             for (TransformedRecipe tr : trs) {
                 if (tr == null || tr.getId() == null) continue;
                 trById.put(tr.getId(), tr);
@@ -304,7 +312,7 @@ public class MealPlanQueryService {
                 .filter(r -> r.getId() != null)
                 .collect(Collectors.toMap(Recipe::getId, r -> r, (a, b) -> a));
 
-        // recipeId로 저장된 케이스는 transformedRecipeId도 내려주기 위해 조회 (옵션 유지)
+        // recipeId로 저장된 케이스는 transformedRecipeId도 내려주기 위해 조회
         Map<Long, Long> transformedIdByRecipeId = new HashMap<>();
         if (!recipeIds.isEmpty()) {
             transformedRecipeRepository.findByFamilyRoomIdAndBaseRecipe_IdIn(familyRoomId, recipeIds)
@@ -318,17 +326,24 @@ public class MealPlanQueryService {
         for (Long storedId : transformedIds) {
             TransformedRecipe tr = trById.get(storedId);
             if (tr == null) continue;
-            Recipe base = (tr.getBaseRecipe() == null) ? null : recipeById.get(tr.getBaseRecipe().getId());
-            if (base == null) continue;
 
-            String title = (tr.getTitle() == null || tr.getTitle().isBlank()) ? base.getTitle() : tr.getTitle();
+            Recipe base = (tr.getBaseRecipe() == null) ? null : recipeById.get(tr.getBaseRecipe().getId());
+
+            String title;
+            if (tr.getTitle() != null && !tr.getTitle().isBlank()) {
+                title = tr.getTitle();
+            } else if (base != null) {
+                title = base.getTitle();
+            } else {
+                title = "(레시피 정보를 불러올 수 없음)";
+            }
 
             resolved.put(new SlotRefKey(MealPlan.SlotRefType.TRANSFORMED_RECIPE, storedId), new ResolvedRecipe(
-                    base.getId(),
+                    base == null ? null : base.getId(),
                     tr.getId(),
                     title,
-                    pickIngredients(tr, base),
-                    pickInstructions(tr, base)
+                    base == null ? (tr.getIngredientsRaw() == null ? "" : tr.getIngredientsRaw()) : pickIngredients(tr, base),
+                    base == null ? (tr.getInstructionsRaw() == null ? "" : tr.getInstructionsRaw()) : pickInstructions(tr, base)
             ));
         }
 
