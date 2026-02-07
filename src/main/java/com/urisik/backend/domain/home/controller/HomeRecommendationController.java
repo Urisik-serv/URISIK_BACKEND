@@ -4,6 +4,7 @@ import com.urisik.backend.domain.home.dto.HighScoreRecommendationResponse;
 import com.urisik.backend.domain.home.dto.HomeSafeRecipeResponse;
 import com.urisik.backend.domain.home.enums.HomeSuccessCode;
 import com.urisik.backend.domain.home.service.HighScoreRecommendationService;
+import com.urisik.backend.domain.home.service.SafeHighScoreRecommendationService;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
 import com.urisik.backend.domain.home.service.HomeRecommendationService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
@@ -57,5 +58,23 @@ public class HomeRecommendationController {
                 result
         );
     }
+
+    private final SafeHighScoreRecommendationService safeHighScoreRecommendationService;
+
+    @GetMapping("/safe-high-score")
+    @Operation(
+            summary = "홈 안전한 레시피 추천 API(하단)",
+            description = "로그인한 사용자의 가족방 알레르기 기준으로 안전한 레시피만 필터링한 뒤, 평점이 높은 음식 Top 3를 추천하는 api 입니다."
+    )
+    public ApiResponse<HighScoreRecommendationResponse> recommendSafeHighScore(
+            @AuthenticationPrincipal Long loginUserId,
+            @RequestParam(required = false) String category
+    ) {
+        return ApiResponse.onSuccess(
+                HomeSuccessCode.RECOMMEND_SAFE_HIGH_SCORE_OK,
+                safeHighScoreRecommendationService.recommendSafeRecipes(loginUserId, category)
+        );
+    }
+
 
 }
