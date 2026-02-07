@@ -19,11 +19,11 @@ public class TransformedRecipeReview {
     private Long id;
 
     // 별점
-    @Column(nullable = false)
+    @Column(name = "score", nullable = false)
     private Integer score;   // 1 ~ 5 범위의 정수
 
     // 취향
-    @Column(nullable = false)
+    @Column(name = "isFavorite")
     private boolean isFavorite;
 
     @ManyToOne(fetch = FetchType.LAZY)
