@@ -23,33 +23,33 @@ public interface HomeRepository extends JpaRepository<Recipe, Long> {
      * - 리뷰 수 → 평점 → 위시 수
      */
     @Query("""
-        select r
-        from Recipe r
-        join r.recipeExternalMetadata rem
-        where rem.category in :categories
-        order by
-            r.reviewCount desc,
-            r.avgScore desc,
-            r.wishCount desc
-    """)
+    select r
+    from Recipe r
+    join r.recipeExternalMetadata rem
+    order by
+        r.avgScore desc,
+        r.reviewCount desc,
+        r.wishCount desc
+""")
     List<Recipe> findTopByScore(Pageable pageable);
 
     /**
      * 카테고리별 고평점 레시피 조회
      */
     @Query("""
-        select r
-        from Recipe r
-        join r.recipeExternalMetadata rem
-        where rem.category in :categories
-        order by
-            r.reviewCount desc,
-            r.avgScore desc,
-            r.wishCount desc
-    """)
+    select r
+    from Recipe r
+    join r.recipeExternalMetadata rem
+    where rem.category in :categories
+    order by
+        r.avgScore desc,
+        r.reviewCount desc,
+        r.wishCount desc
+""")
     List<Recipe> findTopByCategories(
             @Param("categories") List<String> categories,
             Pageable pageable
     );
+
 
 }

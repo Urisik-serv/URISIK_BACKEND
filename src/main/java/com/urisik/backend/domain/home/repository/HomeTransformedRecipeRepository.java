@@ -21,31 +21,33 @@ public interface HomeTransformedRecipeRepository
     List<TransformedRecipe> findTopForHome(Pageable pageable);
 
     @Query("""
-        select tr
-        from TransformedRecipe tr
-        join tr.baseRecipe br
-        left join br.recipeExternalMetadata rem
-        order by
-            br.reviewCount desc,
-            br.avgScore desc,
-            tr.wishCount desc
-    """)
+    select tr
+    from TransformedRecipe tr
+    join tr.baseRecipe br
+    left join br.recipeExternalMetadata rem
+    order by
+        br.avgScore desc,
+        br.reviewCount desc,
+        tr.wishCount desc
+""")
     List<TransformedRecipe> findTopByScore(Pageable pageable);
 
+
     @Query("""
-        select tr
-        from TransformedRecipe tr
-        join tr.baseRecipe br
-        join br.recipeExternalMetadata rem
-        where rem.category in :categories
-        order by
-            br.reviewCount desc,
-            br.avgScore desc,
-            tr.wishCount desc
-    """)
+    select tr
+    from TransformedRecipe tr
+    join tr.baseRecipe br
+    join br.recipeExternalMetadata rem
+    where rem.category in :categories
+    order by
+        br.avgScore desc,
+        br.reviewCount desc,
+        tr.wishCount desc
+""")
     List<TransformedRecipe> findTopByCategories(
             @Param("categories") List<String> categories,
             Pageable pageable
     );
+
 
 }
