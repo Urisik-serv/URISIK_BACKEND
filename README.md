@@ -1,18 +1,4 @@
-## Architecture Overview
 
-본 프로젝트는 **보안성과 확장성을 고려한 AWS 기반 클라우드 아키텍처**로 구성되어 있습니다.
-
-사용자의 요청은 **Route 53**을 통해 도메인 기반으로 라우팅되며,  
-**Public Subnet에 위치한 Application Load Balancer(ALB)**를 거쳐  
-**Private Subnet에 위치한 EC2 백엔드 서버**로 전달됩니다.
-
-백엔드 서버는 **Docker 컨테이너 기반의 Spring Boot(Java 17) 애플리케이션**으로 실행되며,  
-데이터는 **Amazon RDS(MySQL)**에 저장되고 파일 데이터는 **Amazon S3**를 사용합니다.
-
-배포는 **GitHub Actions 기반 CI/CD 파이프라인**으로 자동화되어 있으며,  
-Docker 이미지를 **Docker Hub**에 푸시한 뒤 EC2에서 pull & run 방식으로 실행됩니다.
-
----
 
 ## 🏗️ Architecture Diagram
 
@@ -43,7 +29,27 @@ Docker 이미지를 **Docker Hub**에 푸시한 뒤 EC2에서 pull & run 방식�
 </div>
 <br>
 
-
+## Directory Structure
+```
+📦 src/main/java/com/urisik/backend
+ ├──📁 domain
+     ├── 📁 allergy          # 알레르기 관련 패키지
+     ├── 📁 familyroom       # 가족방 관련 패키지
+     ├── 📁 home             # 홈 화면 관련 패키지
+     ├── 📁 mealplan         # 식단 계획 관련 패키지
+     ├── 📁 member           # 사용자 관련 패키지
+     ├── 📁 notification     # 알림 관련 패키지
+     ├── 📁 recipe           # 레시피 관련 패키지
+     └── 📁 review           # 리뷰 관련 패키지
+├── 📁 global
+     ├── 📁 ai               # ai 연동
+     ├── 📁 apiPayload       # 공통 응답, 에러 코드, 예외 처리 등 API 응답 관련 패키지
+     ├── 📁 auth             # 인증/인가 
+     ├── 📁 config           # 공통 설정 정의
+     ├── 📁 external         # AWS S3 연동
+     ├── 📁 util             # 공통 사용 유틸리티
+     └── 📄 BaseEntity.java  # JPA 엔티티의 생성·수정 시간 관
+└── 📄 UrisikBackendApplication.java
 
 ## Commit Message Convention
 
