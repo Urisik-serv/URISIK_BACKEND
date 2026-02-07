@@ -3,11 +3,14 @@ package com.urisik.backend.domain.recipe.converter;
 import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeUpsertRequestDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
+import com.urisik.backend.domain.recipe.entity.RecipeStep;
 import com.urisik.backend.domain.recipe.enums.RecipeErrorCode;
 import com.urisik.backend.domain.recipe.enums.SourceType;
 import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.dto.FoodSafetyRecipeResponse;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class ExternalRecipeConverter {
@@ -40,6 +43,19 @@ public class ExternalRecipeConverter {
                 trimToNull(m.getImageSmallUrl()),
                 trimToNull(m.getImageLargeUrl())
         );
+    }
+
+    public List<RecipeStep> toSteps(Recipe recipe, ExternalRecipeUpsertRequestDTO req) {
+        if (req.getSteps() == null) return List.of();
+
+        return req.getSteps().stream()
+                .map(s -> new RecipeStep(
+                        recipe,
+                        s.getOrder(),
+                        required(s.getDescription(), "step.description"),
+                        trimToNull(s.getImageUrl())
+                ))
+                .toList();
     }
 
     /* ===== 내부 유틸 ===== */

@@ -1,7 +1,10 @@
 package com.urisik.backend.domain.recipe.dto.req;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -24,4 +27,14 @@ public class ExternalRecipeSnapshotDTO {
 
     private String ingredientsRaw;
     private String instructionsRaw;
+
+    private List<Step> steps;
+
+    @Getter
+    @AllArgsConstructor
+    public static class Step {
+        private int order;
+        private String description;
+        private String imageUrl;
+    }
 }

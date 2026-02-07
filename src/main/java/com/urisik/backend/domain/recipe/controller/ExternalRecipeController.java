@@ -1,7 +1,6 @@
 package com.urisik.backend.domain.recipe.controller;
 
 import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeSnapshotDTO;
-import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeUpsertRequestDTO;
 import com.urisik.backend.domain.recipe.dto.res.ExternalRecipeUpsertResponseDTO;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
 import com.urisik.backend.domain.recipe.service.ExternalRecipeService;
@@ -25,12 +24,9 @@ public class ExternalRecipeController {
     public ApiResponse<ExternalRecipeUpsertResponseDTO> upsertExternal(
             @RequestBody ExternalRecipeSnapshotDTO snapshot
     ) {
-        ExternalRecipeUpsertRequestDTO command =
-                ExternalRecipeUpsertRequestDTO.from(snapshot);
-
         return ApiResponse.onSuccess(
                 RecipeSuccessCode.EXTERNAL_RECIPE_UPSERT_OK,
-                externalRecipeService.upsertExternal(command)
+                externalRecipeService.upsertFromSnapshot(snapshot)
         );
     }
 }
