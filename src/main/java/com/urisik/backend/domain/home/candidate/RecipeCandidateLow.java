@@ -42,4 +42,9 @@ public class RecipeCandidateLow implements HighScoreRecipeCandidate{
         );
     }
 
+    @Override
+    public String getDescription() {
+        return String.join(", ", getIngredients());
+    }
+
 }

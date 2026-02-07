@@ -52,4 +52,10 @@ public class TransformedRecipeCandidateLow implements HighScoreRecipeCandidate{
                 tr.getIngredientsRaw()
         );
     }
+
+    @Override
+    public String getDescription() {
+        return tr.getSubstitutionSummaryJson();
+    }
+
 }

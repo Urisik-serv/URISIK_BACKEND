@@ -53,10 +53,13 @@ public class HighScoreRecommendationService {
     ) {
         String normalizedCategory = normalizeCategory(category);
 
+
         // 로그인 사용자 + 가족방 확인
         FamilyMemberProfile profile =
                 familyMemberProfileRepository.findByMember_Id(loginUserId)
                         .orElseThrow(() -> new GeneralException(GeneralErrorCode.NOT_FOUND));
+
+        Long familyRoomId = profile.getFamilyRoom().getId();
 
         Pageable pageable = PageRequest.of(0, 20);
         List<HighScoreRecipeCandidate> candidates = new ArrayList<>();
@@ -121,7 +124,16 @@ public class HighScoreRecommendationService {
         return new HighScoreRecommendationResponse(
                 finalSorted.stream()
                         .limit(3)
-                        .map(converter::toDto)
+                        .map(c -> {
+                            boolean isSafe =
+                                    allergyRiskService
+                                            .detectRiskAllergens(
+                                                    familyRoomId,
+                                                    c.getIngredients()
+                                            )
+                                            .isEmpty();
+                            return converter.toDto(c, isSafe);
+                        })
                         .toList()
         );
     }

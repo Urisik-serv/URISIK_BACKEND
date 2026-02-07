@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class HighScoreRecommendationConverter {
 
-    public HighScoreRecommendationDTO toDto(HighScoreRecipeCandidate candidate) {
+    public HighScoreRecommendationDTO toDto(HighScoreRecipeCandidate candidate, boolean isSafe) {
 
         boolean isTransformed =
                 candidate instanceof TransformedRecipeCandidateLow;
@@ -21,7 +21,9 @@ public class HighScoreRecommendationConverter {
                 candidate.getAvgScore(),
                 candidate.getReviewCount(),
                 candidate.getWishCount(),
-                isTransformed
+                isTransformed,
+                isSafe,
+                candidate.getDescription()
         );
     }
 }

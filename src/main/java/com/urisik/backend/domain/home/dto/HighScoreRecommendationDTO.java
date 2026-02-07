@@ -3,6 +3,8 @@ package com.urisik.backend.domain.home.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @AllArgsConstructor
 public class HighScoreRecommendationDTO {
@@ -17,5 +19,8 @@ public class HighScoreRecommendationDTO {
     private int wishCount;
 
     private boolean isTransformed;
+
+    private boolean safe;
+    private String description;
 
 }

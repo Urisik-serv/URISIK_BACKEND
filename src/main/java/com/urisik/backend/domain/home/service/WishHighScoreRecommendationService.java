@@ -105,7 +105,16 @@ public class WishHighScoreRecommendationService {
         return new HighScoreRecommendationResponse(
                 finalSorted.stream()
                         .limit(3)
-                        .map(converter::toDto)
+                        .map(c -> {
+                            boolean isSafe =
+                                    allergyRiskService
+                                            .detectRiskAllergens(
+                                                    familyRoomId,
+                                                    c.getIngredients()
+                                            )
+                                            .isEmpty();
+                            return converter.toDto(c, isSafe);
+                        })
                         .toList()
         );
     }

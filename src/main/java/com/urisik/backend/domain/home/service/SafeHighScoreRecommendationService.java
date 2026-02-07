@@ -120,7 +120,16 @@ public class SafeHighScoreRecommendationService {
         return new HighScoreRecommendationResponse(
                 safeCandidates.stream()
                         .limit(3)
-                        .map(converter::toDto)
+                        .map(c -> {
+                    boolean isSafe =
+                            allergyRiskService
+                                    .detectRiskAllergens(
+                                            familyRoomId,
+                                            c.getIngredients()
+                                    )
+                                    .isEmpty();
+                    return converter.toDto(c, isSafe);
+                })
                         .toList()
         );
     }

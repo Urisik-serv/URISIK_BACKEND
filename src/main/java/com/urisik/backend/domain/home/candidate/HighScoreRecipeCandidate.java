@@ -14,5 +14,7 @@ public interface HighScoreRecipeCandidate {
     int getWishCount();
 
     List<String> getIngredients();
+
+    String getDescription();
 }
 
