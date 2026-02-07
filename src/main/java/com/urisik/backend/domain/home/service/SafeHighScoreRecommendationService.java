@@ -1,6 +1,8 @@
 package com.urisik.backend.domain.home.service;
 
-import com.urisik.backend.domain.home.candidate.*;
+import com.urisik.backend.domain.home.candidate.HighScoreRecipeCandidate;
+import com.urisik.backend.domain.home.candidate.RecipeCandidateLow;
+import com.urisik.backend.domain.home.candidate.TransformedRecipeCandidateLow;
 import com.urisik.backend.domain.home.converter.HighScoreRecommendationConverter;
 import com.urisik.backend.domain.home.dto.HighScoreRecommendationResponse;
 import com.urisik.backend.domain.home.policy.CategoryMapper;
@@ -21,51 +23,41 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class HighScoreRecommendationService {
+public class SafeHighScoreRecommendationService {
 
     private final HomeRepository homeRepository;
     private final HomeTransformedRecipeRepository homeTransformedRecipeRepository;
-    private final HighScoreRecommendationConverter converter;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final AllergyRiskService allergyRiskService;
+    private final HighScoreRecommendationConverter converter;
 
     /**
-     * 고평점 레시피 추천
-     *
-     * 규칙:
-     * 1) 카테고리 미입력 → 전체 레시피 중 Top 3
-     * 2) 카테고리 입력 → 해당 카테고리 내 Top 3
-     * 3) 정렬 기준
-     *    - 평점 desc
-     *    - 리뷰 수 desc
-     *    - 위시 수 desc
-     * 4) 위 3개 값이 모두 같을 때만
-     *    → 알레르기 "위험 없는" 레시피 우선
+     * 알레르기 안전 + 카테고리 기준 레시피 추천
      */
-    public HighScoreRecommendationResponse recommend(
+    public HighScoreRecommendationResponse recommendSafeRecipes(
             Long loginUserId,
             String category
     ) {
-        String normalizedCategory = normalizeCategory(category);
-
-        // 로그인 사용자 + 가족방 확인
+        // 1️. 로그인 사용자 → 가족방
         FamilyMemberProfile profile =
                 familyMemberProfileRepository.findByMember_Id(loginUserId)
                         .orElseThrow(() -> new GeneralException(GeneralErrorCode.NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(0, 20);
+        Long familyRoomId = profile.getFamilyRoom().getId();
+        String normalizedCategory = normalizeCategory(category);
+
+        Pageable pageable = PageRequest.of(0, 50);
         List<HighScoreRecipeCandidate> candidates = new ArrayList<>();
 
         /* =========================
-         * 1️. 후보 수집
+         * 2️. 카테고리 기준 후보 수집
          * ========================= */
         if (normalizedCategory == null) {
-            // 카테고리 미입력: 전체
+            // 카테고리 미선택 → 전체
             candidates.addAll(
                     homeRepository.findTopByScore(pageable)
                             .stream()
@@ -80,7 +72,6 @@ public class HighScoreRecommendationService {
                             .toList()
             );
         } else {
-            // 카테고리 입력
             List<String> legacyCategories =
                     CategoryMapper.toLegacyList(normalizedCategory);
 
@@ -100,98 +91,38 @@ public class HighScoreRecommendationService {
         }
 
         /* =========================
-         * 2️. 1차 정렬
-         * 평점 → 리뷰 수 → 위시 수
+         * 3. 알레르기 안전 필터 (핵심 차이)
          * ========================= */
-        candidates.sort(
+        List<HighScoreRecipeCandidate> safeCandidates =
+                candidates.stream()
+                        .filter(c ->
+                                allergyRiskService
+                                        .detectRiskAllergens(
+                                                familyRoomId,
+                                                c.getIngredients()
+                                        )
+                                        .isEmpty()
+                        )
+                        .toList();
+
+        /* =========================
+         * 4️. 정렬 기준 유지
+         * ========================= */
+        safeCandidates.sort(
                 Comparator.comparingDouble(HighScoreRecipeCandidate::getAvgScore).reversed()
                         .thenComparingInt(HighScoreRecipeCandidate::getReviewCount).reversed()
                         .thenComparingInt(HighScoreRecipeCandidate::getWishCount).reversed()
         );
 
         /* =========================
-         * 3️. 완전 동점자 알레르기 tie-break
-         * ========================= */
-        List<HighScoreRecipeCandidate> finalSorted =
-                applyAllergyTieBreaker(candidates, profile);
-
-        /* =========================
-         * 4. Top 3 반환
+         * 5️. 결과 반환
          * ========================= */
         return new HighScoreRecommendationResponse(
-                finalSorted.stream()
+                safeCandidates.stream()
                         .limit(3)
                         .map(converter::toDto)
                         .toList()
         );
-    }
-
-    /**
-     * 평점 + 리뷰 수 + 위시 수가 모두 같은 "연속 구간"에 대해서만
-     * 알레르기 위험 없는 레시피를 우선 배치
-     *
-     * ⚠전제:
-     * - candidates 는 이미 점수 기준으로 정렬되어 있음
-     */
-    private List<HighScoreRecipeCandidate> applyAllergyTieBreaker(
-            List<HighScoreRecipeCandidate> candidates,
-            FamilyMemberProfile profile
-    ) {
-        if (candidates.size() <= 1) return candidates;
-
-        List<HighScoreRecipeCandidate> result = new ArrayList<>();
-        int i = 0;
-
-        while (i < candidates.size()) {
-            HighScoreRecipeCandidate base = candidates.get(i);
-
-            // 같은 점수 그룹 찾기
-            List<HighScoreRecipeCandidate> sameRankGroup = new ArrayList<>();
-            sameRankGroup.add(base);
-
-            int j = i + 1;
-            while (j < candidates.size()
-                    && base.getAvgScore() == candidates.get(j).getAvgScore()
-                    && base.getReviewCount() == candidates.get(j).getReviewCount()
-                    && base.getWishCount() == candidates.get(j).getWishCount()
-            ) {
-                sameRankGroup.add(candidates.get(j));
-                j++;
-            }
-
-            // 동점자 그룹 내에서만 알레르기 안전 우선
-            if (sameRankGroup.size() > 1) {
-                sameRankGroup.sort(
-                        (a, b) -> Boolean.compare(
-                                isSafeRecipe(profile, b),
-                                isSafeRecipe(profile, a)
-                        )
-                );
-            }
-
-
-            result.addAll(sameRankGroup);
-            i = j;
-        }
-
-        return result;
-    }
-
-    /**
-     * 알레르기 위험 여부 판단
-     * - 위험 알레르기 없음 → true (안전)
-     * - 하나라도 있으면 → false (위험)
-     */
-    private boolean isSafeRecipe(
-            FamilyMemberProfile profile,
-            HighScoreRecipeCandidate candidate
-    ) {
-        return allergyRiskService
-                .detectRiskAllergens(
-                        profile.getFamilyRoom().getId(),
-                        candidate.getIngredients()
-                )
-                .isEmpty();
     }
 
     private String normalizeCategory(String category) {
@@ -208,5 +139,3 @@ public class HighScoreRecommendationService {
         };
     }
 }
-
-
