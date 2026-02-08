@@ -270,7 +270,7 @@ public class MealPlanQueryService {
             String title,
             String imageUrl,
             String ingredients,
-            List<GetMealPlanResDTO.RecipeStepDTO> recipeSteps
+            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> recipeSteps
     ) {
     }
 
@@ -336,7 +336,7 @@ public class MealPlanQueryService {
         }
 
         // Load recipe steps for all relevant recipeIds (canonical and base)
-        Map<Long, List<GetMealPlanResDTO.RecipeStepDTO>> stepsByRecipeId = new HashMap<>();
+        Map<Long, List<GetMealPlanResDTO.MealPlanRecipeStepDTO>> stepsByRecipeId = new HashMap<>();
         if (!allRecipeIdsToLoad.isEmpty()) {
             List<RecipeStep> steps = recipeStepRepository
                     .findAllByRecipe_IdInOrderByRecipe_IdAscStepOrderAsc(allRecipeIdsToLoad);
@@ -346,7 +346,7 @@ public class MealPlanQueryService {
                 Long rid = s.getRecipe().getId();
                 stepsByRecipeId
                         .computeIfAbsent(rid, k -> new ArrayList<>())
-                        .add(new GetMealPlanResDTO.RecipeStepDTO(
+                        .add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(
                                 s.getStepOrder(),
                                 s.getDescription(),
                                 s.getImageUrl()
@@ -376,7 +376,7 @@ public class MealPlanQueryService {
             }
 
             Long baseRecipeId = (tr.getBaseRecipe() == null ? null : tr.getBaseRecipe().getId());
-            List<GetMealPlanResDTO.RecipeStepDTO> baseSteps = (baseRecipeId == null)
+            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> baseSteps = (baseRecipeId == null)
                     ? List.of()
                     : stepsByRecipeId.getOrDefault(baseRecipeId, List.of());
 
@@ -389,7 +389,7 @@ public class MealPlanQueryService {
             }
 
             List<String> trStepDescriptions = splitInstructionsToSteps(tr.getInstructionsRaw());
-            List<GetMealPlanResDTO.RecipeStepDTO> steps = buildTransformedSteps(baseSteps, trStepDescriptions);
+            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> steps = buildTransformedSteps(baseSteps, trStepDescriptions);
             steps = fillStepImageWithTitleImage(steps, imageUrl);
 
             resolved.put(new SlotRefKey(MealPlan.SlotRefType.TRANSFORMED_RECIPE, storedId), new ResolvedRecipe(
@@ -412,7 +412,7 @@ public class MealPlanQueryService {
                 imageUrl = r.getRecipeExternalMetadata().getThumbnailImageUrl();
             }
 
-            List<GetMealPlanResDTO.RecipeStepDTO> steps =
+            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> steps =
                     (r.getId() == null) ? List.of() : stepsByRecipeId.getOrDefault(r.getId(), List.of());
 
             // If recipe_step rows are missing, fall back to splitting instructions_raw into step descriptions.
@@ -437,8 +437,8 @@ public class MealPlanQueryService {
         return new ResolvedMaps(resolved);
     }
 
-    private static List<GetMealPlanResDTO.RecipeStepDTO> fillStepImageWithTitleImage(
-            List<GetMealPlanResDTO.RecipeStepDTO> steps,
+    private static List<GetMealPlanResDTO.MealPlanRecipeStepDTO> fillStepImageWithTitleImage(
+            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> steps,
             String titleImageUrl
     ) {
         if (steps == null || steps.isEmpty()) return List.of();
@@ -449,7 +449,7 @@ public class MealPlanQueryService {
                 .map(s -> {
                     String img = s.imageUrl();
                     if (img != null && !img.isBlank()) return s;
-                    return new GetMealPlanResDTO.RecipeStepDTO(
+                    return new GetMealPlanResDTO.MealPlanRecipeStepDTO(
                             s.stepOrder(),
                             s.description(),
                             titleImageUrl
@@ -458,14 +458,14 @@ public class MealPlanQueryService {
                 .toList();
     }
 
-    private static List<GetMealPlanResDTO.RecipeStepDTO> buildStepsFromDescriptions(List<String> descriptions) {
+    private static List<GetMealPlanResDTO.MealPlanRecipeStepDTO> buildStepsFromDescriptions(List<String> descriptions) {
         if (descriptions == null || descriptions.isEmpty()) return List.of();
 
-        List<GetMealPlanResDTO.RecipeStepDTO> out = new ArrayList<>(descriptions.size());
+        List<GetMealPlanResDTO.MealPlanRecipeStepDTO> out = new ArrayList<>(descriptions.size());
         for (int i = 0; i < descriptions.size(); i++) {
             String d = descriptions.get(i);
             if (d == null || d.isBlank()) continue;
-            out.add(new GetMealPlanResDTO.RecipeStepDTO(i + 1, d, null));
+            out.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(i + 1, d, null));
         }
         return out;
     }
@@ -537,11 +537,11 @@ public class MealPlanQueryService {
     }
 
     // --- Inserted: buildTransformedSteps ---
-    private static List<GetMealPlanResDTO.RecipeStepDTO> buildTransformedSteps(
-            List<GetMealPlanResDTO.RecipeStepDTO> baseSteps,
+    private static List<GetMealPlanResDTO.MealPlanRecipeStepDTO> buildTransformedSteps(
+            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> baseSteps,
             List<String> transformedDescriptions
     ) {
-        List<GetMealPlanResDTO.RecipeStepDTO> safeBase = (baseSteps == null) ? List.of() : baseSteps;
+        List<GetMealPlanResDTO.MealPlanRecipeStepDTO> safeBase = (baseSteps == null) ? List.of() : baseSteps;
         List<String> descs = (transformedDescriptions == null) ? List.of() : transformedDescriptions;
 
         // If we have base steps (with imageUrl), align transformed descriptions by index.
@@ -553,27 +553,27 @@ public class MealPlanQueryService {
             // Determine the last stepOrder from base (fallback to baseSize)
             int lastOrder = baseSize;
             for (int i = baseSize - 1; i >= 0; i--) {
-                GetMealPlanResDTO.RecipeStepDTO b = safeBase.get(i);
+                GetMealPlanResDTO.MealPlanRecipeStepDTO b = safeBase.get(i);
                 if (b != null && b.stepOrder() > 0) {
                     lastOrder = b.stepOrder();
                     break;
                 }
             }
 
-            List<GetMealPlanResDTO.RecipeStepDTO> out = new ArrayList<>(total);
+            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> out = new ArrayList<>(total);
 
             for (int i = 0; i < total; i++) {
                 if (i < baseSize) {
-                    GetMealPlanResDTO.RecipeStepDTO b = safeBase.get(i);
+                    GetMealPlanResDTO.MealPlanRecipeStepDTO b = safeBase.get(i);
                     int order = (b == null) ? (i + 1) : b.stepOrder();
                     String imageUrl = (b == null) ? null : b.imageUrl();
                     String description = (i < descSize) ? descs.get(i) : null;
-                    out.add(new GetMealPlanResDTO.RecipeStepDTO(order, description, imageUrl));
+                    out.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(order, description, imageUrl));
                 } else {
                     // description is longer than baseSteps -> append extra steps
                     int order = lastOrder + (i - baseSize + 1);
                     String description = descs.get(i);
-                    out.add(new GetMealPlanResDTO.RecipeStepDTO(order, description, null));
+                    out.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(order, description, null));
                 }
             }
             return out;
@@ -581,9 +581,9 @@ public class MealPlanQueryService {
 
         // If no base steps exist yet, fall back to transformed text only.
         if (!descs.isEmpty()) {
-            List<GetMealPlanResDTO.RecipeStepDTO> out = new ArrayList<>(descs.size());
+            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> out = new ArrayList<>(descs.size());
             for (int i = 0; i < descs.size(); i++) {
-                out.add(new GetMealPlanResDTO.RecipeStepDTO(i + 1, descs.get(i), null));
+                out.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(i + 1, descs.get(i), null));
             }
             return out;
         }
