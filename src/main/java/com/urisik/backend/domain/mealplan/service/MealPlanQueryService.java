@@ -270,7 +270,6 @@ public class MealPlanQueryService {
             String title,
             String imageUrl,
             String ingredients,
-            String instructions,
             List<GetMealPlanResDTO.RecipeStepDTO> recipeSteps
     ) {
     }
@@ -399,7 +398,6 @@ public class MealPlanQueryService {
                     title,
                     imageUrl,
                     base == null ? (tr.getIngredientsRaw() == null ? "" : tr.getIngredientsRaw()) : pickIngredients(tr, base),
-                    tr.getInstructionsRaw() == null ? "" : tr.getInstructionsRaw(),
                     steps
             ));
         }
@@ -426,20 +424,12 @@ public class MealPlanQueryService {
             // Ensure step imageUrl is always present when we have a title image.
             steps = fillStepImageWithTitleImage(steps, imageUrl);
 
-            boolean hasStepDescription = steps.stream()
-                    .anyMatch(s -> s != null && s.description() != null && !s.description().isBlank());
-
-            String instructions = hasStepDescription
-                    ? ""
-                    : (r.getInstructionsRaw() == null ? "" : r.getInstructionsRaw());
-
             resolved.put(new SlotRefKey(MealPlan.SlotRefType.RECIPE, storedId), new ResolvedRecipe(
                     r.getId(),
                     transformedIdByRecipeId.get(r.getId()),
                     r.getTitle(),
                     imageUrl,
                     r.getIngredientsRaw(),
-                    instructions,
                     steps
             ));
         }
