@@ -67,7 +67,7 @@ public class TransformedReviewService {
         recipe.updateAvgScore(review.getScore());
 
         return TransformedReviewConverter.toReviewResponseDto(
-                review.getId(),
+                review,
                 recipe.getAvgScore()
         );
     }
