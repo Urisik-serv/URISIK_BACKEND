@@ -445,8 +445,8 @@ public class MealPlanQueryService {
         if (titleImageUrl == null || titleImageUrl.isBlank()) return steps;
 
         return steps.stream()
+                .filter(Objects::nonNull)
                 .map(s -> {
-                    if (s == null) return null;
                     String img = s.imageUrl();
                     if (img != null && !img.isBlank()) return s;
                     return new GetMealPlanResDTO.RecipeStepDTO(
