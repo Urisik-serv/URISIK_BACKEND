@@ -492,7 +492,7 @@ public class MealPlanQueryService {
 
         // Numbered patterns at line start: 1. / 1) / 1 - / 1: / 1]
         List<Integer> starts = new ArrayList<>();
-        var p = java.util.regex.Pattern.compile("(?m)^\\s*\\d{1,2}\\s*(?:[\\.)\\]:-])\\s*");
+        var p = java.util.regex.Pattern.compile("(?m)^\\s*\\d{1,2}\\s*(?:[\\.)\\]:\\-])\\s*");
         var m = p.matcher(text);
         while (m.find()) starts.add(m.start());
 
