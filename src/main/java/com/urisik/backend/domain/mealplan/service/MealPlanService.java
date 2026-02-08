@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -54,98 +55,139 @@ public class MealPlanService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    /**
-     * 식단 생성 API
-     */
+    /** 식단 생성 API */
     @Transactional
     public CreateMealPlanResult createMealPlan(Long memberId, Long familyRoomId, CreateMealPlanReqDTO req) {
-        LocalDate weekStart = normalizeToMonday(req.weekStartDate());
+        final long t0 = System.nanoTime();
+        final LocalDate reqWeekStart = req == null ? null : req.weekStartDate();
+        final int reqSlotCount = (req == null || req.selectedSlots() == null) ? 0 : req.selectedSlots().size();
 
-        // 방장 검증
-        familyRoomService.validateLeader(memberId, familyRoomId);
+        try {
+            LocalDate weekStart = normalizeToMonday(req.weekStartDate());
 
-        Optional<MealPlan> existingMealPlanOpt =
-                mealPlanRepository.findByFamilyRoomIdAndWeekStartDate(familyRoomId, weekStart);
+            // 방장 검증
+            familyRoomService.validateLeader(memberId, familyRoomId);
 
-        MealPlan mealPlan;
-        if (existingMealPlanOpt.isPresent()) {
-            mealPlan = existingMealPlanOpt.get();
+            Optional<MealPlan> existingMealPlanOpt =
+                    mealPlanRepository.findByFamilyRoomIdAndWeekStartDate(familyRoomId, weekStart);
 
-            // 확정된 식단은 재생성/수정 불가
-            if (mealPlan.getStatus() == MealPlanStatus.CONFIRMED) {
-                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_ALREADY_CONFIRMED);
+            MealPlan mealPlan;
+            if (existingMealPlanOpt.isPresent()) {
+                mealPlan = existingMealPlanOpt.get();
+
+                // 확정된 식단은 재생성/수정 불가
+                if (mealPlan.getStatus() == MealPlanStatus.CONFIRMED) {
+                    throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_ALREADY_CONFIRMED);
+                }
+
+                // DRAFT 식단이 있을 시 regenerate=false면 중복 생성 불가
+                if (!req.regenerate()) {
+                    throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_ALREADY_EXISTS);
+                }
+
+            } else {
+                FamilyRoom familyRoom = familyRoomRepository.findById(familyRoomId)
+                        .orElseThrow(() -> new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED));
+
+                mealPlan = MealPlan.draft(familyRoom, weekStart);
             }
 
-            // DRAFT 식단이 있을 시 regenerate=false면 중복 생성 불가
-            if (!req.regenerate()) {
-                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_ALREADY_EXISTS);
+            List<MealPlan.SlotKey> selectedSlots = distinctPreserveOrder(toSlotKeys(req.selectedSlots()));
+            if (selectedSlots.isEmpty()) {
+                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
             }
 
-        } else {
-            FamilyRoom familyRoom = familyRoomRepository.findById(familyRoomId)
-                    .orElseThrow(() -> new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED));
+            final long tGen0 = System.nanoTime();
+            GenerationResult generationResult = generateForSelectedSlots(memberId, familyRoomId, selectedSlots);
+            final long genMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tGen0);
 
-            mealPlan = MealPlan.draft(familyRoom, weekStart);
-        }
-
-        List<MealPlan.SlotKey> selectedSlots = distinctPreserveOrder(toSlotKeys(req.selectedSlots()));
-        if (selectedSlots.isEmpty()) {
-            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
-        }
-
-        GenerationResult generationResult = generateForSelectedSlots(memberId, familyRoomId, selectedSlots);
-
-        // 저장
-        for (var entry : generationResult.selections().entrySet()) {
-            MealPlan.SlotKey slotKey = entry.getKey();
-            RecipeSelectionDTO selection = entry.getValue();
-            mealPlan.updateSlot(slotKey, toSlotRefType(selection.type()), selection.id());
-        }
-        mealPlanRepository.save(mealPlan);
-
-        // 응답: chosenId + title
-        Map<String, RecipeDTO> slots = new LinkedHashMap<>();
-
-        // Batch-load titles
-        Map<Long, String> recipeTitles = new HashMap<>();
-        Map<Long, String> trTitles = new HashMap<>();
-        Set<Long> recipeIdsToLoad = new HashSet<>();
-        Set<Long> trIdsToLoad = new HashSet<>();
-        for (RecipeSelectionDTO sel : generationResult.selections().values()) {
-            if (sel.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE) recipeIdsToLoad.add(sel.id());
-            else trIdsToLoad.add(sel.id());
-        }
-        if (!recipeIdsToLoad.isEmpty())
-            recipeRepository.findAllById(recipeIdsToLoad).forEach(r -> recipeTitles.put(r.getId(), r.getTitle()));
-        if (!trIdsToLoad.isEmpty())
-            transformedRecipeRepository.findAllById(trIdsToLoad).forEach(tr -> trTitles.put(tr.getId(), tr.getTitle()));
-
-        for (MealPlan.SlotKey slot : selectedSlots) {
-            RecipeSelectionDTO selection = generationResult.selections().get(slot);
-            if (selection == null || selection.type() == null || selection.id() == null) {
-                throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED);
+            // 저장
+            final long tSave0 = System.nanoTime();
+            for (var entry : generationResult.selections().entrySet()) {
+                MealPlan.SlotKey slotKey = entry.getKey();
+                RecipeSelectionDTO selection = entry.getValue();
+                mealPlan.updateSlot(slotKey, toSlotRefType(selection.type()), selection.id());
             }
-            String title = (selection.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE)
-                    ? recipeTitles.getOrDefault(selection.id(), "UNKNOWN")
-                    : trTitles.getOrDefault(selection.id(), "UNKNOWN");
+            mealPlanRepository.save(mealPlan);
+            final long saveMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tSave0);
 
-            RecipeDTO.RecipeType dtoType = (selection.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE)
-                    ? RecipeDTO.RecipeType.RECIPE
-                    : RecipeDTO.RecipeType.TRANSFORMED_RECIPE;
+            // 응답: chosenId + title
+            Map<String, RecipeDTO> slots = new LinkedHashMap<>();
 
-            String key = slot.mealType().name() + "-" + slot.dayOfWeek().name();
-            slots.put(key, new RecipeDTO(dtoType, selection.id(), title));
+            // Batch-load titles
+            final long tTitle0 = System.nanoTime();
+            Map<Long, String> recipeTitles = new HashMap<>();
+            Map<Long, String> trTitles = new HashMap<>();
+            Set<Long> recipeIdsToLoad = new HashSet<>();
+            Set<Long> trIdsToLoad = new HashSet<>();
+            for (RecipeSelectionDTO sel : generationResult.selections().values()) {
+                if (sel.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE) recipeIdsToLoad.add(sel.id());
+                else trIdsToLoad.add(sel.id());
+            }
+            if (!recipeIdsToLoad.isEmpty())
+                recipeRepository.findAllById(recipeIdsToLoad).forEach(r -> recipeTitles.put(r.getId(), r.getTitle()));
+            if (!trIdsToLoad.isEmpty())
+                transformedRecipeRepository.findAllById(trIdsToLoad).forEach(tr -> trTitles.put(tr.getId(), tr.getTitle()));
+            final long titleLoadMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tTitle0);
+
+            for (MealPlan.SlotKey slot : selectedSlots) {
+                RecipeSelectionDTO selection = generationResult.selections().get(slot);
+                if (selection == null || selection.type() == null || selection.id() == null) {
+                    throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED);
+                }
+                String title = (selection.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE)
+                        ? recipeTitles.getOrDefault(selection.id(), "UNKNOWN")
+                        : trTitles.getOrDefault(selection.id(), "UNKNOWN");
+
+                RecipeDTO.RecipeType dtoType = (selection.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE)
+                        ? RecipeDTO.RecipeType.RECIPE
+                        : RecipeDTO.RecipeType.TRANSFORMED_RECIPE;
+
+                String key = slot.mealType().name() + "-" + slot.dayOfWeek().name();
+                slots.put(key, new RecipeDTO(dtoType, selection.id(), title));
+            }
+
+            CreateMealPlanResDTO res = new CreateMealPlanResDTO(
+                    mealPlan.getId(),
+                    familyRoomId,
+                    mealPlan.getWeekStartDate(),
+                    mealPlan.getStatus(),
+                    slots
+            );
+
+            final long totalMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t0);
+            AiMeta meta = generationResult.aiMeta();
+            log.info("[PERF] mealplan_create totalMs={} genMs={} saveMs={} titleLoadMs={} weekStart={} slots={} aiUsed={} aiClient={} success=true",
+                    totalMs,
+                    genMs,
+                    saveMs,
+                    titleLoadMs,
+                    weekStart,
+                    selectedSlots.size(),
+                    meta != null && meta.aiUsed(),
+                    meta == null ? "UNKNOWN" : meta.aiClient());
+
+            return new CreateMealPlanResult(res, generationResult.aiMeta());
+
+        } catch (Exception e) {
+            final long totalMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t0);
+            log.warn("[PERF] mealplan_create totalMs={} weekStart={} reqSlots={} familyRoomId={} errType={} msg={} success=false",
+                    totalMs,
+                    reqWeekStart,
+                    reqSlotCount,
+                    familyRoomId,
+                    e.getClass().getSimpleName(),
+                    e.getMessage());
+
+            // Local debugging: include stack trace (keep PERF line above for parsing)
+            log.error("[ERR] mealplan_create FAILED (memberId={}, familyRoomId={}, weekStart={}, reqSlots={})",
+                    memberId,
+                    familyRoomId,
+                    reqWeekStart,
+                    reqSlotCount,
+                    e);
+            throw e;
         }
-
-        CreateMealPlanResDTO res = new CreateMealPlanResDTO(
-                mealPlan.getId(),
-                familyRoomId,
-                mealPlan.getWeekStartDate(),
-                mealPlan.getStatus(),
-                slots
-        );
-
-        return new CreateMealPlanResult(res, generationResult.aiMeta());
     }
 
     private record GenerationResult(
@@ -172,9 +214,7 @@ public class MealPlanService {
         }
     }
 
-    /**
-     * 식단 생성 결과(응답 DTO + AI 메타)
-     */
+    /** 식단 생성 결과(응답 DTO + AI 메타) */
     public record CreateMealPlanResult(
             CreateMealPlanResDTO response,
             AiMeta aiMeta
@@ -191,12 +231,18 @@ public class MealPlanService {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
+        final long tStage0 = System.nanoTime();
+
+        final long tCand0 = System.nanoTime();
+
         // CandidateProvider 역할: 안전 후보군만 제공(알레르기/제외 정책은 provider 내부에서 반영되어야 함)
         List<RecipeSelectionDTO> wishSelections =
                 candidateProvider.getWishRecipeSelections(memberId, familyRoomId);
 
         List<RecipeSelectionDTO> fallbackSelections =
                 candidateProvider.getFallbackRecipeSelections(memberId, familyRoomId);
+
+        final long candMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tCand0);
 
         if ((wishSelections == null || wishSelections.isEmpty())
                 && (fallbackSelections == null || fallbackSelections.isEmpty())) {
@@ -222,8 +268,10 @@ public class MealPlanService {
 
         // 안전 후보군 안에서 슬롯별 최종 선택
         try {
+            final long tAssign0 = System.nanoTime();
             Map<MealPlan.SlotKey, RecipeSelectionDTO> assignments =
                     generator.generateRecipeAssignments(shuffledSlots, safeCandidates);
+            final long assignMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tAssign0);
 
             // 후보군(type+id) 안에서 선택했는지 검증
             validator.validateRecipeSelections(shuffledSlots, assignments, safeCandidates);
@@ -237,6 +285,17 @@ public class MealPlanService {
 
             log.info("[MEALPLAN][GEN] AI assignments done (count={})", assignments.size());
 
+            final long stageMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tStage0);
+            log.info("[PERF] mealplan_generate stageMs={} candMs={} assignMs={} requiredSlots={} wishCandidates={} fallbackCandidates={} safeCandidates={} aiUsed=true aiClient={} success=true",
+                    stageMs,
+                    candMs,
+                    assignMs,
+                    requiredSize,
+                    wishSelections == null ? 0 : wishSelections.size(),
+                    fallbackSelections == null ? 0 : fallbackSelections.size(),
+                    safeCandidates.size(),
+                    mealPlanAiService.getAiClient());
+
             return new GenerationResult(assignments, AiMeta.ai(mealPlanAiService.getAiClient()));
 
         } catch (Exception e) {
@@ -247,12 +306,26 @@ public class MealPlanService {
             // fallback: AI 실패/비활성(NoAiClient)/파싱 실패/검증 실패 등 예외 상황에서만 사용
             log.warn("[MEALPLAN][GEN] AI failed -> fallback (errType={}, msg={})",
                     e.getClass().getSimpleName(), e.getMessage());
+            log.error("[ERR] mealplan_generate AI path failed -> fallback (memberId={}, familyRoomId={}, requiredSlots={})",
+                    memberId,
+                    familyRoomId,
+                    requiredSize,
+                    e);
             Map<MealPlan.SlotKey, RecipeSelectionDTO> fallbackAssignments =
                     heuristicFallbackFill(shuffledSlots, wishSelections, fallbackSelections);
             if (fallbackAssignments.size() < requiredSize) {
                 throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_GENERATION_FAILED);
             }
             log.info("[MEALPLAN][GEN] fallback assignments done (count={})", fallbackAssignments.size());
+            final long stageMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tStage0);
+            log.info("[PERF] mealplan_generate stageMs={} candMs={} assignMs={} requiredSlots={} wishCandidates={} fallbackCandidates={} safeCandidates={} aiUsed=false aiClient=FALLBACK success=true",
+                    stageMs,
+                    candMs,
+                    -1,
+                    requiredSize,
+                    wishSelections == null ? 0 : wishSelections.size(),
+                    fallbackSelections == null ? 0 : fallbackSelections.size(),
+                    safeCandidates.size());
             return new GenerationResult(fallbackAssignments, AiMeta.fallback());
         }
     }

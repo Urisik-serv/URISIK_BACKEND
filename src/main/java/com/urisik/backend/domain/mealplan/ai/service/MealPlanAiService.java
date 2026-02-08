@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -27,37 +28,78 @@ public class MealPlanAiService {
             List<MealPlan.SlotKey> selectedSlots,
             List<RecipeSelectionDTO> candidateSelections
     ) {
+        final long t0 = System.nanoTime();
+        final int slotCount = selectedSlots == null ? 0 : selectedSlots.size();
+        final int candidateCount = candidateSelections == null ? 0 : candidateSelections.size();
+        final String clientName = aiClient == null ? "null" : aiClient.getClass().getSimpleName();
+
         log.info("[AI][FLOW] MealPlanAiService.generate start (slots={}, candidates={}, aiClient={})",
-                selectedSlots == null ? 0 : selectedSlots.size(),
-                candidateSelections == null ? 0 : candidateSelections.size(),
-                aiClient == null ? "null" : aiClient.getClass().getSimpleName());
+                slotCount,
+                candidateCount,
+                clientName);
 
+        // 1) Prompt build timing
+        final long tPrompt0 = System.nanoTime();
         String prompt = promptBuilder.build(selectedSlots, candidateSelections);
-        log.info("[AI][FLOW] prompt built (chars={})", prompt == null ? 0 : prompt.length());
+        final long promptMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tPrompt0);
+        log.info("[AI][FLOW] prompt built (chars={}, promptMs={})", prompt == null ? 0 : prompt.length(), promptMs);
 
+        // 2) AI call timing (Gemini / external)
         String json;
+        long aiMs;
         try {
-            log.info("[AI][FLOW] calling aiClient.generateJson (client={})",
-                    aiClient == null ? "null" : aiClient.getClass().getSimpleName());
+            log.info("[AI][FLOW] calling aiClient.generateJson (client={})", clientName);
+            final long tAi0 = System.nanoTime();
             json = aiClient.generateJson(prompt);
-            log.info("[AI][FLOW] aiClient.generateJson success (jsonChars={})", json == null ? 0 : json.length());
+            aiMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tAi0);
+            log.info("[AI][FLOW] aiClient.generateJson success (jsonChars={}, aiMs={})", json == null ? 0 : json.length(), aiMs);
         } catch (Exception e) {
+            // Still record AI duration if we can
+            // (If the exception occurs before returning, totalMs is still useful in logs)
             log.error("[AI][FLOW] aiClient.generateJson FAILED (client={}, errType={}, msg={})",
-                    aiClient == null ? "null" : aiClient.getClass().getSimpleName(),
+                    clientName,
                     e.getClass().getSimpleName(),
                     e.getMessage());
+
+            final long totalMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t0);
+            log.warn("[PERF] mealplan_ai_generate totalMs={} promptMs={} aiMs={} slots={} candidates={} aiClient={} success=false",
+                    totalMs,
+                    promptMs,
+                    -1,
+                    slotCount,
+                    candidateCount,
+                    clientName);
             throw e;
         }
 
+        // 3) Parse timing
+        final long tParse0 = System.nanoTime();
         Map<MealPlan.SlotKey, RecipeSelectionDTO> assignments =
                 responseParser.parseSelections(json, selectedSlots, candidateSelections);
-        log.info("[AI][FLOW] parsed assignments (count={})", assignments == null ? 0 : assignments.size());
+        final long parseMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tParse0);
+        log.info("[AI][FLOW] parsed assignments (count={}, parseMs={})", assignments == null ? 0 : assignments.size(), parseMs);
 
+        // 4) Validation timing
+        final long tVal0 = System.nanoTime();
         validator.validateRecipeSelections(
                 selectedSlots,
                 assignments,
                 candidateSelections
         );
+        final long validateMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tVal0);
+
+        final long totalMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t0);
+
+        // One-line PERF summary for before/after comparison
+        log.info("[PERF] mealplan_ai_generate totalMs={} promptMs={} aiMs={} parseMs={} validateMs={} slots={} candidates={} aiClient={} success=true",
+                totalMs,
+                promptMs,
+                aiMs,
+                parseMs,
+                validateMs,
+                slotCount,
+                candidateCount,
+                clientName);
 
         log.info("[AI][FLOW] MealPlanAiService.generate done");
         return assignments;
