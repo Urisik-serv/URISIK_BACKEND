@@ -16,7 +16,7 @@ public interface MealPlanRepository extends JpaRepository<MealPlan, Long> {
 
     Optional<MealPlan> findByFamilyRoomIdAndWeekStartDate(Long familyRoomId, LocalDate weekStartDate);
 
-    List<MealPlan> findAllByFamilyRoomIdAndWeekStartDateBetweenOrderByWeekStartDateDesc(
+    List<MealPlan> findAllByFamilyRoomIdAndWeekStartDateBetweenOrderByWeekStartDateAsc(
             Long familyRoomId, LocalDate start, LocalDate end
     );
 

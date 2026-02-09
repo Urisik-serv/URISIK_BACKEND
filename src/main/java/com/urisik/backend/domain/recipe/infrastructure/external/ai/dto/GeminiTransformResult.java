@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.recipe.infrastructure.external.ai.dto;
 
-import com.urisik.backend.domain.recipe.dto.res.RecipeStepDTO;
+import com.urisik.backend.domain.recipe.dto.RecipeStepDTO;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

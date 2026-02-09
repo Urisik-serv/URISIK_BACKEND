@@ -38,6 +38,10 @@ public enum MealPlanErrorCode implements BaseErrorCode {
             "MEAL_PLAN_400",
             "AI 응답 파싱에 실패했습니다."),
 
+    MEAL_PLAN_DATE_RANGE_TOO_WIDE(HttpStatus.BAD_REQUEST,
+            "MEAL_PLAN_400",
+            "식단 조회 기간을 초과했습니다."),
+
     MEAL_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND,
             "MEAL_PLAN_404",
             "식단을 찾을 수 없습니다."),

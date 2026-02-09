@@ -2,6 +2,8 @@ package com.urisik.backend.domain.recipe.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.urisik.backend.domain.recipe.dto.RecipeStepDetailDTO;
+import com.urisik.backend.domain.recipe.dto.SubstitutionReasonDTO;
 import com.urisik.backend.domain.recipe.dto.res.*;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;

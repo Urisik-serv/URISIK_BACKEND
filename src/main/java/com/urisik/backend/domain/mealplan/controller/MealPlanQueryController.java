@@ -61,18 +61,22 @@ public class MealPlanQueryController {
         return ApiResponse.onSuccess(MealPlanSuccessCode.MEAL_PLAN_GET, result);
     }
 
-    @GetMapping("/last-month")
-    @Operation(summary = "최근 1개월 식단 조회 API")
-    public ApiResponse<GetMealPlanResDTO.MonthlyMealPlanResDTO> getLastMonthHistory(
+    @GetMapping("/history")
+    @Operation(summary = "기간별 식단 기록 조회 API")
+    public ApiResponse<GetMealPlanResDTO.MealPlanHistoryResDTO> getMealPlanHistory(
             @AuthenticationPrincipal Long memberId,
-            @PathVariable Long familyRoomId
+            @PathVariable Long familyRoomId,
+            @RequestParam(name = "fromDate", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(name = "toDate", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
     ) {
         if (memberId == null) {
             throw new AuthenExcetion(AuthErrorCode.TOKEN_NOT_VALID);
         }
 
-        GetMealPlanResDTO.MonthlyMealPlanResDTO result =
-                mealPlanQueryService.getLastMonthMealPlan(memberId, familyRoomId);
+        GetMealPlanResDTO.MealPlanHistoryResDTO result =
+                mealPlanQueryService.getMealPlanHistory(memberId, familyRoomId, fromDate, toDate);
 
         return ApiResponse.onSuccess(MealPlanSuccessCode.MEAL_PLAN_GET, result);
     }

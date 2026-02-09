@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.recipe.init;
 
-import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeSnapshotDTO;
+import com.urisik.backend.domain.recipe.dto.ExternalRecipeSnapshotDTO;
 import org.springframework.stereotype.Component;
 import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeUpsertRequestDTO;
 

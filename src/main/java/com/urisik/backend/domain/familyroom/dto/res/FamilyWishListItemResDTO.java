@@ -14,6 +14,7 @@ public class FamilyWishListItemResDTO {
     private final String imageUrl;
     private final Double avgScore;
     private final Category category;
+    private final String ingredientsRaw;
     private final SourceProfile sourceProfile; // 이 레시피를 위시한 가족원 (개인 위시리스트 집계 결과)
 
     public FamilyWishListItemResDTO(
@@ -23,6 +24,7 @@ public class FamilyWishListItemResDTO {
             String imageUrl,
             Double avgScore,
             Category category,
+            String ingredientsRaw,
             SourceProfile sourceProfile
     ) {
         this.type = type;
@@ -31,6 +33,7 @@ public class FamilyWishListItemResDTO {
         this.imageUrl = imageUrl;
         this.avgScore = avgScore;
         this.category = category;
+        this.ingredientsRaw = ingredientsRaw;
         this.sourceProfile = sourceProfile;
     }
 
@@ -56,6 +59,10 @@ public class FamilyWishListItemResDTO {
 
     public Category getCategory() {
         return category;
+    }
+
+    public String getIngredientsRaw() {
+        return ingredientsRaw;
     }
 
     public SourceProfile getSourceProfile() {

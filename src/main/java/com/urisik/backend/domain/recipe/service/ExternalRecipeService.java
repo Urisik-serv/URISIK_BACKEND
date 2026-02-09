@@ -1,19 +1,16 @@
 package com.urisik.backend.domain.recipe.service;
 
 import com.urisik.backend.domain.recipe.converter.ExternalRecipeConverter;
-import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeSnapshotDTO;
+import com.urisik.backend.domain.recipe.dto.ExternalRecipeSnapshotDTO;
 import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeUpsertRequestDTO;
 import com.urisik.backend.domain.recipe.dto.res.ExternalRecipeUpsertResponseDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
 import com.urisik.backend.domain.recipe.entity.RecipeStep;
-import com.urisik.backend.domain.recipe.enums.RecipeErrorCode;
-import com.urisik.backend.domain.recipe.enums.SourceType;
 import com.urisik.backend.domain.recipe.init.ExternalRecipeAssembler;
 import com.urisik.backend.domain.recipe.repository.RecipeExternalMetadataRepository;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.RecipeStepRepository;
-import com.urisik.backend.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
