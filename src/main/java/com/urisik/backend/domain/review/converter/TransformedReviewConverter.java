@@ -23,10 +23,11 @@ public class TransformedReviewConverter {
     }
 
     // Review -> res
-    public static ReviewResponseDto toReviewResponseDto(Long id, Double avgScore) {
+    public static ReviewResponseDto toReviewResponseDto(TransformedRecipeReview transReview, Double avgScore) {
         return ReviewResponseDto.builder()
-                .reviewId(id)
+                .reviewId(transReview.getId())
                 .avgScore(avgScore)
+                .createdAt(transReview.getCreateAt())
                 .build();
     }
 }

@@ -31,7 +31,7 @@ import java.util.UUID;
 public class InviteService {
 
     private static final int DEFAULT_EXPIRE_DAYS = 7;
-    private static final String INVITE_BASE_URL = "https://urisik.app/invite/";
+    private static final String INVITE_BASE_URL = "https://urisik.vercel.app/invite/";
 
     private final InviteRepository inviteRepository;
     private final FamilyRoomRepository familyRoomRepository;

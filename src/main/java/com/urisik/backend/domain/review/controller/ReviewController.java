@@ -5,10 +5,9 @@ import com.urisik.backend.domain.review.dto.ReviewResponseDto;
 import com.urisik.backend.domain.review.exception.ReviewSuccessCode;
 import com.urisik.backend.domain.review.service.ReviewService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
-import com.urisik.backend.global.auth.exception.AuthenExcetion;
-import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +27,7 @@ public class ReviewController {
     @Operation(summary = "간단 후기 작성 API", description = "특정 메뉴에 대해 별점, 취향 여부 정보를 입력하는 api 입니다. ")
     public ApiResponse<ReviewResponseDto> createReview(
             @PathVariable(name = "recipeId") Long recipe_id,
-            @RequestBody ReviewRequestDto request,
+            @RequestBody @Valid ReviewRequestDto request,
             @AuthenticationPrincipal Long memberId
             ) {
 

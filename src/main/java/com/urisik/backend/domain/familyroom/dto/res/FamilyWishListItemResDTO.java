@@ -8,47 +8,42 @@ import java.util.List;
 */
 public class FamilyWishListItemResDTO {
 
-    private final Long recipeId;
-    private final Long transformedRecipeId;
-    private final String recipeName;
+    private final String type; // RECIPE | TRANSFORMED_RECIPE
+    private final Long id;
+    private final String title;
     private final String imageUrl;
     private final Double avgScore;
     private final Category category;
-
-    private final boolean usableForMealPlan;
-    // 이 레시피를 위시한 가족원 (개인 위시리스트 집계 결과)
-    private final SourceProfile sourceProfile;
+    private final SourceProfile sourceProfile; // 이 레시피를 위시한 가족원 (개인 위시리스트 집계 결과)
 
     public FamilyWishListItemResDTO(
-            Long recipeId,
-            Long transformedRecipeId,
-            String recipeName,
+            String type,
+            Long id,
+            String title,
             String imageUrl,
             Double avgScore,
             Category category,
-            boolean usableForMealPlan,
             SourceProfile sourceProfile
     ) {
-        this.recipeId = recipeId;
-        this.transformedRecipeId = transformedRecipeId;
-        this.recipeName = recipeName;
+        this.type = type;
+        this.id = id;
+        this.title = title;
         this.imageUrl = imageUrl;
         this.avgScore = avgScore;
         this.category = category;
-        this.usableForMealPlan = usableForMealPlan;
         this.sourceProfile = sourceProfile;
     }
 
-    public Long getRecipeId() {
-        return recipeId;
+    public String getType() {
+        return type;
     }
 
-    public Long getTransformedRecipeId() {
-        return transformedRecipeId;
+    public Long getId() {
+        return id;
     }
 
-    public String getRecipeName() {
-        return recipeName;
+    public String getTitle() {
+        return title;
     }
 
     public String getImageUrl() {
@@ -61,10 +56,6 @@ public class FamilyWishListItemResDTO {
 
     public Category getCategory() {
         return category;
-    }
-
-    public boolean isUsableForMealPlan() {
-        return usableForMealPlan;
     }
 
     public SourceProfile getSourceProfile() {
@@ -109,10 +100,12 @@ public class FamilyWishListItemResDTO {
     public static class Profile {
         private final Long profileId;
         private final String nickname;
+        private final String profilePicUrl;
 
-        public Profile(Long profileId, String nickname) {
+        public Profile(Long profileId, String nickname, String profilePicUrl) {
             this.profileId = profileId;
             this.nickname = nickname;
+            this.profilePicUrl = profilePicUrl;
         }
 
         public Long getProfileId() {
@@ -121,6 +114,10 @@ public class FamilyWishListItemResDTO {
 
         public String getNickname() {
             return nickname;
+        }
+
+        public String getProfilePicUrl() {
+            return profilePicUrl;
         }
     }
 }

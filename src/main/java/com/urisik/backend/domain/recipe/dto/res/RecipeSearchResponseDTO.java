@@ -23,6 +23,10 @@ public class RecipeSearchResponseDTO {
         private Integer reviewCount;
         private Integer wishCount;
 
+        private String description;
+
+        private Boolean safe; //외부 레시피에서 처음 불러오면 null
+
         private ExternalSnapshot external;
     }
 
@@ -44,7 +48,8 @@ public class RecipeSearchResponseDTO {
         private String imageLarge;
 
         private String ingredientsRaw;
-        private String instructionsRaw; // 서버에서 joinManual 안 하게, 여기서 합쳐서 내려줌(또는 서버에서 join해도 됨)
+        private List<RecipeStepDetailDTO> steps;
+
     }
 }
 

@@ -14,60 +14,98 @@ import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TransformedRecipeReadService {
 
     private final TransformedRecipeRepository transformedRecipeRepository;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final AllergyRiskService allergyRiskService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     public TransformedRecipeDetailResponseDTO getTransformedRecipeDetail(
             Long transformedRecipeId,
             Long loginUserId
     ) {
+        // 1. 변형 레시피 조회 (누구나 조회 가능)
         TransformedRecipe tr = transformedRecipeRepository.findById(transformedRecipeId)
-                .orElseThrow(() -> new GeneralException(RecipeErrorCode.TRANSFORMED_RECIPE_NOT_FOUND));
+                .orElseThrow(() ->
+                        new GeneralException(RecipeErrorCode.TRANSFORMED_RECIPE_NOT_FOUND)
+                );
 
+        // 2. 로그인 사용자 → 가족방 조회 (알레르기 판별용)
         FamilyMemberProfile profile =
                 familyMemberProfileRepository.findByMember_Id(loginUserId)
-                        .orElseThrow(() -> new GeneralException(GeneralErrorCode.NOT_FOUND));
+                        .orElseThrow(() ->
+                                new GeneralException(GeneralErrorCode.NOT_FOUND)
+                        );
 
-        Long myFamilyRoomId = profile.getFamilyRoom().getId();
+        Long familyRoomId = profile.getFamilyRoom().getId();
 
-        List<String> ingredients = RecipeTextParser.parseIngredients(tr.getIngredientsRaw());
-        List<Allergen> risky = allergyRiskService.detectRiskAllergens(myFamilyRoomId, ingredients);
+        // 3. 재료 파싱
+        List<String> ingredients =
+                RecipeTextParser.parseIngredients(tr.getIngredientsRaw());
 
-        boolean createdByFamily = tr.getFamilyRoomId().equals(myFamilyRoomId);
+        // 4. 가족 기준 알레르기 위험 판별
+        List<Allergen> risky =
+                allergyRiskService.detectRiskAllergens(familyRoomId, ingredients);
 
+        TransformedRecipeDetailResponseDTO.AllergyWarningDTO allergyWarning =
+                risky.isEmpty()
+                        ? new TransformedRecipeDetailResponseDTO.AllergyWarningDTO(
+                        false,
+                        List.of()
+                )
+                        : new TransformedRecipeDetailResponseDTO.AllergyWarningDTO(
+                        true,
+                        risky.stream()
+                                .map(Allergen::getKoreanName)
+                                .toList()
+                );
+
+        // 5. 대체 요약 파싱
         List<TransformedRecipeDetailResponseDTO.SubstitutionSummaryDTO> subs =
                 parseSubstitutionSummary(tr.getSubstitutionSummaryJson());
 
-        TransformedRecipeDetailResponseDTO.WarningDTO warning =
-                risky.isEmpty()
-                        ? new TransformedRecipeDetailResponseDTO.WarningDTO(false, "우리 가족 기준으로 안전합니다.", List.of())
-                        : new TransformedRecipeDetailResponseDTO.WarningDTO(true, "우리 가족 기준으로 알레르기 위험이 있습니다.", risky.stream().map(Allergen::getKoreanName).toList());
+        // 6. 이미지 URL (baseRecipe → metadata)
+        String imageUrl =
+                tr.getBaseRecipe().getRecipeExternalMetadata() != null
+                        ? tr.getBaseRecipe().getRecipeExternalMetadata().getImageLargeUrl()
+                        : null;
 
+        // 7. DTO 조립
         return new TransformedRecipeDetailResponseDTO(
                 tr.getId(),
-                tr.getBaseRecipe().getTitle(), // 원하면 변형 title 필드 따로 두고 관리 가능
+                tr.getBaseRecipe().getTitle(),
+                imageUrl,
                 tr.getBaseRecipe().getId(),
+
                 ingredients,
                 RecipeTextParser.parseSteps(tr.getInstructionsRaw()),
                 subs,
-                warning,
-                createdByFamily
+                allergyWarning,
+
+                tr.getReviewCount(),
+                tr.getAvgScore(),
+                tr.getWishCount()
         );
     }
 
-    private List<TransformedRecipeDetailResponseDTO.SubstitutionSummaryDTO> parseSubstitutionSummary(String json) {
+    /* ================== 내부 헬퍼 ================== */
+
+    private List<TransformedRecipeDetailResponseDTO.SubstitutionSummaryDTO>
+    parseSubstitutionSummary(String json) {
         try {
             if (json == null || json.isBlank()) return List.of();
-            return objectMapper.readValue(json, new TypeReference<>() {});
+            return objectMapper.readValue(
+                    json,
+                    new TypeReference<List<TransformedRecipeDetailResponseDTO.SubstitutionSummaryDTO>>() {}
+            );
         } catch (Exception e) {
             return List.of();
         }

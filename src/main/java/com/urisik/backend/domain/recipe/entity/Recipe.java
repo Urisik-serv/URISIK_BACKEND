@@ -81,9 +81,11 @@ public class Recipe {
 
     /** 평균 점수 갱신 */
     public void updateAvgScore(int newScore) {
-        this.avgScore =
+        double rawAvg =
                 ((this.avgScore * (this.reviewCount - 1)) + newScore)
                         / this.reviewCount;
+
+        this.avgScore = (int)((rawAvg + 0.05) * 10) / 10.0; // 소수점 첫째 자리까지 반올림
     }
     public void incrementWishCount() {
         wishCount++;

@@ -15,13 +15,19 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
     List<Recipe> findByTitleContainingIgnoreCase(String keyword, Pageable pageable);
 
+    /** Lightweight candidate row for meal plan generation (avoid loading full entity graph) */
+    interface RecipeCandidateRow {
+        Long getId();
+        String getIngredientsRaw();
+    }
+
+    /** Fetch a limited random-ish slice of recipes for candidate building. */
     @Query("""
-        select r
+        select r.id as id, r.ingredientsRaw as ingredientsRaw
         from Recipe r
-        left join fetch r.recipeExternalMetadata
-        order by r.wishCount desc
+        order by function('rand')
     """)
-    List<Recipe> findTopForHome(Pageable pageable);
+    List<RecipeCandidateRow> findRandomCandidateRows(Pageable pageable);
 
 
 

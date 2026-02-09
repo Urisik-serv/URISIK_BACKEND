@@ -1,19 +1,24 @@
 package com.urisik.backend.domain.recipe.service;
 
 import com.urisik.backend.domain.recipe.converter.ExternalRecipeConverter;
+import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeSnapshotDTO;
 import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeUpsertRequestDTO;
 import com.urisik.backend.domain.recipe.dto.res.ExternalRecipeUpsertResponseDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
+import com.urisik.backend.domain.recipe.entity.RecipeStep;
 import com.urisik.backend.domain.recipe.enums.RecipeErrorCode;
 import com.urisik.backend.domain.recipe.enums.SourceType;
+import com.urisik.backend.domain.recipe.init.ExternalRecipeAssembler;
 import com.urisik.backend.domain.recipe.repository.RecipeExternalMetadataRepository;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
+import com.urisik.backend.domain.recipe.repository.RecipeStepRepository;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -22,29 +27,48 @@ public class ExternalRecipeService {
 
     private final RecipeRepository recipeRepository;
     private final RecipeExternalMetadataRepository metadataRepository;
-    private final ExternalRecipeConverter externalRecipeConverter;
+    private final RecipeStepRepository recipeStepRepository;
+    private final ExternalRecipeConverter converter;
+    private final ExternalRecipeAssembler assembler;
 
     @Transactional
-    public ExternalRecipeUpsertResponseDTO upsertExternal(ExternalRecipeUpsertRequestDTO req) {
-
-        // 1) 이미 저장된 외부 레시피면 그대로 반환
-        Optional<Recipe> existing = recipeRepository.findBySourceRef(req.getRcpSeq());
+    public ExternalRecipeUpsertResponseDTO upsertFromSnapshot(
+            ExternalRecipeSnapshotDTO snapshot
+    ) {
+        // 이미 있으면 반환
+        Optional<Recipe> existing =
+                recipeRepository.findBySourceRef(snapshot.getRcpSeq());
         if (existing.isPresent()) {
             return new ExternalRecipeUpsertResponseDTO(existing.get().getId(), false);
         }
 
-        // 2) 새로 저장
-        Recipe recipe = externalRecipeConverter.toRecipe(req);
+        ExternalRecipeUpsertRequestDTO command =
+                assembler.assemble(snapshot);
+
+        Recipe recipe = converter.toRecipe(command);
         Recipe saved = recipeRepository.save(recipe);
 
         RecipeExternalMetadata meta =
-                externalRecipeConverter.toMetadata(saved, req);
+                converter.toMetadata(saved, command);
         metadataRepository.save(meta);
+
+        if (command.getSteps() != null && !command.getSteps().isEmpty()) {
+            List<RecipeStep> steps = command.getSteps().stream()
+                    .map(s -> new RecipeStep(
+                            saved,
+                            s.getOrder(),
+                            s.getDescription(),
+                            s.getImageUrl()
+                    ))
+                    .toList();
+
+            recipeStepRepository.saveAll(steps);
+        }
 
         return new ExternalRecipeUpsertResponseDTO(saved.getId(), true);
     }
-
 }
+
 
 
 

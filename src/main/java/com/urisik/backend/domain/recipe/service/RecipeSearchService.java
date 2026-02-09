@@ -1,16 +1,21 @@
 package com.urisik.backend.domain.recipe.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
+import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recipe.converter.RecipeSearchConverter;
+import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
 import com.urisik.backend.domain.recipe.dto.res.RecipeSearchResponseDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
-import com.urisik.backend.domain.recipe.enums.Visibility;
 import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.FoodSafetyRecipeClient;
 import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.dto.FoodSafetyRecipeResponse;
 import com.urisik.backend.domain.recipe.repository.RecipeExternalMetadataRepository;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
+import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
+import com.urisik.backend.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -27,6 +32,8 @@ public class RecipeSearchService {
     private final TransformedRecipeRepository transformedRecipeRepository;
     private final RecipeExternalMetadataRepository metadataRepository;
     private final FoodSafetyRecipeClient foodSafetyRecipeClient;
+    private final AllergyRiskService allergyRiskService;
+    private final FamilyMemberProfileRepository familyMemberProfileRepository;
 
     private static final Map<String, Integer> TYPE_PRIORITY = Map.of(
             "TRANSFORMED", 0,
@@ -35,7 +42,17 @@ public class RecipeSearchService {
     );
 
     @Transactional(readOnly = true)
-    public RecipeSearchResponseDTO search(String keyword, int page, int size) {
+    public RecipeSearchResponseDTO search(Long loginUserId,String keyword, int page, int size) {
+
+        FamilyMemberProfile profile =
+                familyMemberProfileRepository.findByMember_Id(loginUserId)
+                        .orElseThrow(() ->
+                                new GeneralException(GeneralErrorCode.NOT_FOUND));
+
+        Long familyRoomId = profile.getFamilyRoom().getId();
+
+
+
         PageRequest pageable = PageRequest.of(page, size);
         List<RecipeSearchResponseDTO.Item> items = new ArrayList<>();
 
@@ -43,16 +60,30 @@ public class RecipeSearchService {
         List<Recipe> recipes = recipeRepository.findByTitleContainingIgnoreCase(keyword, pageable);
         for (Recipe r : recipes) {
             RecipeExternalMetadata meta = metadataRepository.findByRecipe_Id(r.getId()).orElse(null);
-            items.add(RecipeSearchConverter.fromRecipe(r, meta));
+
+            Boolean safe = determineSafety(
+                    familyRoomId,
+                    RecipeTextParser.parseIngredients(r.getIngredientsRaw())
+            );
+
+            items.add(RecipeSearchConverter.fromRecipe(r, meta, safe));
         }
 
         // 2) 공개 변형 레시피
         List<TransformedRecipe> trs =
-                transformedRecipeRepository.findPublicByRecipeTitleLike(keyword, Visibility.PUBLIC, pageable);
+                transformedRecipeRepository.findByTitleLike(keyword, pageable);
 
         for (TransformedRecipe tr : trs) {
             RecipeExternalMetadata meta = metadataRepository.findByRecipe_Id(tr.getBaseRecipe().getId()).orElse(null);
-            items.add(RecipeSearchConverter.fromTransformed(tr, meta));
+
+            Boolean safe = determineSafety(
+                    familyRoomId,
+                    RecipeTextParser.parseIngredients(
+                            tr.getBaseRecipe().getIngredientsRaw()
+                    )
+            );
+
+            items.add(RecipeSearchConverter.fromTransformed(tr, meta, safe));
         }
 
         // 3) 외부 API 검색 ( row를 상세 저장에 쓸 snapshot으로도 내려줌)
@@ -63,14 +94,26 @@ public class RecipeSearchService {
                 foodSafetyRecipeClient.searchByName(keyword, startIdx, endIdx);
 
         for (FoodSafetyRecipeResponse.Row row : externals) {
-            String instructionsRaw = joinManuals(row);
-            items.add(RecipeSearchConverter.fromExternal(row, instructionsRaw));
+            items.add(RecipeSearchConverter.fromExternal(row));
         }
 
         // 4) 리뷰 높은 순 정렬
         items.sort(reviewSortComparator());
 
         return new RecipeSearchResponseDTO(items);
+    }
+
+    private Boolean determineSafety(
+            Long familyRoomId,
+            List<String> ingredients
+    ) {
+        if (familyRoomId == null) {
+            return null;
+        }
+
+        return allergyRiskService
+                .detectRiskAllergens(familyRoomId, ingredients)
+                .isEmpty();
     }
 
     private Comparator<RecipeSearchResponseDTO.Item> reviewSortComparator() {
@@ -87,19 +130,6 @@ public class RecipeSearchService {
                 .thenComparing(RecipeSearchResponseDTO.Item::getTitle);
     }
 
-    private String joinManuals(FoodSafetyRecipeResponse.Row row) {
-        return Stream.of(
-                        row.getManual01(), row.getManual02(), row.getManual03(), row.getManual04(), row.getManual05(),
-                        row.getManual06(), row.getManual07(), row.getManual08(), row.getManual09(), row.getManual10(),
-                        row.getManual11(), row.getManual12(), row.getManual13(), row.getManual14(), row.getManual15(),
-                        row.getManual16(), row.getManual17(), row.getManual18(), row.getManual19(), row.getManual20()
-                )
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .filter(s -> !s.isBlank())
-                .reduce((a, b) -> a + "\n" + b)
-                .orElse("");
-    }
 }
 
 

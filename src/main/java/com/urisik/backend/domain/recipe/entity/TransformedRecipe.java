@@ -1,7 +1,5 @@
 package com.urisik.backend.domain.recipe.entity;
 
-import com.urisik.backend.domain.recipe.enums.ValidationStatus;
-import com.urisik.backend.domain.recipe.enums.Visibility;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -13,7 +11,6 @@ import lombok.NoArgsConstructor;
         indexes = {
                 @Index(name = "idx_tr_base_recipe", columnList = "base_recipe_id"),
                 @Index(name = "idx_tr_family_room", columnList = "family_room_id"),
-                @Index(name = "idx_tr_visibility", columnList = "visibility")
         }
 )
 @Getter
@@ -36,11 +33,6 @@ public class TransformedRecipe {
     /** AI가 생성한 제목 */
     @Column(nullable = false)
     private String title;
-
-    /** 공개 여부 (기본 PUBLIC) */
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Visibility visibility = Visibility.PUBLIC;
 
     /** 알레르기 안전성 재검증 결과 */
     @Column(nullable = false)
@@ -77,7 +69,6 @@ public class TransformedRecipe {
             Recipe baseRecipe,
             Long familyRoomId,
             String title,
-            Visibility visibility,
             String ingredientsRaw,
             String instructionsRaw,
             String substitutionSummaryJson
@@ -85,7 +76,6 @@ public class TransformedRecipe {
         this.baseRecipe = baseRecipe;
         this.familyRoomId = familyRoomId;
         this.title = title;
-        this.visibility = visibility == null ? Visibility.PUBLIC : visibility;
         this.ingredientsRaw = ingredientsRaw;
         this.instructionsRaw = instructionsRaw;
         this.substitutionSummaryJson = substitutionSummaryJson;
@@ -111,10 +101,6 @@ public class TransformedRecipe {
 
     public void decrementWishCount() {
         this.wishCount--;
-    }
-
-    public void changeVisibility(Visibility visibility) {
-        this.visibility = visibility;
     }
 
     public void updateValidationStatus(boolean status) {

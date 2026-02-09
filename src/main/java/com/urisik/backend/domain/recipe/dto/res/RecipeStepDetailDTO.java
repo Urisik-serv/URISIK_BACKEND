@@ -3,12 +3,13 @@ package com.urisik.backend.domain.recipe.dto.res;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.List;
-
 @Getter
 @AllArgsConstructor
-public class HomeSafeRecipeResponse {
+public class RecipeStepDetailDTO {
 
-    private List<HomeSafeRecipeDTO> recipes;
+    private int order;
+    private String description;
+    private String imageUrl;
 
 }
+

@@ -184,19 +184,17 @@ public class FamilyWishListQueryService {
             WishKey key = entry.getKey();
             Agg agg = entry.getValue();
 
-            String recipeName = agg.getTitle();
-
-            Long recipeId = (key.type() == WishKey.Type.CANONICAL) ? key.id() : null;
-            Long transformedRecipeId = (key.type() == WishKey.Type.TRANSFORMED) ? key.id() : null;
+            String type = toApiType(key.type());
+            Long id = key.id();
+            String title = agg.getTitle();
 
             items.add(new FamilyWishListItemResDTO(
-                    recipeId,
-                    transformedRecipeId,
-                    recipeName,
+                    type,
+                    id,
+                    title,
                     agg.getImageUrl(),
                     agg.getAvgScore(),
                     agg.getCategory(),
-                    true,
                     new FamilyWishListItemResDTO.SourceProfile(new ArrayList<>(agg.getProfiles().values()))
             ));
         }
@@ -247,8 +245,8 @@ public class FamilyWishListQueryService {
         cmp = Long.compare(cursor.latestWishId, a.getLatestWishId());
         if (cmp != 0) return cmp;
 
-        // type: CANONICAL 먼저
-        cmp = Integer.compare(typeOrder(k.type()), typeOrder(cursor.type));
+        // type: RECIPE 먼저
+        cmp = Integer.compare(typeOrder(k.type()), apiTypeOrder(cursor.type));
         if (cmp != 0) return cmp;
 
         // id DESC
@@ -257,9 +255,20 @@ public class FamilyWishListQueryService {
         return Long.compare(cursorId, entryId);
     }
 
+    private int apiTypeOrder(String type) {
+        if (type == null) return 0;
+        String t = type.trim().toUpperCase(Locale.ROOT);
+        return "RECIPE".equals(t) ? 0 : 1; // RECIPE first
+    }
+
     private int typeOrder(WishKey.Type type) {
         // CANONICAL 먼저
         return (type == WishKey.Type.CANONICAL) ? 0 : 1;
+    }
+
+    private static String toApiType(WishKey.Type type) {
+        if (type == null) return "RECIPE";
+        return (type == WishKey.Type.CANONICAL) ? "RECIPE" : "TRANSFORMED_RECIPE";
     }
 
     public record PageResult(
@@ -275,10 +284,10 @@ public class FamilyWishListQueryService {
     public static class Cursor {
         private final int wisherCount;
         private final long latestWishId;
-        private final WishKey.Type type;
+        private final String type;
         private final Long id;
 
-        public Cursor(int wisherCount, long latestWishId, WishKey.Type type, Long id) {
+        public Cursor(int wisherCount, long latestWishId, String type, Long id) {
             this.wisherCount = wisherCount;
             this.latestWishId = latestWishId;
             this.type = type;
@@ -293,7 +302,7 @@ public class FamilyWishListQueryService {
             return latestWishId;
         }
 
-        public WishKey.Type getType() {
+        public String getType() {
             return type;
         }
 
@@ -302,24 +311,22 @@ public class FamilyWishListQueryService {
         }
 
         public boolean isValid() {
-            return wisherCount >= 0 && latestWishId >= 0 && type != null && id != null;
+            return wisherCount >= 0 && latestWishId >= 0 && type != null && !type.isBlank() && id != null;
         }
 
         static Cursor from(WishKey key, Agg agg) {
             return new Cursor(
                     agg == null ? 0 : agg.getWisherCount(),
                     agg == null ? 0L : agg.getLatestWishId(),
-                    key == null ? WishKey.Type.CANONICAL : key.type(),
+                    key == null ? "RECIPE" : toApiType(key.type()),
                     key == null ? null : key.id()
             );
         }
 
         public static Cursor of(Integer wisherCount, Long latestWishId, String type, Long id) {
             if (wisherCount == null || latestWishId == null || type == null || id == null) return null;
-            WishKey.Type t;
-            try {
-                t = WishKey.Type.valueOf(type.trim().toUpperCase(Locale.ROOT));
-            } catch (Exception e) {
+            String t = type.trim().toUpperCase(Locale.ROOT);
+            if (!"RECIPE".equals(t) && !"TRANSFORMED_RECIPE".equals(t)) {
                 return null;
             }
             return new Cursor(wisherCount, latestWishId, t, id);
@@ -332,7 +339,9 @@ public class FamilyWishListQueryService {
                 ObjectNode node = CURSOR_MAPPER.createObjectNode();
                 node.put("w", wisherCount);
                 node.put("l", latestWishId);
-                node.put("t", type == WishKey.Type.CANONICAL ? "C" : "T");
+                String tShort = "RECIPE".equalsIgnoreCase(type) ? "R"
+                        : ("TRANSFORMED_RECIPE".equalsIgnoreCase(type) ? "T" : null);
+                node.put("t", tShort);
                 node.put("id", id);
                 node.put("exp", exp);
 
@@ -362,9 +371,9 @@ public class FamilyWishListQueryService {
                 long now = Instant.now().getEpochSecond();
                 if (exp < now) return null; // expired
 
-                WishKey.Type type;
-                if ("C".equalsIgnoreCase(tRaw)) type = WishKey.Type.CANONICAL;
-                else if ("T".equalsIgnoreCase(tRaw)) type = WishKey.Type.TRANSFORMED;
+                String type;
+                if ("R".equalsIgnoreCase(tRaw)) type = "RECIPE";
+                else if ("T".equalsIgnoreCase(tRaw)) type = "TRANSFORMED_RECIPE";
                 else return null;
 
                 Cursor cursor = new Cursor(w, l, type, id);
@@ -383,39 +392,57 @@ public class FamilyWishListQueryService {
     public void deleteFamilyWishListItems(
             Long memberId,
             Long familyRoomId,
-            List<Long> recipeId,
-            List<Long> transformedRecipeId
+            List<WishItemKey> items
     ) {
-
         // 가족방 구성원만 가능
         validateFamilyRoomMember(memberId, familyRoomId);
 
         // 방장 검증
         familyRoomService.validateLeader(memberId, familyRoomId);
 
-        boolean hasCanonical = recipeId != null && !recipeId.isEmpty();
-        boolean hasTransformed = transformedRecipeId != null && !transformedRecipeId.isEmpty();
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+
+        List<Long> recipeIds = new ArrayList<>();
+        List<Long> transformedIds = new ArrayList<>();
+
+        for (WishItemKey item : items) {
+            if (item == null || item.id() == null || item.type() == null) continue;
+            String t = item.type().trim().toUpperCase(Locale.ROOT);
+            if ("RECIPE".equals(t)) {
+                recipeIds.add(item.id());
+            } else if ("TRANSFORMED_RECIPE".equals(t)) {
+                transformedIds.add(item.id());
+            }
+        }
+
+        boolean hasCanonical = !recipeIds.isEmpty();
+        boolean hasTransformed = !transformedIds.isEmpty();
 
         if (!hasCanonical && !hasTransformed) {
             return;
         }
 
         if (hasCanonical) {
-            Set<Long> existing = memberWishListRepository.findExistingRecipeIds(familyRoomId, recipeId);
-            if (existing.size() != new HashSet<>(recipeId).size()) {
+            Set<Long> existing = memberWishListRepository.findExistingRecipeIds(familyRoomId, recipeIds);
+            if (existing.size() != new HashSet<>(recipeIds).size()) {
                 throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_WISHLIST_NOT_FOUND);
             }
-            familyWishListExclusionRepository.excludeRecipes(familyRoomId, recipeId);
+            familyWishListExclusionRepository.excludeRecipes(familyRoomId, recipeIds);
         }
 
         if (hasTransformed) {
-            Set<Long> existing = memberTransformedRecipeWishRepository.findExistingTransformedRecipeIds(familyRoomId, transformedRecipeId);
-            if (existing.size() != new HashSet<>(transformedRecipeId).size()) {
+            Set<Long> existing = memberTransformedRecipeWishRepository.findExistingTransformedRecipeIds(familyRoomId, transformedIds);
+            if (existing.size() != new HashSet<>(transformedIds).size()) {
                 throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_WISHLIST_NOT_FOUND);
             }
-            familyWishListExclusionRepository.excludeTransformedRecipes(familyRoomId, transformedRecipeId);
+            familyWishListExclusionRepository.excludeTransformedRecipes(familyRoomId, transformedIds);
         }
     }
+
+    // Unified key for deleteFamilyWishListItems
+    public record WishItemKey(String type, Long id) {}
 
     private void validateFamilyRoomMember(Long memberId, Long familyRoomId) {
         familyMemberProfileRepository.findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
@@ -543,9 +570,27 @@ public class FamilyWishListQueryService {
         private static Agg fromTransformed(TransformedRecipe recipe) {
             String t = (recipe == null) ? null : recipe.getTitle();
             String ing = (recipe == null) ? null : recipe.getIngredientsRaw();
+
             String imageUrl = null;
+            if (recipe != null && recipe.getBaseRecipe() != null) {
+                RecipeExternalMetadata meta = recipe.getBaseRecipe().getRecipeExternalMetadata();
+                if (meta != null) {
+                    imageUrl = meta.getThumbnailImageUrl();
+                }
+            }
+
             Double avgScore = (recipe == null) ? null : recipe.getAvgScore();
+
             Category category = null;
+            if (recipe != null && recipe.getBaseRecipe() != null) {
+                RecipeExternalMetadata meta = recipe.getBaseRecipe().getRecipeExternalMetadata();
+                if (meta != null && meta.getCategory() != null) {
+                    category = new Category(
+                            meta.getCategory(),
+                            meta.getCategory()
+                    );
+                }
+            }
 
             return new Agg(t, ing, imageUrl, avgScore, category);
         }
@@ -570,7 +615,7 @@ public class FamilyWishListQueryService {
             if (p == null || p.getId() == null) return;
             profiles.putIfAbsent(
                     p.getId(),
-                    new Profile(p.getId(), p.getNickname())
+                    new Profile(p.getId(), p.getNickname(), p.getProfilePicUrl())
             );
         }
 

@@ -2,6 +2,7 @@ package com.urisik.backend.domain.review.entity;
 
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.recipe.entity.Recipe;
+import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,18 +12,18 @@ import lombok.*;
 @Table(name = "recipe_review")
 @Builder
 @AllArgsConstructor
-public class Review {
+public class Review extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // 별점
-    @Column(nullable = false)
+    @Column(name = "score", nullable = false)
     private Integer score;   // 1 ~ 5 범위의 정수
 
     // 취향
-    @Column(nullable = false)
+    @Column(name = "isFavorite")
     private boolean isFavorite;
 
     @ManyToOne(fetch = FetchType.LAZY)
