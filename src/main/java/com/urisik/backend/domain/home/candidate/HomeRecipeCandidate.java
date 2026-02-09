@@ -1,17 +1,18 @@
 package com.urisik.backend.domain.home.candidate;
 
+import java.util.List;
+
 public interface HomeRecipeCandidate {
 
     Long getId();
     String getTitle();
-
     String getImageUrl();
-    String getCategory();
+    List<String> getIngredients();
+    String getDescription();
+    int getWishCount();
 
+    String getCategory();
     double getAvgScore();
     int getReviewCount();
-
-    int getWishCount();
-    String getIngredientsRaw();
 
 }

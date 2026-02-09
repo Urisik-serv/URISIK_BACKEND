@@ -70,10 +70,7 @@ public class HomeRecommendationService {
 
         for (HomeRecipeCandidate candidate : candidates) {
 
-            List<String> ingredients =
-                    RecipeTextParser.parseIngredients(
-                            candidate.getIngredientsRaw()
-                    );
+            List<String> ingredients = candidate.getIngredients();
 
             boolean hasRisk =
                     !allergyRiskService

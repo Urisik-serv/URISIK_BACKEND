@@ -94,22 +94,25 @@ public class SafeHighScoreRecommendationService {
          * 3. 알레르기 안전 필터 (핵심 차이)
          * ========================= */
         List<HighScoreRecipeCandidate> safeCandidates =
-                candidates.stream()
-                        .filter(c ->
-                                allergyRiskService
-                                        .detectRiskAllergens(
-                                                familyRoomId,
-                                                c.getIngredients()
-                                        )
-                                        .isEmpty()
-                        )
-                        .toList();
+                new ArrayList<>(
+                        candidates.stream()
+                                .filter(c ->
+                                        allergyRiskService
+                                                .detectRiskAllergens(
+                                                        familyRoomId,
+                                                        c.getIngredients()
+                                                )
+                                                .isEmpty()
+                                )
+                                .toList()
+                );
 
         /* =========================
          * 4️. 정렬 기준 유지
          * ========================= */
         safeCandidates.sort(
-                Comparator.comparingDouble(HighScoreRecipeCandidate::getAvgScore).reversed()
+                Comparator
+                        .comparingDouble(HighScoreRecipeCandidate::getAvgScore).reversed()
                         .thenComparingInt(HighScoreRecipeCandidate::getReviewCount).reversed()
                         .thenComparingInt(HighScoreRecipeCandidate::getWishCount).reversed()
         );
@@ -120,16 +123,7 @@ public class SafeHighScoreRecommendationService {
         return new HighScoreRecommendationResponse(
                 safeCandidates.stream()
                         .limit(3)
-                        .map(c -> {
-                    boolean isSafe =
-                            allergyRiskService
-                                    .detectRiskAllergens(
-                                            familyRoomId,
-                                            c.getIngredients()
-                                    )
-                                    .isEmpty();
-                    return converter.toDto(c, isSafe);
-                })
+                        .map(c -> converter.toDto(c, true)) // 항상 안전
                         .toList()
         );
     }
