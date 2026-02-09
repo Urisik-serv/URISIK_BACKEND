@@ -1,6 +1,7 @@
 package com.urisik.backend.domain.member.service;
 
 
+import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.familyroom.repository.FamilyWishListExclusionRepository;
 import com.urisik.backend.domain.member.dto.req.WishListRequest;
 import com.urisik.backend.domain.member.dto.res.WishListResponse;
@@ -16,8 +17,10 @@ import com.urisik.backend.domain.member.repo.MemberWishListRepository;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
+import com.urisik.backend.domain.recipe.enums.FoodSafety;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
+import com.urisik.backend.domain.recipe.service.AllergyRiskService;
 import com.urisik.backend.domain.review.entity.Review;
 import com.urisik.backend.domain.review.repository.ReviewRepository;
 import com.urisik.backend.global.auth.exception.AuthenExcetion;
@@ -43,6 +46,7 @@ public class MemberWishListService {
     private final TransformedRecipeRepository transformedRecipeRepository;
     private final MemberTransformedRecipeWishRepository memberTransformedRecipeWishRepository;
     private final ReviewRepository reviewRepository;
+    private final AllergyRiskService allergyRiskService;
 
     @Transactional
     public WishListResponse.PostWishes addWishItems
@@ -206,17 +210,30 @@ public class MemberWishListService {
 
         // 3) DTO 변환 (WishItem 리스트)
 
+
         List<WishListResponse.WishItem> items = rows.stream()
-                .map(w -> WishListResponse.WishItem.builder()
-                        .wishId(w.getId())
-                        .recipeId(w.getRecipe().getId())
-                        .recipeName(w.getRecipe().getTitle())
-                        .foodImage(w.getRecipe().getRecipeExternalMetadata().getImageSmallUrl())
-                        .category(w.getRecipe().getRecipeExternalMetadata().getCategory())
-                        .avgScore(w.getRecipe().getAvgScore())
-                        .recipeIngredients(RecipeTextParser.parseIngredients(w.getRecipe().getIngredientsRaw()))
-                        .build())
-                .toList();
+                .map(w -> {
+                    List<Allergen> risks = allergyRiskService.detectRiskAllergensForOne(
+                            profile.getId(),
+                            RecipeTextParser.parseIngredients(w.getRecipe().getIngredientsRaw())
+                    );
+
+                    FoodSafety safety = (risks != null && !risks.isEmpty())
+                            ? FoodSafety.DANGEROUS
+                            : FoodSafety.SAFETY;
+
+                    return WishListResponse.WishItem.builder()
+                            .wishId(w.getId())
+                            .recipeId(w.getRecipe().getId())
+                            .recipeName(w.getRecipe().getTitle())
+                            .foodImage(w.getRecipe().getRecipeExternalMetadata().getImageSmallUrl())
+                            .category(w.getRecipe().getRecipeExternalMetadata().getCategory())
+                            .avgScore(w.getRecipe().getAvgScore())
+                            .recipeIngredients(RecipeTextParser.parseIngredients(w.getRecipe().getIngredientsRaw()))
+                            .foodSafety(safety)
+                            .build();
+                })
+                .toList(); // 자바 16 미만이면 아래로 교체
 
         // 4) 응답
         return WishListResponse.GetWishes.builder()
@@ -272,16 +289,29 @@ public class MemberWishListService {
 
         // 3) DTO 변환 (WishItem 리스트)
         List<WishListResponse.TransWishItem> items = rows.stream()
-                .map(w -> WishListResponse.TransWishItem.builder()
-                        .wishId(w.getId())
-                        .transformedRecipeId(w.getRecipe().getId())
-                        .avgScore(w.getRecipe().getAvgScore())
-                        .category(w.getRecipe().getBaseRecipe().getRecipeExternalMetadata().getCategory())
-                        .foodImage(w.getRecipe().getBaseRecipe().getRecipeExternalMetadata().getImageSmallUrl())
-                        .transformedRecipeName(w.getRecipe().getTitle())
-                        .recipeIngredients(RecipeTextParser.parseIngredients(w.getRecipe().getIngredientsRaw()))
-                        .build())
-                .toList();
+                .map(w -> {
+                    List<Allergen> risks = allergyRiskService.detectRiskAllergensForOne(
+                            profile.getId(),
+                            RecipeTextParser.parseIngredients(w.getRecipe().getIngredientsRaw())
+                    );
+
+                    FoodSafety safety = (risks != null && !risks.isEmpty())
+                            ? FoodSafety.DANGEROUS
+                            : FoodSafety.SAFETY;
+
+                    return WishListResponse.TransWishItem.builder()
+                            .wishId(w.getId())
+                            .transformedRecipeId(w.getRecipe().getId())
+                            .transformedRecipeName(w.getRecipe().getTitle())
+                            .foodImage(w.getRecipe().getBaseRecipe().getRecipeExternalMetadata().getImageSmallUrl())
+                            .category(w.getRecipe().getBaseRecipe().getRecipeExternalMetadata().getCategory())
+                            .avgScore(w.getRecipe().getAvgScore())
+                            .recipeIngredients(RecipeTextParser.parseIngredients(w.getRecipe().getIngredientsRaw()))
+                            .foodSafety(safety)
+                            .build();
+                })
+                .toList(); // 자바 16 미만이면 아래로 교체
+
 
         // 4) 응답
         return WishListResponse.GetTransWishes.builder()
@@ -301,13 +331,13 @@ public class MemberWishListService {
        Long recipeId = reviewRepository.findRandomHighScoreReviewId(profile.getId(),4)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NO_REVIEW));
 
-       Recipe recipe = recipeRepository.findById(recipeId).orElseThrow(
+       Review review = reviewRepository.findByIdWithRecipe(recipeId).orElseThrow(
                () -> new MemberException(MemberErrorCode.NO_RECIPE)
        );
 
         //3.  recipe에 있는 ingredient 필드 파싱 해서 재료들 리스트로 저장. 재료들을 부분으로 가지고 있는 ingredient필드가 있는 레시피 검색== 레시피 리스트로 반환.
 
-        List<String> ingredients = new ArrayList<>(ingredientParser.parseIngredients(recipe.getIngredientsRaw()));
+        List<String> ingredients = new ArrayList<>(ingredientParser.parseIngredients(review.getRecipe().getIngredientsRaw()));
         Collections.shuffle(ingredients);
 
         // 4) 재료별 검색해서 최대 5개 모으기(중복 제거)

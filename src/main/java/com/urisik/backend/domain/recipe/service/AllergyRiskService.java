@@ -34,4 +34,24 @@ public class AllergyRiskService {
                 .toList();
 
     }
+
+    // 개인 전용 알러지 탐색기
+    public List<Allergen> detectRiskAllergensForOne(Long profileId, List<String> ingredients) {
+        List<Allergen> personalAllergens =
+                memberAllergyRepository.findByFamilyMemberProfile_Id(profileId)
+                        .stream()
+                        .map(MemberAllergy::getAllergen)
+                        .distinct()
+                        .toList();
+
+        if (personalAllergens.isEmpty()) return List.of();
+
+        List<String> normalized =
+                ingredients.stream().map(ingredientNormalizer::normalize).toList();
+
+        return personalAllergens.stream()
+                .filter(a -> normalized.stream().anyMatch(a::matchesIngredient))
+                .toList();
+
+    }
 }
