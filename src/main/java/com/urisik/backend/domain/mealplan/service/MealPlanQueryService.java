@@ -198,7 +198,7 @@ public class MealPlanQueryService {
 
         // Guard: prevent excessive range queries (max 1 year)
         if (to.isAfter(from.plusYears(1))) {
-            throw new MealPlanException(MealPlanErrorCode.DATE_RANGE_TOO_WIDE);
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_DATE_RANGE_TOO_WIDE);
         }
 
         LocalDate startWeek = normalizeToMonday(from);
