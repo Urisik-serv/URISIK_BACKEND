@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.home.dto;
+package com.urisik.backend.domain.recommendation.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

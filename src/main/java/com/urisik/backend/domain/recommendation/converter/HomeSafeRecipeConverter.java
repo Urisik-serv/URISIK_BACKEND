@@ -1,10 +1,8 @@
-package com.urisik.backend.domain.home.converter;
+package com.urisik.backend.domain.recommendation.converter;
 
-import com.urisik.backend.domain.home.candidate.HomeRecipeCandidate;
-import com.urisik.backend.domain.home.candidate.TransformedRecipeCandidate;
-import com.urisik.backend.domain.home.dto.HomeSafeRecipeDTO;
-import com.urisik.backend.domain.recipe.entity.Recipe;
-import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
+import com.urisik.backend.domain.recommendation.candidate.HomeRecipeCandidate;
+import com.urisik.backend.domain.recommendation.candidate.TransformedRecipeCandidate;
+import com.urisik.backend.domain.recommendation.dto.HomeSafeRecipeDTO;
 import org.springframework.stereotype.Component;
 
 @Component

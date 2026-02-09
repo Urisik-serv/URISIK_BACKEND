@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.home.candidate;
+package com.urisik.backend.domain.recommendation.candidate;
 
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
 import com.urisik.backend.domain.recipe.entity.Recipe;

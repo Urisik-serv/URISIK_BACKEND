@@ -1,13 +1,13 @@
-package com.urisik.backend.domain.home.controller;
+package com.urisik.backend.domain.recommendation.controller;
 
-import com.urisik.backend.domain.home.dto.HighScoreRecommendationResponse;
-import com.urisik.backend.domain.home.dto.HomeSafeRecipeResponse;
-import com.urisik.backend.domain.home.enums.HomeSuccessCode;
-import com.urisik.backend.domain.home.service.HighScoreRecommendationService;
-import com.urisik.backend.domain.home.service.SafeHighScoreRecommendationService;
-import com.urisik.backend.domain.home.service.WishHighScoreRecommendationService;
+import com.urisik.backend.domain.recommendation.dto.HighScoreRecommendationResponse;
+import com.urisik.backend.domain.recommendation.dto.HomeSafeRecipeResponse;
+import com.urisik.backend.domain.recommendation.enums.HomeSuccessCode;
+import com.urisik.backend.domain.recommendation.service.HighScoreRecommendationService;
+import com.urisik.backend.domain.recommendation.service.SafeHighScoreRecommendationService;
+import com.urisik.backend.domain.recommendation.service.WishHighScoreRecommendationService;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
-import com.urisik.backend.domain.home.service.HomeRecommendationService;
+import com.urisik.backend.domain.recommendation.service.HomeRecommendationService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/home/recommendations/")
-@Tag(name = "Home", description = "홈 화면 관련 API")
+@RequestMapping("/api/recommendations/home")
+@Tag(name = "Recommendations", description = "홈 화면 추천 관련 API")
 public class HomeRecommendationController {
 
     private final HomeRecommendationService homeRecommendationService;

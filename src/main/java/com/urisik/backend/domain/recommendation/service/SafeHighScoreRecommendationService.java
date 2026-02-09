@@ -1,14 +1,14 @@
-package com.urisik.backend.domain.home.service;
+package com.urisik.backend.domain.recommendation.service;
 
-import com.urisik.backend.domain.home.candidate.HighScoreRecipeCandidate;
-import com.urisik.backend.domain.home.candidate.RecipeCandidateLow;
-import com.urisik.backend.domain.home.candidate.TransformedRecipeCandidateLow;
-import com.urisik.backend.domain.home.converter.HighScoreRecommendationConverter;
-import com.urisik.backend.domain.home.dto.HighScoreRecommendationResponse;
-import com.urisik.backend.domain.home.policy.CategoryMapper;
-import com.urisik.backend.domain.home.policy.UnifiedCategory;
-import com.urisik.backend.domain.home.repository.HomeRepository;
-import com.urisik.backend.domain.home.repository.HomeTransformedRecipeRepository;
+import com.urisik.backend.domain.recommendation.candidate.HighScoreRecipeCandidate;
+import com.urisik.backend.domain.recommendation.candidate.RecipeCandidateLow;
+import com.urisik.backend.domain.recommendation.candidate.TransformedRecipeCandidateLow;
+import com.urisik.backend.domain.recommendation.converter.HighScoreRecommendationConverter;
+import com.urisik.backend.domain.recommendation.dto.HighScoreRecommendationResponse;
+import com.urisik.backend.domain.recommendation.policy.CategoryMapper;
+import com.urisik.backend.domain.recommendation.policy.UnifiedCategory;
+import com.urisik.backend.domain.recommendation.repository.HomeRepository;
+import com.urisik.backend.domain.recommendation.repository.HomeTransformedRecipeRepository;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recipe.service.AllergyRiskService;

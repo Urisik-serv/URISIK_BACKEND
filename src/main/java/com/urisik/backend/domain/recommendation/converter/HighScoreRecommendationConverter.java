@@ -1,8 +1,8 @@
-package com.urisik.backend.domain.home.converter;
+package com.urisik.backend.domain.recommendation.converter;
 
-import com.urisik.backend.domain.home.candidate.HighScoreRecipeCandidate;
-import com.urisik.backend.domain.home.candidate.TransformedRecipeCandidateLow;
-import com.urisik.backend.domain.home.dto.HighScoreRecommendationDTO;
+import com.urisik.backend.domain.recommendation.candidate.HighScoreRecipeCandidate;
+import com.urisik.backend.domain.recommendation.candidate.TransformedRecipeCandidateLow;
+import com.urisik.backend.domain.recommendation.dto.HighScoreRecommendationDTO;
 import org.springframework.stereotype.Component;
 
 @Component

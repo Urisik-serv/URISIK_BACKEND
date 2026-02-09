@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.home.policy;
+package com.urisik.backend.domain.recommendation.policy;
 
 import java.util.List;
 

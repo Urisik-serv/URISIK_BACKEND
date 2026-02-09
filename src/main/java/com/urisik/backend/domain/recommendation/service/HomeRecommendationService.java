@@ -1,16 +1,15 @@
-package com.urisik.backend.domain.home.service;
+package com.urisik.backend.domain.recommendation.service;
 
-import com.urisik.backend.domain.home.candidate.HomeRecipeCandidate;
-import com.urisik.backend.domain.home.candidate.RecipeCandidate;
-import com.urisik.backend.domain.home.candidate.TransformedRecipeCandidate;
-import com.urisik.backend.domain.home.repository.HomeRepository;
-import com.urisik.backend.domain.home.repository.HomeTransformedRecipeRepository;
+import com.urisik.backend.domain.recommendation.candidate.HomeRecipeCandidate;
+import com.urisik.backend.domain.recommendation.candidate.RecipeCandidate;
+import com.urisik.backend.domain.recommendation.candidate.TransformedRecipeCandidate;
+import com.urisik.backend.domain.recommendation.repository.HomeRepository;
+import com.urisik.backend.domain.recommendation.repository.HomeTransformedRecipeRepository;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
-import com.urisik.backend.domain.home.converter.HomeSafeRecipeConverter;
-import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
-import com.urisik.backend.domain.home.dto.HomeSafeRecipeDTO;
-import com.urisik.backend.domain.home.dto.HomeSafeRecipeResponse;
+import com.urisik.backend.domain.recommendation.converter.HomeSafeRecipeConverter;
+import com.urisik.backend.domain.recommendation.dto.HomeSafeRecipeDTO;
+import com.urisik.backend.domain.recommendation.dto.HomeSafeRecipeResponse;
 import com.urisik.backend.domain.recipe.service.AllergyRiskService;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;

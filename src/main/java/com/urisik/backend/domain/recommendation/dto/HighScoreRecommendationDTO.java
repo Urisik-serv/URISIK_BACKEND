@@ -1,23 +1,24 @@
-package com.urisik.backend.domain.home.dto;
+package com.urisik.backend.domain.recommendation.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class HomeSafeRecipeDTO {
+public class HighScoreRecommendationDTO {
 
     private String id;
     private String title;
     private String imageUrl;
-    private String description;
-    private int wishCount;
-
     private String category;
     private double avgScore;
+    private boolean safe;
+    private String description;
+
     private int reviewCount;
+    private int wishCount;
+
     private boolean isTransformed;
-    private boolean isSafe;
+
 
 }
-

@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.home.repository;
+package com.urisik.backend.domain.recommendation.repository;
 
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import org.springframework.data.domain.Pageable;

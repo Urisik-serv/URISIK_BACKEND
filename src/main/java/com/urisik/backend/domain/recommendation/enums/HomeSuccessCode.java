@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.home.enums;
+package com.urisik.backend.domain.recommendation.enums;
 
 import com.urisik.backend.global.apiPayload.code.BaseSuccessCode;
 import com.urisik.backend.global.apiPayload.code.SuccessReason;

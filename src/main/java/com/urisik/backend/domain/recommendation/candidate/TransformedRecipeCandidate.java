@@ -1,8 +1,7 @@
-package com.urisik.backend.domain.home.candidate;
+package com.urisik.backend.domain.recommendation.candidate;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.urisik.backend.domain.home.policy.CategoryMapper;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
 import com.urisik.backend.domain.recipe.dto.res.SubstitutionReasonDTO;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
@@ -13,7 +12,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-public class TransformedRecipeCandidateLow implements HighScoreRecipeCandidate{
+public class TransformedRecipeCandidate implements HomeRecipeCandidate {
 
     private final TransformedRecipe tr;
 
@@ -27,22 +26,6 @@ public class TransformedRecipeCandidateLow implements HighScoreRecipeCandidate{
         return tr.getBaseRecipe().getRecipeExternalMetadata() != null
                 ? tr.getBaseRecipe().getRecipeExternalMetadata().getImageLargeUrl()
                 : null;
-    }
-
-    @Override
-    public String getCategory() {
-        return tr.getBaseRecipe().getRecipeExternalMetadata() != null
-                ? CategoryMapper.map(
-                tr.getBaseRecipe()
-                        .getRecipeExternalMetadata()
-                        .getCategory()
-        )
-                : CategoryMapper.map(null);
-    }
-
-
-    @Override public double getAvgScore() {
-        return tr.getBaseRecipe().getAvgScore();
     }
 
     @Override
@@ -77,12 +60,25 @@ public class TransformedRecipeCandidateLow implements HighScoreRecipeCandidate{
         }
     }
 
-    @Override public int getReviewCount() {
-        return tr.getBaseRecipe().getReviewCount();
-    }
-
     @Override public int getWishCount() {
         return tr.getWishCount();
     }
 
+    @Override
+    public String getCategory() {
+        return tr.getBaseRecipe().getRecipeExternalMetadata() != null
+                ? tr.getBaseRecipe().getRecipeExternalMetadata().getCategory()
+                : null;
+    }
+
+    @Override public double getAvgScore() {
+        return tr.getBaseRecipe().getAvgScore();
+    }
+
+    @Override public int getReviewCount() {
+        return tr.getBaseRecipe().getReviewCount();
+    }
+
+
 }
+

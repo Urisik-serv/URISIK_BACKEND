@@ -1,6 +1,6 @@
-package com.urisik.backend.domain.home.candidate;
+package com.urisik.backend.domain.recommendation.candidate;
 
-import com.urisik.backend.domain.home.policy.CategoryMapper;
+import com.urisik.backend.domain.recommendation.policy.CategoryMapper;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import lombok.RequiredArgsConstructor;
