@@ -416,9 +416,6 @@ public class MealPlanQueryService {
             String titleImageUrl = firstNonBlank(tr.getImageUrl(), baseTitleImageUrl);
 
             Long baseRecipeId = (tr.getBaseRecipe() == null ? null : tr.getBaseRecipe().getId());
-            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> baseSteps = (baseRecipeId == null)
-                    ? List.of()
-                    : stepsByRecipeId.getOrDefault(baseRecipeId, List.of());
 
             List<String> trStepDescriptions = splitInstructionsToSteps(tr.getInstructionsRaw());
             Map<Integer, String> stepImgMap = trStepImageByTrId.getOrDefault(tr.getId(), Map.of());
@@ -433,7 +430,16 @@ public class MealPlanQueryService {
                 String desc = (trStepDescriptions != null && i <= trStepDescriptions.size())
                         ? trStepDescriptions.get(i - 1)
                         : null;
+                if (desc != null && desc.isBlank()) desc = null;
+
                 String img = stepImgMap.get(i);
+                if (img != null && img.isBlank()) img = null;
+
+                // Avoid phantom steps when stepOrder keys are sparse
+                if (desc == null && img == null) {
+                    continue;
+                }
+
                 steps.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(i, desc, img));
             }
 
@@ -588,60 +594,5 @@ public class MealPlanQueryService {
         return (type == MealPlan.SlotRefType.TRANSFORMED_RECIPE)
                 ? GetMealPlanResDTO.SlotRefType.TRANSFORMED_RECIPE
                 : GetMealPlanResDTO.SlotRefType.RECIPE;
-    }
-
-    // --- Inserted: buildTransformedSteps ---
-    private static List<GetMealPlanResDTO.MealPlanRecipeStepDTO> buildTransformedSteps(
-            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> baseSteps,
-            List<String> transformedDescriptions
-    ) {
-        List<GetMealPlanResDTO.MealPlanRecipeStepDTO> safeBase = (baseSteps == null) ? List.of() : baseSteps;
-        List<String> descs = (transformedDescriptions == null) ? List.of() : transformedDescriptions;
-
-        // If we have base steps (with imageUrl), align transformed descriptions by index.
-        if (!safeBase.isEmpty()) {
-            int baseSize = safeBase.size();
-            int descSize = descs.size();
-            int total = Math.max(baseSize, descSize);
-
-            // Determine the last stepOrder from base (fallback to baseSize)
-            int lastOrder = baseSize;
-            for (int i = baseSize - 1; i >= 0; i--) {
-                GetMealPlanResDTO.MealPlanRecipeStepDTO b = safeBase.get(i);
-                if (b != null && b.stepOrder() > 0) {
-                    lastOrder = b.stepOrder();
-                    break;
-                }
-            }
-
-            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> out = new ArrayList<>(total);
-
-            for (int i = 0; i < total; i++) {
-                if (i < baseSize) {
-                    GetMealPlanResDTO.MealPlanRecipeStepDTO b = safeBase.get(i);
-                    int order = (b == null) ? (i + 1) : b.stepOrder();
-                    String imageUrl = (b == null) ? null : b.imageUrl();
-                    String description = (i < descSize) ? descs.get(i) : null;
-                    out.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(order, description, imageUrl));
-                } else {
-                    // description is longer than baseSteps -> append extra steps
-                    int order = lastOrder + (i - baseSize + 1);
-                    String description = descs.get(i);
-                    out.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(order, description, null));
-                }
-            }
-            return out;
-        }
-
-        // If no base steps exist yet, fall back to transformed text only.
-        if (!descs.isEmpty()) {
-            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> out = new ArrayList<>(descs.size());
-            for (int i = 0; i < descs.size(); i++) {
-                out.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(i + 1, descs.get(i), null));
-            }
-            return out;
-        }
-
-        return List.of();
     }
 }
