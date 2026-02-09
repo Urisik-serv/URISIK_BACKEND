@@ -72,17 +72,10 @@ public class TransformedRecipeReadService {
         List<TransformedRecipeDetailResponseDTO.SubstitutionSummaryDTO> subs =
                 parseSubstitutionSummary(tr.getSubstitutionSummaryJson());
 
-        // 6. 이미지 URL (baseRecipe → metadata)
-        String imageUrl =
-                tr.getBaseRecipe().getRecipeExternalMetadata() != null
-                        ? tr.getBaseRecipe().getRecipeExternalMetadata().getImageLargeUrl()
-                        : null;
-
-        // 7. DTO 조립
+        // 6. DTO 조립
         return new TransformedRecipeDetailResponseDTO(
                 tr.getId(),
                 tr.getBaseRecipe().getTitle(),
-                imageUrl,
                 tr.getBaseRecipe().getId(),
 
                 ingredients,

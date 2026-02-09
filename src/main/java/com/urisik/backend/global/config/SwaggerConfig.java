@@ -25,12 +25,7 @@ import org.springframework.context.annotation.Configuration;
 
 public class SwaggerConfig {
 
-    // 로컬 개발 환경에서는 아래 openAPI를 아예 삭제함, EC2배포에서는 "https://api.urisik.com"로 설정해야함.
-    @Bean
-    public OpenAPI openAPI() {
-        return new OpenAPI()
-                .addServersItem(new Server().url("https://api.urisik.com"));
-    }
+
 
     /*
      * 각 API 도메인 별로 그룹화하여 Swagger UI에 표시합니다.

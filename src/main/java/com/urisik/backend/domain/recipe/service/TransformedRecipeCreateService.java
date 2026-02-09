@@ -8,20 +8,25 @@ import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
 import com.urisik.backend.domain.recipe.dto.RecipeStepDTO;
-import com.urisik.backend.domain.recipe.dto.res.TransformedRecipeCreateResponse;
+import com.urisik.backend.domain.recipe.dto.res.TransformedRecipeCreateResponseDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
+import com.urisik.backend.domain.recipe.entity.TransformedRecipeStepImage;
 import com.urisik.backend.domain.recipe.enums.RecipeErrorCode;
 import com.urisik.backend.domain.recipe.infrastructure.external.ai.AiJsonExtractor;
+import com.urisik.backend.domain.recipe.infrastructure.external.ai.GeminiImagePromptBuilder;
 import com.urisik.backend.domain.recipe.infrastructure.external.ai.GeminiPromptBuilder;
 import com.urisik.backend.domain.recipe.infrastructure.external.ai.dto.GeminiTransformResult;
 import com.urisik.backend.domain.recipe.repository.RecipeExternalMetadataRepository;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
+import com.urisik.backend.domain.recipe.repository.TransformedRecipeStepImageRepository;
+import com.urisik.backend.global.ai.AiImageClient;
 import com.urisik.backend.global.ai.GeminiClient;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
+import com.urisik.backend.global.external.s3.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,7 +50,12 @@ public class TransformedRecipeCreateService {
     private final GeminiClient geminiClient;
     private final ObjectMapper objectMapper;
 
-    public TransformedRecipeCreateResponse create(
+    private final AiImageClient aiImageClient;
+    private final S3Uploader s3Uploader;
+    private final TransformedRecipeStepImageRepository stepImageRepository;
+    private final TransformedRecipeStepImageAsyncService stepImageAsyncService;
+
+    public TransformedRecipeCreateResponseDTO create(
             Long recipeId,
             Long loginUserId
     ) {
@@ -105,6 +115,8 @@ public class TransformedRecipeCreateService {
         // 8️. 검증
         boolean valid = validate(result, rules);
 
+        String finalImageUrl = generateRecipeImage(result, recipe);
+
         // 9️. 저장
         TransformedRecipe tr = new TransformedRecipe(
                 recipe,
@@ -114,19 +126,86 @@ public class TransformedRecipeCreateService {
                 result.getSteps().stream()
                         .map(s -> s.getOrder() + ". " + s.getDescription())
                         .collect(Collectors.joining("\n")),
-                toJson(result.getSubstitutionSummary())
+                toJson(result.getSubstitutionSummary()),
+                finalImageUrl
         );
         tr.updateValidationStatus(valid);
 
         transformedRecipeRepository.save(tr);
 
-        // 10. 이미지 (원본 참조)
-        String imageUrl =
-                metadataRepository.findByRecipe_Id(recipe.getId())
-                        .map(RecipeExternalMetadata::getImageLargeUrl)
-                        .orElse(null);
+        stepImageAsyncService.generateStepImagesAsync(
+                tr.getId(),
+                result.getTitle(),
+                result.getSteps()
+        );
 
-        return toResponse(tr, recipe, imageUrl, result);
+        return toResponse(tr, recipe, result);
+    }
+
+    /* =====================
+       대표 이미지 생성
+       ===================== */
+    private String generateRecipeImage(
+            GeminiTransformResult result,
+            Recipe recipe
+    ) {
+        try {
+            return aiImageClient.generateImage(
+                            GeminiImagePromptBuilder.recipeImage(
+                                    result.getTitle(),
+                                    result.getIngredients()
+                            )
+                    )
+                    .map(bytes ->
+                            s3Uploader.uploadBytes(
+                                    bytes,
+                                    "recipe.png",
+                                    "image/png",
+                                    "transformed-recipe"
+                            )
+                    )
+                    .orElseGet(() ->
+                            metadataRepository.findByRecipe_Id(recipe.getId())
+                                    .map(RecipeExternalMetadata::getImageLargeUrl)
+                                    .orElse(null)
+                    );
+        } catch (Exception e) {
+            log.warn("[AI][IMAGE] recipe image fallback", e);
+            return metadataRepository.findByRecipe_Id(recipe.getId())
+                    .map(RecipeExternalMetadata::getImageLargeUrl)
+                    .orElse(null);
+        }
+    }
+
+    /* =====================
+       단계별 이미지 생성
+       ===================== */
+    private void generateStepImages(
+            Long transformedRecipeId,
+            GeminiTransformResult result
+    ) {
+        for (RecipeStepDTO step : result.getSteps()) {
+            aiImageClient.generateImage(
+                    GeminiImagePromptBuilder.stepImage(
+                            result.getTitle(),
+                            step
+                    )
+            ).ifPresent(bytes -> {
+                String url = s3Uploader.uploadBytes(
+                        bytes,
+                        "step_" + step.getOrder() + ".png",
+                        "image/png",
+                        "transformed-recipe-step"
+                );
+                stepImageRepository.save(
+                        new TransformedRecipeStepImage(
+                                transformedRecipeId,
+                                step.getOrder(),
+                                url
+                        )
+                );
+            });
+        }
     }
 
     private boolean validate(
@@ -201,22 +280,20 @@ public class TransformedRecipeCreateService {
         }
     }
 
-    private TransformedRecipeCreateResponse toResponse(
+    private TransformedRecipeCreateResponseDTO toResponse(
             TransformedRecipe tr,
             Recipe recipe,
-            String imageUrl,
             GeminiTransformResult result
     ) {
-        return new TransformedRecipeCreateResponse(
+        return new TransformedRecipeCreateResponseDTO(
                 tr.getId(),
                 tr.getTitle(),
-                imageUrl,
                 recipe.getId(),
                 tr.isValidationStatus(),
                 result.getIngredients(),
                 result.getSteps(),
                 result.getSubstitutionSummary().stream()
-                        .map(s -> new TransformedRecipeCreateResponse.SubstitutionSummaryDTO(
+                        .map(s -> new TransformedRecipeCreateResponseDTO.SubstitutionSummaryDTO(
                                 s.getAllergen(), s.getReplacedWith(), s.getReason()))
                         .toList()
         );

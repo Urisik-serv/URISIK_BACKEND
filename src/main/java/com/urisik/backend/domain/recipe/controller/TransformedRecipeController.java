@@ -1,6 +1,6 @@
 package com.urisik.backend.domain.recipe.controller;
 
-import com.urisik.backend.domain.recipe.dto.res.TransformedRecipeCreateResponse;
+import com.urisik.backend.domain.recipe.dto.res.TransformedRecipeCreateResponseDTO;
 import com.urisik.backend.domain.recipe.dto.res.TransformedRecipeDetailResponseDTO;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
 import com.urisik.backend.domain.recipe.service.TransformedRecipeCreateService;
@@ -23,7 +23,7 @@ public class TransformedRecipeController {
 
     @PostMapping("/{recipeId}/transform")
     @Operation(summary = "변형 레시피 생성 API", description = "사용자 가족에 맞게 레시피를 변형 생성하는 api 입니다.")
-    public ApiResponse<TransformedRecipeCreateResponse> transform(
+    public ApiResponse<TransformedRecipeCreateResponseDTO> transform(
             @PathVariable Long recipeId,
             @AuthenticationPrincipal Long loginUserId
     ) {
