@@ -1,16 +1,14 @@
 package com.urisik.backend.domain.mealplan.validation;
 
-import com.urisik.backend.domain.allergy.enums.Allergen;
-import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.repository.FamilyWishListExclusionRepository;
 import com.urisik.backend.domain.mealplan.dto.common.RecipeSelectionDTO;
 import com.urisik.backend.domain.mealplan.exception.code.MealPlanErrorCode;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
-
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
 import com.urisik.backend.domain.mealplan.exception.MealPlanException;
+import com.urisik.backend.domain.recipe.service.AllergyRiskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,9 +26,8 @@ import java.util.*;
 @Transactional(readOnly = true)
 public class MealPlanSafetyValidatorImpl implements MealPlanSafetyValidator {
 
-    private final MemberAllergyRepository memberAllergyRepository;
+    private final AllergyRiskService allergyRiskService;
     private final FamilyWishListExclusionRepository familyWishListExclusionRepository;
-
     private final RecipeRepository recipeRepository;
     private final TransformedRecipeRepository transformedRecipeRepository;
 
@@ -49,18 +46,15 @@ public class MealPlanSafetyValidatorImpl implements MealPlanSafetyValidator {
         }
 
         // 2) 가족 알레르기 기준 검증 (ingredientsRaw 기반)
-        List<String> normalizedAllergens = loadNormalizedFamilyAllergens(familyRoomId);
-        if (normalizedAllergens.isEmpty()) {
-            return; // 알레르기 없음 -> 통과
-        }
-
         String ingredientsRaw = loadIngredientsRaw(selection);
         if (ingredientsRaw == null || ingredientsRaw.isBlank()) {
             // 재료정보가 없으면 안전 판정 불가 -> unsafe 처리
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
-        if (!isUsableForMealPlan(ingredientsRaw, normalizedAllergens)) {
+        List<String> ingredients = splitIngredientsRaw(ingredientsRaw);
+        boolean safe = allergyRiskService.detectRiskAllergens(familyRoomId, ingredients).isEmpty();
+        if (!safe) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
     }
@@ -77,23 +71,6 @@ public class MealPlanSafetyValidatorImpl implements MealPlanSafetyValidator {
         return false;
     }
 
-    private List<String> loadNormalizedFamilyAllergens(Long familyRoomId) {
-        List<Allergen> familyAllergens = memberAllergyRepository.findDistinctAllergensByFamilyRoomId(familyRoomId);
-        if (familyAllergens == null || familyAllergens.isEmpty()) {
-            return List.of();
-        }
-
-        List<String> normalized = new ArrayList<>();
-        for (Allergen a : familyAllergens) {
-            if (a == null) continue;
-            String name = a.getKoreanName();
-            String n = normalize(name);
-            if (n == null || n.isBlank()) continue;
-            normalized.add(n);
-        }
-
-        return normalized.stream().distinct().toList();
-    }
 
     private String loadIngredientsRaw(RecipeSelectionDTO selection) {
         if (selection.type() == RecipeSelectionDTO.RecipeSelectionType.RECIPE) {
@@ -111,46 +88,6 @@ public class MealPlanSafetyValidatorImpl implements MealPlanSafetyValidator {
         throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
     }
 
-    /**
-     * usableForMealPlan 판단
-     * - FamilyWishListQueryService와 동일하게: ingredientsRaw를 토큰화 후 normalize하고
-     *   allergenKey가 부분포함(contains)되면 unsafe로 본다.
-     */
-    private boolean isUsableForMealPlan(String ingredientsRaw, List<String> normalizedAllergens) {
-        if (normalizedAllergens == null || normalizedAllergens.isEmpty()) {
-            return true;
-        }
-
-        if (ingredientsRaw == null || ingredientsRaw.isBlank()) {
-            return false;
-        }
-
-        List<String> normalizedIngredients = splitIngredientsRaw(ingredientsRaw).stream()
-                .map(this::normalize)
-                .filter(s -> s != null && !s.isBlank())
-                .toList();
-
-        if (normalizedIngredients.isEmpty()) {
-            return false;
-        }
-
-        for (String allergenKey : normalizedAllergens) {
-            if (allergenKey == null || allergenKey.isBlank()) continue;
-
-            boolean matched = normalizedIngredients.stream()
-                    .anyMatch(ing -> ing.contains(allergenKey));
-
-            if (matched) return false;
-        }
-
-        return true;
-    }
-
-    private String normalize(String s) {
-        if (s == null) return "";
-        String lowered = s.toLowerCase(Locale.ROOT);
-        return lowered.replaceAll("[^0-9a-zA-Z가-힣]", "");
-    }
 
     private List<String> splitIngredientsRaw(String ingredientsRaw) {
         if (ingredientsRaw == null || ingredientsRaw.isBlank()) {

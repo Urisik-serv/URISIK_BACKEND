@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
 
-import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO;
 import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO.Category;
@@ -22,6 +21,7 @@ import com.urisik.backend.domain.member.repo.MemberTransformedRecipeWishReposito
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
+import com.urisik.backend.domain.recipe.service.AllergyRiskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,10 +36,11 @@ public class FamilyWishListQueryService {
     private static final ObjectMapper CURSOR_MAPPER = new ObjectMapper();
     private static final long CURSOR_TTL_SECONDS = 60L * 60L * 24L * 7L; // 7 days
 
+    private final FamilyRoomService familyRoomService;
+    private final AllergyRiskService allergyRiskService;
     private final MemberWishListRepository memberWishListRepository;
     private final MemberTransformedRecipeWishRepository memberTransformedRecipeWishRepository;
     private final FamilyWishListExclusionRepository familyWishListExclusionRepository;
-    private final FamilyRoomService familyRoomService;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final MemberAllergyRepository memberAllergyRepository;
 
@@ -73,20 +74,6 @@ public class FamilyWishListQueryService {
                 familyWishListExclusionRepository.findExcludedRecipeIdsByFamilyRoomId(familyRoomId);
         Set<Long> excludedTransformedRecipeIds =
                 familyWishListExclusionRepository.findExcludedTransformedRecipeIdsByFamilyRoomId(familyRoomId);
-
-        // 가족방 전체 알레르기 조회
-        List<Allergen> familyAllergens =
-                memberAllergyRepository.findDistinctAllergensByFamilyRoomId(familyRoomId);
-
-        // 알레르겐 정규화
-        List<String> normalizedAllergens = familyAllergens.stream()
-                .filter(Objects::nonNull)
-                .map(Allergen::getKoreanName)
-                .filter(Objects::nonNull)
-                .map(this::normalize)
-                .filter(s -> s != null && !s.isBlank())
-                .distinct()
-                .toList();
 
         // 가족방 내 전체 개인 위시리스트 조회 (recipe + profile join fetch)
         List<MemberWishList> all = memberWishListRepository.findAllByFamilyRoomIdWithRecipe(familyRoomId);
@@ -131,6 +118,7 @@ public class FamilyWishListQueryService {
         /**
          * 정렬
          * - 담은 인원 수 많은 순 (DESC)
+         * - 평점 높은 순 (avgScore DESC)
          * - 최신순 (latest wish id DESC)
          * - tie-breaker: type(CANONICAL 먼저) -> id DESC
          */
@@ -141,11 +129,12 @@ public class FamilyWishListQueryService {
         List<Map.Entry<WishKey, Agg>> usableEntries = new ArrayList<>(sortedEntries.size());
         for (Map.Entry<WishKey, Agg> entry : sortedEntries) {
             Agg agg = entry.getValue();
-            boolean usableForMealPlan = isUsableForMealPlan(
-                    agg.getIngredientsRaw(),
-                    normalizedAllergens
-            );
-            if (usableForMealPlan) {
+
+            List<String> ingredients = splitIngredientsRaw(agg.getIngredientsRaw());
+            boolean safe = allergyRiskService.detectRiskAllergens(familyRoomId, ingredients).isEmpty();
+            agg.setAllergySafe(safe);
+
+            if (safe) {
                 usableEntries.add(entry);
             }
         }
@@ -187,6 +176,7 @@ public class FamilyWishListQueryService {
             String type = toApiType(key.type());
             Long id = key.id();
             String title = agg.getTitle();
+            String allergyStatus = agg.isAllergySafe() ? "SAFE" : "RISK";
 
             items.add(new FamilyWishListItemResDTO(
                     type,
@@ -194,6 +184,7 @@ public class FamilyWishListQueryService {
                     title,
                     agg.getImageUrl(),
                     agg.getAvgScore(),
+                    allergyStatus,
                     agg.getCategory(),
                     agg.getIngredientsRaw(),
                     new FamilyWishListItemResDTO.SourceProfile(new ArrayList<>(agg.getProfiles().values()))
@@ -215,6 +206,10 @@ public class FamilyWishListQueryService {
 
         // wisherCount DESC
         int cmp = Integer.compare(a2.getWisherCount(), a1.getWisherCount());
+        if (cmp != 0) return cmp;
+
+        // avgScore DESC
+        cmp = Double.compare(scoreValue(a2.getAvgScore()), scoreValue(a1.getAvgScore()));
         if (cmp != 0) return cmp;
 
         // latestWishId DESC
@@ -242,6 +237,10 @@ public class FamilyWishListQueryService {
         int cmp = Integer.compare(cursor.wisherCount, a.getWisherCount());
         if (cmp != 0) return cmp;
 
+        // avgScore DESC
+        cmp = Double.compare(cursor.avgScore, scoreValue(a.getAvgScore()));
+        if (cmp != 0) return cmp;
+
         // latestWishId DESC
         cmp = Long.compare(cursor.latestWishId, a.getLatestWishId());
         if (cmp != 0) return cmp;
@@ -260,6 +259,10 @@ public class FamilyWishListQueryService {
         if (type == null) return 0;
         String t = type.trim().toUpperCase(Locale.ROOT);
         return "RECIPE".equals(t) ? 0 : 1; // RECIPE first
+    }
+
+    private static double scoreValue(Double avgScore) {
+        return (avgScore == null) ? -1.0d : avgScore;
     }
 
     private int typeOrder(WishKey.Type type) {
@@ -285,12 +288,14 @@ public class FamilyWishListQueryService {
     public static class Cursor {
         private final int wisherCount;
         private final long latestWishId;
+        private final double avgScore;
         private final String type;
         private final Long id;
 
-        public Cursor(int wisherCount, long latestWishId, String type, Long id) {
+        public Cursor(int wisherCount, long latestWishId, double avgScore, String type, Long id) {
             this.wisherCount = wisherCount;
             this.latestWishId = latestWishId;
+            this.avgScore = avgScore;
             this.type = type;
             this.id = id;
         }
@@ -303,6 +308,10 @@ public class FamilyWishListQueryService {
             return latestWishId;
         }
 
+        public double getAvgScore() {
+            return avgScore;
+        }
+
         public String getType() {
             return type;
         }
@@ -312,25 +321,30 @@ public class FamilyWishListQueryService {
         }
 
         public boolean isValid() {
-            return wisherCount >= 0 && latestWishId >= 0 && type != null && !type.isBlank() && id != null;
+            return wisherCount >= 0
+                    && latestWishId >= 0
+                    && avgScore >= -1.0d
+                    && type != null && !type.isBlank()
+                    && id != null;
         }
 
         static Cursor from(WishKey key, Agg agg) {
             return new Cursor(
                     agg == null ? 0 : agg.getWisherCount(),
                     agg == null ? 0L : agg.getLatestWishId(),
+                    agg == null ? -1.0d : scoreValue(agg.getAvgScore()),
                     key == null ? "RECIPE" : toApiType(key.type()),
                     key == null ? null : key.id()
             );
         }
 
-        public static Cursor of(Integer wisherCount, Long latestWishId, String type, Long id) {
-            if (wisherCount == null || latestWishId == null || type == null || id == null) return null;
+        public static Cursor of(Integer wisherCount, Long latestWishId, Double avgScore, String type, Long id) {
+            if (wisherCount == null || latestWishId == null || avgScore == null || type == null || id == null) return null;
             String t = type.trim().toUpperCase(Locale.ROOT);
             if (!"RECIPE".equals(t) && !"TRANSFORMED_RECIPE".equals(t)) {
                 return null;
             }
-            return new Cursor(wisherCount, latestWishId, t, id);
+            return new Cursor(wisherCount, latestWishId, avgScore, t, id);
         }
 
         public String encode() {
@@ -340,6 +354,7 @@ public class FamilyWishListQueryService {
                 ObjectNode node = CURSOR_MAPPER.createObjectNode();
                 node.put("w", wisherCount);
                 node.put("l", latestWishId);
+                node.put("s", avgScore);
                 String tShort = "RECIPE".equalsIgnoreCase(type) ? "R"
                         : ("TRANSFORMED_RECIPE".equalsIgnoreCase(type) ? "T" : null);
                 node.put("t", tShort);
@@ -363,11 +378,12 @@ public class FamilyWishListQueryService {
 
                 int w = node.path("w").asInt(-1);
                 long l = node.path("l").asLong(-1L);
+                double s = node.path("s").asDouble(-1.0d);
                 String tRaw = node.path("t").asText(null);
                 long id = node.path("id").asLong(-1L);
                 long exp = node.path("exp").asLong(-1L);
 
-                if (w < 0 || l < 0 || id < 0 || tRaw == null || exp < 0) return null;
+                if (w < 0 || l < 0 || s < -1.0d || id < 0 || tRaw == null || exp < 0) return null;
 
                 long now = Instant.now().getEpochSecond();
                 if (exp < now) return null; // expired
@@ -377,7 +393,7 @@ public class FamilyWishListQueryService {
                 else if ("T".equalsIgnoreCase(tRaw)) type = "TRANSFORMED_RECIPE";
                 else return null;
 
-                Cursor cursor = new Cursor(w, l, type, id);
+                Cursor cursor = new Cursor(w, l, s, type, id);
                 return cursor.isValid() ? cursor : null;
             } catch (Exception e) {
                 return null;
@@ -533,6 +549,7 @@ public class FamilyWishListQueryService {
         private final Double avgScore;
         private final Category category;
 
+        private boolean allergySafe = false; // computed per request
         private final Map<Long, Profile> profiles = new LinkedHashMap<>();
         private long latestWishId = 0L;
 
@@ -650,6 +667,14 @@ public class FamilyWishListQueryService {
 
         private Category getCategory() {
             return category;
+        }
+
+        private boolean isAllergySafe() {
+            return allergySafe;
+        }
+
+        private void setAllergySafe(boolean allergySafe) {
+            this.allergySafe = allergySafe;
         }
     }
 }

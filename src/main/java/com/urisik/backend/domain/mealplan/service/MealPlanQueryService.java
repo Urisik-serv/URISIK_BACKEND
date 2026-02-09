@@ -1,5 +1,8 @@
 package com.urisik.backend.domain.mealplan.service;
 
+import com.urisik.backend.domain.recipe.entity.TransformedRecipeStepImage;
+import com.urisik.backend.domain.recipe.repository.TransformedRecipeStepImageRepository;
+
 import com.urisik.backend.domain.recipe.entity.RecipeStep;
 import com.urisik.backend.domain.recipe.repository.RecipeStepRepository;
 
@@ -35,6 +38,7 @@ public class MealPlanQueryService {
     private final TransformedRecipeRepository transformedRecipeRepository;
     private final FamilyRoomService familyRoomService;
     private final RecipeStepRepository recipeStepRepository;
+    private final TransformedRecipeStepImageRepository transformedRecipeStepImageRepository;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -372,6 +376,22 @@ public class MealPlanQueryService {
             }
         }
 
+        // Load transformed recipe step images
+        Map<Long, Map<Integer, String>> trStepImageByTrId = new HashMap<>();
+        if (!transformedIds.isEmpty()) {
+            List<Long> trIds = new ArrayList<>(transformedIds);
+            List<TransformedRecipeStepImage> imgs =
+                    transformedRecipeStepImageRepository
+                            .findAllByTransformedRecipeIdInOrderByTransformedRecipeIdAscStepOrderAsc(trIds);
+
+            for (TransformedRecipeStepImage img : imgs) {
+                if (img == null) continue;
+                trStepImageByTrId
+                        .computeIfAbsent(img.getTransformedRecipeId(), k -> new HashMap<>())
+                        .put(img.getStepOrder(), img.getImageUrl());
+            }
+        }
+
         // resolved: storedId == transformedRecipeId
         for (Long storedId : transformedIds) {
             TransformedRecipe tr = trById.get(storedId);
@@ -388,33 +408,49 @@ public class MealPlanQueryService {
                 title = "(레시피 정보를 불러올 수 없음)";
             }
 
-            String imageUrl = null;
+            String baseTitleImageUrl = null;
             if (base != null && base.getRecipeExternalMetadata() != null) {
-                imageUrl = base.getRecipeExternalMetadata().getThumbnailImageUrl();
+                baseTitleImageUrl = base.getRecipeExternalMetadata().getThumbnailImageUrl();
             }
+
+            String titleImageUrl = firstNonBlank(tr.getImageUrl(), baseTitleImageUrl);
 
             Long baseRecipeId = (tr.getBaseRecipe() == null ? null : tr.getBaseRecipe().getId());
-            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> baseSteps = (baseRecipeId == null)
-                    ? List.of()
-                    : stepsByRecipeId.getOrDefault(baseRecipeId, List.of());
-
-            // Fallback: if metadata image is missing, use the first step image from the base recipe
-            if ((imageUrl == null || imageUrl.isBlank()) && !baseSteps.isEmpty()) {
-                String stepImg = baseSteps.get(0).imageUrl();
-                if (stepImg != null && !stepImg.isBlank()) {
-                    imageUrl = stepImg;
-                }
-            }
 
             List<String> trStepDescriptions = splitInstructionsToSteps(tr.getInstructionsRaw());
-            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> steps = buildTransformedSteps(baseSteps, trStepDescriptions);
-            steps = fillStepImageWithTitleImage(steps, imageUrl);
+            Map<Integer, String> stepImgMap = trStepImageByTrId.getOrDefault(tr.getId(), Map.of());
+
+            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> steps = new ArrayList<>();
+            int max = Math.max(
+                    trStepDescriptions == null ? 0 : trStepDescriptions.size(),
+                    stepImgMap.keySet().stream().mapToInt(Integer::intValue).max().orElse(0)
+            );
+
+            for (int i = 1; i <= max; i++) {
+                String desc = (trStepDescriptions != null && i <= trStepDescriptions.size())
+                        ? trStepDescriptions.get(i - 1)
+                        : null;
+                if (desc != null && desc.isBlank()) desc = null;
+
+                String img = stepImgMap.get(i);
+                if (img != null && img.isBlank()) img = null;
+
+                // Avoid phantom steps when stepOrder keys are sparse
+                if (desc == null && img == null) {
+                    continue;
+                }
+
+                steps.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(i, desc, img));
+            }
+
+            // Fallback: if step image is missing, use title image
+            steps = fillStepImageWithTitleImage(steps, titleImageUrl);
 
             resolved.put(new SlotRefKey(MealPlan.SlotRefType.TRANSFORMED_RECIPE, storedId), new ResolvedRecipe(
                     baseRecipeId,
                     tr.getId(),
                     title,
-                    imageUrl,
+                    titleImageUrl,
                     base == null ? (tr.getIngredientsRaw() == null ? "" : tr.getIngredientsRaw()) : pickIngredients(tr, base),
                     steps
             ));
@@ -493,6 +529,12 @@ public class MealPlanQueryService {
         return (v == null || v.isBlank()) ? (base == null ? null : base.getIngredientsRaw()) : v;
     }
 
+    private static String firstNonBlank(String primary, String fallback) {
+        if (primary != null && !primary.isBlank()) return primary;
+        if (fallback != null && !fallback.isBlank()) return fallback;
+        return null;
+    }
+
     private static List<String> splitInstructionsToSteps(String raw) {
         if (raw == null) return List.of();
         String text = raw.trim();
@@ -552,60 +594,5 @@ public class MealPlanQueryService {
         return (type == MealPlan.SlotRefType.TRANSFORMED_RECIPE)
                 ? GetMealPlanResDTO.SlotRefType.TRANSFORMED_RECIPE
                 : GetMealPlanResDTO.SlotRefType.RECIPE;
-    }
-
-    // --- Inserted: buildTransformedSteps ---
-    private static List<GetMealPlanResDTO.MealPlanRecipeStepDTO> buildTransformedSteps(
-            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> baseSteps,
-            List<String> transformedDescriptions
-    ) {
-        List<GetMealPlanResDTO.MealPlanRecipeStepDTO> safeBase = (baseSteps == null) ? List.of() : baseSteps;
-        List<String> descs = (transformedDescriptions == null) ? List.of() : transformedDescriptions;
-
-        // If we have base steps (with imageUrl), align transformed descriptions by index.
-        if (!safeBase.isEmpty()) {
-            int baseSize = safeBase.size();
-            int descSize = descs.size();
-            int total = Math.max(baseSize, descSize);
-
-            // Determine the last stepOrder from base (fallback to baseSize)
-            int lastOrder = baseSize;
-            for (int i = baseSize - 1; i >= 0; i--) {
-                GetMealPlanResDTO.MealPlanRecipeStepDTO b = safeBase.get(i);
-                if (b != null && b.stepOrder() > 0) {
-                    lastOrder = b.stepOrder();
-                    break;
-                }
-            }
-
-            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> out = new ArrayList<>(total);
-
-            for (int i = 0; i < total; i++) {
-                if (i < baseSize) {
-                    GetMealPlanResDTO.MealPlanRecipeStepDTO b = safeBase.get(i);
-                    int order = (b == null) ? (i + 1) : b.stepOrder();
-                    String imageUrl = (b == null) ? null : b.imageUrl();
-                    String description = (i < descSize) ? descs.get(i) : null;
-                    out.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(order, description, imageUrl));
-                } else {
-                    // description is longer than baseSteps -> append extra steps
-                    int order = lastOrder + (i - baseSize + 1);
-                    String description = descs.get(i);
-                    out.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(order, description, null));
-                }
-            }
-            return out;
-        }
-
-        // If no base steps exist yet, fall back to transformed text only.
-        if (!descs.isEmpty()) {
-            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> out = new ArrayList<>(descs.size());
-            for (int i = 0; i < descs.size(); i++) {
-                out.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(i + 1, descs.get(i), null));
-            }
-            return out;
-        }
-
-        return List.of();
     }
 }
