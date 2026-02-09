@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.urisik.backend.domain.recommendation.policy.CategoryMapper;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
-import com.urisik.backend.domain.recipe.dto.res.SubstitutionReasonDTO;
+import com.urisik.backend.domain.recipe.dto.SubstitutionReasonDTO;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import lombok.RequiredArgsConstructor;
 

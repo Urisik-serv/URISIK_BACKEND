@@ -2,7 +2,7 @@ package com.urisik.backend.domain.recommendation.service;
 
 import com.urisik.backend.domain.recommendation.candidate.*;
 import com.urisik.backend.domain.recommendation.converter.HighScoreRecommendationConverter;
-import com.urisik.backend.domain.recommendation.dto.HighScoreRecommendationResponse;
+import com.urisik.backend.domain.recommendation.dto.res.HighScoreRecommendationResponseDTO;
 import com.urisik.backend.domain.recommendation.policy.CategoryMapper;
 import com.urisik.backend.domain.recommendation.policy.UnifiedCategory;
 import com.urisik.backend.domain.recommendation.repository.HomeRepository;
@@ -46,7 +46,7 @@ public class HighScoreRecommendationService {
      * 4) 위 3개 값이 모두 같을 때만
      *    → 알레르기 "위험 없는" 레시피 우선
      */
-    public HighScoreRecommendationResponse recommend(
+    public HighScoreRecommendationResponseDTO recommend(
             Long loginUserId,
             String category
     ) {
@@ -120,7 +120,7 @@ public class HighScoreRecommendationService {
         /* =========================
          * 4. Top 3 반환
          * ========================= */
-        return new HighScoreRecommendationResponse(
+        return new HighScoreRecommendationResponseDTO(
                 finalSorted.stream()
                         .limit(3)
                         .map(c -> {

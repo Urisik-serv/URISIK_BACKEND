@@ -2,7 +2,7 @@ package com.urisik.backend.domain.recipe.infrastructure.external.ai;
 
 import com.urisik.backend.domain.allergy.entity.AllergenAlternative;
 import com.urisik.backend.domain.allergy.enums.Allergen;
-import com.urisik.backend.domain.recipe.dto.res.RecipeStepDTO;
+import com.urisik.backend.domain.recipe.dto.RecipeStepDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.recipe.dto.req;
+package com.urisik.backend.domain.recipe.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

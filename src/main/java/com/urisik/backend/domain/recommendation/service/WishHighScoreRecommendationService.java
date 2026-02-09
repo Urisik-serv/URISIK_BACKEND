@@ -4,7 +4,7 @@ import com.urisik.backend.domain.recommendation.candidate.HighScoreRecipeCandida
 import com.urisik.backend.domain.recommendation.candidate.RecipeCandidateLow;
 import com.urisik.backend.domain.recommendation.candidate.TransformedRecipeCandidateLow;
 import com.urisik.backend.domain.recommendation.converter.HighScoreRecommendationConverter;
-import com.urisik.backend.domain.recommendation.dto.HighScoreRecommendationResponse;
+import com.urisik.backend.domain.recommendation.dto.res.HighScoreRecommendationResponseDTO;
 import com.urisik.backend.domain.recommendation.policy.CategoryMapper;
 import com.urisik.backend.domain.recommendation.policy.UnifiedCategory;
 import com.urisik.backend.domain.recommendation.repository.HomeRepository;
@@ -44,7 +44,7 @@ public class WishHighScoreRecommendationService {
      * 4) 위 3개가 모두 같을 때만 알레르기 안전 우선
      * 5) 카테고리 선택 시 해당 카테고리 내에서만
      */
-    public HighScoreRecommendationResponse recommend(
+    public HighScoreRecommendationResponseDTO recommend(
             Long loginUserId,
             String category
     ) {
@@ -102,7 +102,7 @@ public class WishHighScoreRecommendationService {
         /* =========================
          * 4️. Top 3 반환
          * ========================= */
-        return new HighScoreRecommendationResponse(
+        return new HighScoreRecommendationResponseDTO(
                 finalSorted.stream()
                         .limit(3)
                         .map(c -> {

@@ -9,7 +9,7 @@ import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recommendation.converter.HomeSafeRecipeConverter;
 import com.urisik.backend.domain.recommendation.dto.HomeSafeRecipeDTO;
-import com.urisik.backend.domain.recommendation.dto.HomeSafeRecipeResponse;
+import com.urisik.backend.domain.recommendation.dto.res.HomeSafeRecipeResponseDTO;
 import com.urisik.backend.domain.recipe.service.AllergyRiskService;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
@@ -34,7 +34,7 @@ public class HomeRecommendationService {
     private final HomeSafeRecipeConverter converter;
 
     @Transactional(readOnly = true)
-    public HomeSafeRecipeResponse recommendSafeRecipes(Long loginUserId) {
+    public HomeSafeRecipeResponseDTO recommendSafeRecipes(Long loginUserId) {
 
         FamilyMemberProfile profile =
                 familyMemberProfileRepository.findByMember_Id(loginUserId)
@@ -83,6 +83,6 @@ public class HomeRecommendationService {
             if (result.size() == 3) break;
         }
 
-        return new HomeSafeRecipeResponse(result);
+        return new HomeSafeRecipeResponseDTO(result);
     }
 }

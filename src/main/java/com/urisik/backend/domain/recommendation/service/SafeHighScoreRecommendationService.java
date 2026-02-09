@@ -4,7 +4,7 @@ import com.urisik.backend.domain.recommendation.candidate.HighScoreRecipeCandida
 import com.urisik.backend.domain.recommendation.candidate.RecipeCandidateLow;
 import com.urisik.backend.domain.recommendation.candidate.TransformedRecipeCandidateLow;
 import com.urisik.backend.domain.recommendation.converter.HighScoreRecommendationConverter;
-import com.urisik.backend.domain.recommendation.dto.HighScoreRecommendationResponse;
+import com.urisik.backend.domain.recommendation.dto.res.HighScoreRecommendationResponseDTO;
 import com.urisik.backend.domain.recommendation.policy.CategoryMapper;
 import com.urisik.backend.domain.recommendation.policy.UnifiedCategory;
 import com.urisik.backend.domain.recommendation.repository.HomeRepository;
@@ -38,7 +38,7 @@ public class SafeHighScoreRecommendationService {
     /**
      * 알레르기 안전 + 카테고리 기준 레시피 추천
      */
-    public HighScoreRecommendationResponse recommendSafeRecipes(
+    public HighScoreRecommendationResponseDTO recommendSafeRecipes(
             Long loginUserId,
             String category
     ) {
@@ -120,7 +120,7 @@ public class SafeHighScoreRecommendationService {
         /* =========================
          * 5️. 결과 반환
          * ========================= */
-        return new HighScoreRecommendationResponse(
+        return new HighScoreRecommendationResponseDTO(
                 safeCandidates.stream()
                         .limit(3)
                         .map(c -> converter.toDto(c, true)) // 항상 안전

@@ -7,7 +7,7 @@ import com.urisik.backend.domain.allergy.service.AllergySubstitutionService;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
-import com.urisik.backend.domain.recipe.dto.res.RecipeStepDTO;
+import com.urisik.backend.domain.recipe.dto.RecipeStepDTO;
 import com.urisik.backend.domain.recipe.dto.res.TransformedRecipeCreateResponse;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;

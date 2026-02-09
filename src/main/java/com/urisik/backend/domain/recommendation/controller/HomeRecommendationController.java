@@ -1,7 +1,7 @@
 package com.urisik.backend.domain.recommendation.controller;
 
-import com.urisik.backend.domain.recommendation.dto.HighScoreRecommendationResponse;
-import com.urisik.backend.domain.recommendation.dto.HomeSafeRecipeResponse;
+import com.urisik.backend.domain.recommendation.dto.res.HighScoreRecommendationResponseDTO;
+import com.urisik.backend.domain.recommendation.dto.res.HomeSafeRecipeResponseDTO;
 import com.urisik.backend.domain.recommendation.enums.HomeSuccessCode;
 import com.urisik.backend.domain.recommendation.service.HighScoreRecommendationService;
 import com.urisik.backend.domain.recommendation.service.SafeHighScoreRecommendationService;
@@ -31,7 +31,7 @@ public class HomeRecommendationController {
             summary = "홈 안전 레시피 추천 API(상단)",
             description = "위시리스트가 많은 레시피 중 로그인 사용자의 가족 알레르기 기준으로 안전한 레시피 Top 3를 추천하는 api 입니다."
     )
-    public ApiResponse<HomeSafeRecipeResponse> getSafeRecipeRecommendations(
+    public ApiResponse<HomeSafeRecipeResponseDTO> getSafeRecipeRecommendations(
             @AuthenticationPrincipal Long loginUserId
     ) {
         return ApiResponse.onSuccess(
@@ -47,11 +47,11 @@ public class HomeRecommendationController {
             summary = "홈 평점 순 레시피 추천 API(하단)",
             description =  "카테고리 선택 여부에 따라 레시피 및 변형 레시피를 통합하여 별점이 높은 음식 Top 3를 추천하는 api 입니다."
     )
-    public ApiResponse<HighScoreRecommendationResponse> recommendHighScore(
+    public ApiResponse<HighScoreRecommendationResponseDTO> recommendHighScore(
             @AuthenticationPrincipal Long loginUserId,
             @RequestParam(required = false) String category
     ) {
-        HighScoreRecommendationResponse result =
+        HighScoreRecommendationResponseDTO result =
                 highScoreRecommendationService.recommend(loginUserId, category);
 
         return ApiResponse.onSuccess(
@@ -67,7 +67,7 @@ public class HomeRecommendationController {
             summary = "홈 평점 순 레시피(알레르기에 안전) 추천 API(하단)",
             description = "로그인한 사용자의 가족방 알레르기 기준으로 안전한 레시피만 필터링한 뒤, 평점이 높은 음식 Top 3를 추천하는 api 입니다."
     )
-    public ApiResponse<HighScoreRecommendationResponse> recommendSafeHighScore(
+    public ApiResponse<HighScoreRecommendationResponseDTO> recommendSafeHighScore(
             @AuthenticationPrincipal Long loginUserId,
             @RequestParam(required = false) String category
     ) {
@@ -84,7 +84,7 @@ public class HomeRecommendationController {
             summary = "홈 위시리스트 많은 순 레시피 추천 API(하단)",
             description = "위시리스트 개수가 많은 순으로 정렬하되, 동일할 경우 평점·리뷰 수·알레르기 안전 여부를 기준으로 Top 3를 추천하는 api 입니다."
     )
-    public ApiResponse<HighScoreRecommendationResponse> recommendWishHighScore(
+    public ApiResponse<HighScoreRecommendationResponseDTO> recommendWishHighScore(
             @AuthenticationPrincipal Long loginUserId,
             @RequestParam(required = false) String category
     ) {

@@ -1,13 +1,12 @@
 package com.urisik.backend.domain.recipe.controller;
 
-import com.urisik.backend.domain.recipe.dto.req.ExternalRecipeSnapshotDTO;
+import com.urisik.backend.domain.recipe.dto.ExternalRecipeSnapshotDTO;
 import com.urisik.backend.domain.recipe.dto.res.ExternalRecipeUpsertResponseDTO;
 import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
 import com.urisik.backend.domain.recipe.service.ExternalRecipeService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

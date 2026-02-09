@@ -1,5 +1,6 @@
 package com.urisik.backend.domain.recipe.dto.res;
 
+import com.urisik.backend.domain.recipe.dto.RecipeStepDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
