@@ -7,6 +7,7 @@ import com.urisik.backend.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,13 +21,14 @@ public class RecipeSearchController {
     @GetMapping("/search")
     @Operation(summary = "레시피 검색 API", description = "검색어를 통해 여러 레시피들을 검색하는 api 입니다.")
     public ApiResponse<RecipeSearchResponseDTO> search(
+            @AuthenticationPrincipal Long loginUserId,
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         return ApiResponse.onSuccess(
                 RecipeSuccessCode.RECIPE_SEARCH_OK,
-                recipeSearchService.search(keyword, page, size)
+                recipeSearchService.search(loginUserId,keyword, page, size)
         );
     }
 }
