@@ -1,21 +1,73 @@
-## 🍽️Urisik | 알레르기 가족 모두가 안전하게, 한 식탁에서 즐겁게 먹을 수 있도록 돕는 맞춤형 식단 관리 서비스
+# 🍽️ URISIK  
+### 알레르기 가족 모두가 안전하게,  
+### 한 식탁에서 즐겁게 먹을 수 있도록 돕는 맞춤형 식단 관리 서비스
 
-## Project Introduction
+---
+
+## 📌 Project Introduction
+
+<table>
+<tr>
+<td width="520">
+
 <img src="https://github.com/user-attachments/assets/dbeabecb-9501-4323-8f41-533b2eef2231" width="500" />
+
+</td>
+<td width="420" valign="top">
 
 ### 🧩 서비스 한 줄 요약
 알레르기 정보를 기반으로  
 **안전한 레시피만 골라 추천하는 가족 맞춤 식단 서비스**
 
 ### ✨ 주요 기능
-- 알레르기 자동 판별
-- 안전 / 별점 / 위시리스트 기반 추천
-- 변형 레시피 제공
-<br>
+- 🛡️ 알레르기 자동 판별
+- ⭐ 안전 / 별점 / 위시리스트 기반 추천
+- 🔁 알레르기 대체 레시피 제공
+- 👨‍👩‍👧 가족 단위 알레르기 관리
+- 📝 리뷰 및 평점 기반 추천 고도화
+
+</td>
+</tr>
+</table>
 
 ---
 
-## Tech Stack
+## 🎯 Problem & Solution
+
+### ❗ Problem
+- 가족 구성원마다 서로 다른 알레르기
+- 레시피 선택 시 매번 성분 확인 필요
+- 기존 레시피 서비스는 **“개인 기준” 추천에만 집중**
+
+### ✅ Solution
+- 가족방 단위 알레르기 정보 관리
+- 레시피별 알레르기 위험 자동 판별
+- 안전 / 선호 / 행동 데이터를 결합한 추천 제공
+
+---
+
+## 📱 주요 화면 미리보기
+
+### 👤 마이페이지 & 가족 관리
+<img src="https://github.com/user-attachments/assets/a7d5e329-6e55-4235-b6ee-4ad1eff50dd0" width="300" />
+<img src="https://github.com/user-attachments/assets/575b3a79-f037-4435-b0a5-93b2b798a055" width="300" />
+
+---
+
+### 🍽️ 레시피 추천
+<img src="https://github.com/user-attachments/assets/bc388a94-b57e-4601-be2a-1fa551a7df04" width="300" />
+<img src="https://github.com/user-attachments/assets/2b7dff3e-193d-4b0f-bd57-45f5360a353d" width="300" />
+<img src="https://github.com/user-attachments/assets/9ccd4640-97c3-4439-8002-c96944b40147" width="300" />
+
+---
+
+### 🗓️ 식단 생성 & 리뷰
+<img src="https://github.com/user-attachments/assets/32ecc60a-5d35-4064-ad5d-3dcbb562e96b" width="300" />
+<img src="https://github.com/user-attachments/assets/b909040c-daa3-4c5f-b9a2-4599fbc4698f" width="300" />
+
+---
+
+## 🛠 Tech Stack
 
 ### 🛠 Backend & Framework
 <div>
@@ -52,13 +104,13 @@
 
 ---
 
-##  Architecture Diagram
+## 🏗  Architecture Diagram
 
 <img src="https://github.com/user-attachments/assets/ba8962eb-3e53-45d6-ac7d-4050eae0dc2d" width="800" />
 
 ---
 
-## ERD
+## 🗄 ERD
 
 <img src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" width="800" />
 
