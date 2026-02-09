@@ -196,16 +196,20 @@ public class MealPlanQueryService {
             to = tmp;
         }
 
+        // Guard: prevent excessive range queries (max 1 year)
+        if (to.isAfter(from.plusYears(1))) {
+            throw new MealPlanException(MealPlanErrorCode.DATE_RANGE_TOO_WIDE);
+        }
+
         LocalDate startWeek = normalizeToMonday(from);
         LocalDate endWeek = normalizeToMonday(to);
 
         List<MealPlan> plans = mealPlanRepository
-                .findAllByFamilyRoomIdAndWeekStartDateBetweenOrderByWeekStartDateDesc(
+                .findAllByFamilyRoomIdAndWeekStartDateBetweenOrderByWeekStartDateAsc(
                         familyRoomId, startWeek, endWeek
                 )
                 .stream()
                 .filter(mp -> mp.getStatus() == MealPlanStatus.CONFIRMED)
-                .sorted(Comparator.comparing(MealPlan::getWeekStartDate))
                 .toList();
 
         if (plans.isEmpty()) {
