@@ -32,8 +32,6 @@ public class RecipeCandidateLow implements HighScoreRecipeCandidate{
     }
 
     @Override public double getAvgScore() { return recipe.getAvgScore(); }
-    @Override public int getReviewCount() { return recipe.getReviewCount(); }
-    @Override public int getWishCount() { return recipe.getWishCount(); }
 
     @Override
     public List<String> getIngredients() {
@@ -46,5 +44,10 @@ public class RecipeCandidateLow implements HighScoreRecipeCandidate{
     public String getDescription() {
         return String.join(", ", getIngredients());
     }
+
+
+    @Override public int getReviewCount() { return recipe.getReviewCount(); }
+    @Override public int getWishCount() { return recipe.getWishCount(); }
+
 
 }

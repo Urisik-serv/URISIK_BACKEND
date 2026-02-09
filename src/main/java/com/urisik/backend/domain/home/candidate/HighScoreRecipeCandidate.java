@@ -8,13 +8,12 @@ public interface HighScoreRecipeCandidate {
     String getTitle();
     String getImageUrl();
     String getCategory();
-
     double getAvgScore();
+    List<String> getIngredients();
+    String getDescription();
+
     int getReviewCount();
     int getWishCount();
 
-    List<String> getIngredients();
-
-    String getDescription();
 }
 

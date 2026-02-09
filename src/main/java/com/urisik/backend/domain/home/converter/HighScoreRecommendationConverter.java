@@ -19,11 +19,11 @@ public class HighScoreRecommendationConverter {
                 candidate.getImageUrl(),
                 candidate.getCategory(),
                 candidate.getAvgScore(),
+                isSafe,
+                candidate.getDescription(),
                 candidate.getReviewCount(),
                 candidate.getWishCount(),
-                isTransformed,
-                isSafe,
-                candidate.getDescription()
+                isTransformed
         );
     }
 }
