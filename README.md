@@ -1,9 +1,16 @@
 ## 🍽️Urisik | 알레르기 가족 모두가 안전하게, 한 식탁에서 즐겁게 먹을 수 있도록 돕는 맞춤형 식단 관리 서비스
 
 ## Project Introduction
-<img width="1366" height="4096" alt="우리식 1" src="https://github.com/user-attachments/assets/dbeabecb-9501-4323-8f41-533b2eef2231" />
+<img src="https://github.com/user-attachments/assets/dbeabecb-9501-4323-8f41-533b2eef2231" width="700" />
 
+### 🧩 서비스 한 줄 요약
+알레르기 정보를 기반으로  
+**안전한 레시피만 골라 추천하는 가족 맞춤 식단 서비스**
 
+### ✨ 주요 기능
+- 알레르기 자동 판별
+- 안전 / 별점 / 위시리스트 기반 추천
+- 변형 레시피 제공
 <br>
 
 ---
