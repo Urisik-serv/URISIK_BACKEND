@@ -2,8 +2,10 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 export const options = {
-  vus: 1,          // 동시 사용자 수 (hey -c 1 대응)
-  iterations: 50,  // 총 요청 수 (hey -n 50 대응)
+    vus: 1,          // 동시 사용자 수 (hey -c 1 대응)
+    iterations: 50,  // 총 요청 수 (hey -n 50 대응)
+    maxDuration: '30m',
+    gracefulStop: '30s',
 };
 
 const BASE_URL = 'http://localhost:8080';

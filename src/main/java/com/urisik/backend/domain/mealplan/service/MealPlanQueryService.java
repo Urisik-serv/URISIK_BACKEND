@@ -174,28 +174,46 @@ public class MealPlanQueryService {
         return new GetMealPlanResDTO.WeeklyMealPlanResDTO(mealPlan.getId(), mealPlan.getWeekStartDate(), slots);
     }
 
-    /** 최근 1개월 식단 조회 */
+    /** 기간별 식단 기록 조회 (fromDate ~ toDate) */
     @Transactional(readOnly = true)
-    public GetMealPlanResDTO.MonthlyMealPlanResDTO getLastMonthMealPlan(Long memberId, Long familyRoomId) {
+    public GetMealPlanResDTO.MealPlanHistoryResDTO getMealPlanHistory(
+            Long memberId,
+            Long familyRoomId,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
         familyRoomService.validateMember(memberId, familyRoomId);
 
-        LocalDate to = LocalDate.now(KST);
-        LocalDate from = to.minusMonths(1);
+        LocalDate today = LocalDate.now(KST);
+
+        LocalDate from = (fromDate == null) ? today.minusMonths(1) : fromDate;
+        LocalDate to = (toDate == null) ? today : toDate;
+
+        // Defensive: if caller swaps dates, normalize to from <= to
+        if (from.isAfter(to)) {
+            LocalDate tmp = from;
+            from = to;
+            to = tmp;
+        }
+
+        // Guard: prevent excessive range queries (max 1 year)
+        if (to.isAfter(from.plusYears(1))) {
+            throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_DATE_RANGE_TOO_WIDE);
+        }
 
         LocalDate startWeek = normalizeToMonday(from);
         LocalDate endWeek = normalizeToMonday(to);
 
         List<MealPlan> plans = mealPlanRepository
-                .findAllByFamilyRoomIdAndWeekStartDateBetweenOrderByWeekStartDateDesc(
+                .findAllByFamilyRoomIdAndWeekStartDateBetweenOrderByWeekStartDateAsc(
                         familyRoomId, startWeek, endWeek
                 )
                 .stream()
                 .filter(mp -> mp.getStatus() == MealPlanStatus.CONFIRMED)
-                .sorted(Comparator.comparing(MealPlan::getWeekStartDate))
                 .toList();
 
         if (plans.isEmpty()) {
-            return new GetMealPlanResDTO.MonthlyMealPlanResDTO(from, to, List.of());
+            return new GetMealPlanResDTO.MealPlanHistoryResDTO(from, to, List.of());
         }
 
         Set<SlotRefKey> refKeys = new HashSet<>();
@@ -252,7 +270,7 @@ public class MealPlanQueryService {
             weeks.add(new GetMealPlanResDTO.WeekHistoryDTO(mp.getId(), mp.getWeekStartDate(), days));
         }
 
-        return new GetMealPlanResDTO.MonthlyMealPlanResDTO(from, to, weeks);
+        return new GetMealPlanResDTO.MealPlanHistoryResDTO(from, to, weeks);
     }
 
     // ----------------- resolve helpers -----------------
