@@ -1,5 +1,8 @@
 package com.urisik.backend.domain.mealplan.service;
 
+import com.urisik.backend.domain.recipe.entity.TransformedRecipeStepImage;
+import com.urisik.backend.domain.recipe.repository.TransformedRecipeStepImageRepository;
+
 import com.urisik.backend.domain.recipe.entity.RecipeStep;
 import com.urisik.backend.domain.recipe.repository.RecipeStepRepository;
 
@@ -35,6 +38,7 @@ public class MealPlanQueryService {
     private final TransformedRecipeRepository transformedRecipeRepository;
     private final FamilyRoomService familyRoomService;
     private final RecipeStepRepository recipeStepRepository;
+    private final TransformedRecipeStepImageRepository transformedRecipeStepImageRepository;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -372,6 +376,22 @@ public class MealPlanQueryService {
             }
         }
 
+        // Load transformed recipe step images
+        Map<Long, Map<Integer, String>> trStepImageByTrId = new HashMap<>();
+        if (!transformedIds.isEmpty()) {
+            List<Long> trIds = new ArrayList<>(transformedIds);
+            List<TransformedRecipeStepImage> imgs =
+                    transformedRecipeStepImageRepository
+                            .findAllByTransformedRecipeIdInOrderByTransformedRecipeIdAscStepOrderAsc(trIds);
+
+            for (TransformedRecipeStepImage img : imgs) {
+                if (img == null) continue;
+                trStepImageByTrId
+                        .computeIfAbsent(img.getTransformedRecipeId(), k -> new HashMap<>())
+                        .put(img.getStepOrder(), img.getImageUrl());
+            }
+        }
+
         // resolved: storedId == transformedRecipeId
         for (Long storedId : transformedIds) {
             TransformedRecipe tr = trById.get(storedId);
@@ -388,33 +408,43 @@ public class MealPlanQueryService {
                 title = "(레시피 정보를 불러올 수 없음)";
             }
 
-            String imageUrl = null;
+            String baseTitleImageUrl = null;
             if (base != null && base.getRecipeExternalMetadata() != null) {
-                imageUrl = base.getRecipeExternalMetadata().getThumbnailImageUrl();
+                baseTitleImageUrl = base.getRecipeExternalMetadata().getThumbnailImageUrl();
             }
+
+            String titleImageUrl = firstNonBlank(tr.getImageUrl(), baseTitleImageUrl);
 
             Long baseRecipeId = (tr.getBaseRecipe() == null ? null : tr.getBaseRecipe().getId());
             List<GetMealPlanResDTO.MealPlanRecipeStepDTO> baseSteps = (baseRecipeId == null)
                     ? List.of()
                     : stepsByRecipeId.getOrDefault(baseRecipeId, List.of());
 
-            // Fallback: if metadata image is missing, use the first step image from the base recipe
-            if ((imageUrl == null || imageUrl.isBlank()) && !baseSteps.isEmpty()) {
-                String stepImg = baseSteps.get(0).imageUrl();
-                if (stepImg != null && !stepImg.isBlank()) {
-                    imageUrl = stepImg;
-                }
+            List<String> trStepDescriptions = splitInstructionsToSteps(tr.getInstructionsRaw());
+            Map<Integer, String> stepImgMap = trStepImageByTrId.getOrDefault(tr.getId(), Map.of());
+
+            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> steps = new ArrayList<>();
+            int max = Math.max(
+                    trStepDescriptions == null ? 0 : trStepDescriptions.size(),
+                    stepImgMap.keySet().stream().mapToInt(Integer::intValue).max().orElse(0)
+            );
+
+            for (int i = 1; i <= max; i++) {
+                String desc = (trStepDescriptions != null && i <= trStepDescriptions.size())
+                        ? trStepDescriptions.get(i - 1)
+                        : null;
+                String img = stepImgMap.get(i);
+                steps.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(i, desc, img));
             }
 
-            List<String> trStepDescriptions = splitInstructionsToSteps(tr.getInstructionsRaw());
-            List<GetMealPlanResDTO.MealPlanRecipeStepDTO> steps = buildTransformedSteps(baseSteps, trStepDescriptions);
-            steps = fillStepImageWithTitleImage(steps, imageUrl);
+            // Fallback: if step image is missing, use title image
+            steps = fillStepImageWithTitleImage(steps, titleImageUrl);
 
             resolved.put(new SlotRefKey(MealPlan.SlotRefType.TRANSFORMED_RECIPE, storedId), new ResolvedRecipe(
                     baseRecipeId,
                     tr.getId(),
                     title,
-                    imageUrl,
+                    titleImageUrl,
                     base == null ? (tr.getIngredientsRaw() == null ? "" : tr.getIngredientsRaw()) : pickIngredients(tr, base),
                     steps
             ));
@@ -491,6 +521,12 @@ public class MealPlanQueryService {
     private String pickIngredients(TransformedRecipe tr, Recipe base) {
         String v = tr == null ? null : tr.getIngredientsRaw();
         return (v == null || v.isBlank()) ? (base == null ? null : base.getIngredientsRaw()) : v;
+    }
+
+    private static String firstNonBlank(String primary, String fallback) {
+        if (primary != null && !primary.isBlank()) return primary;
+        if (fallback != null && !fallback.isBlank()) return fallback;
+        return null;
     }
 
     private static List<String> splitInstructionsToSteps(String raw) {
