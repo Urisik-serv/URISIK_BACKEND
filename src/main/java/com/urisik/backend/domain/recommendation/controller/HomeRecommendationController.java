@@ -2,7 +2,7 @@ package com.urisik.backend.domain.recommendation.controller;
 
 import com.urisik.backend.domain.recommendation.dto.res.HighScoreRecommendationResponseDTO;
 import com.urisik.backend.domain.recommendation.dto.res.HomeSafeRecipeResponseDTO;
-import com.urisik.backend.domain.recommendation.enums.HomeSuccessCode;
+import com.urisik.backend.domain.recommendation.enums.RecommendationSuccessCode;
 import com.urisik.backend.domain.recommendation.service.HighScoreRecommendationService;
 import com.urisik.backend.domain.recommendation.service.SafeHighScoreRecommendationService;
 import com.urisik.backend.domain.recommendation.service.WishHighScoreRecommendationService;
@@ -35,7 +35,7 @@ public class HomeRecommendationController {
             @AuthenticationPrincipal Long loginUserId
     ) {
         return ApiResponse.onSuccess(
-                RecipeSuccessCode.HOME_SAFE_RECIPE_OK,
+                RecommendationSuccessCode.HOME_SAFE_RECIPE_OK,
                 homeRecommendationService.recommendSafeRecipes(loginUserId)
         );
     }
@@ -55,7 +55,7 @@ public class HomeRecommendationController {
                 highScoreRecommendationService.recommend(loginUserId, category);
 
         return ApiResponse.onSuccess(
-                HomeSuccessCode.RECOMMEND_HIGH_SCORE_OK,
+                RecommendationSuccessCode.RECOMMEND_HIGH_SCORE_OK,
                 result
         );
     }
@@ -72,7 +72,7 @@ public class HomeRecommendationController {
             @RequestParam(required = false) String category
     ) {
         return ApiResponse.onSuccess(
-                HomeSuccessCode.RECOMMEND_SAFE_HIGH_SCORE_OK,
+                RecommendationSuccessCode.RECOMMEND_SAFE_HIGH_SCORE_OK,
                 safeHighScoreRecommendationService.recommendSafeRecipes(loginUserId, category)
         );
     }
@@ -89,7 +89,7 @@ public class HomeRecommendationController {
             @RequestParam(required = false) String category
     ) {
         return ApiResponse.onSuccess(
-                HomeSuccessCode.RECOMMEND_WISH_HIGH_SCORE_OK,
+                RecommendationSuccessCode.RECOMMEND_WISH_HIGH_SCORE_OK,
                 wishHighScoreRecommendationService.recommend(loginUserId, category)
         );
     }

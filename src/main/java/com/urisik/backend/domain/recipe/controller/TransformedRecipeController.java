@@ -27,9 +27,21 @@ public class TransformedRecipeController {
             @PathVariable Long recipeId,
             @AuthenticationPrincipal Long loginUserId
     ) {
+        TransformedRecipeCreateResponseDTO result =
+                service.create(recipeId, loginUserId);
+
+        // 변형할 레시피가 없는 경우
+        if (result == null) {
+            return ApiResponse.onSuccess(
+                    RecipeSuccessCode.RECIPE_NO_TRANSFORM,
+                    null
+            );
+        }
+
+        // 변형 레시피 생성 성공
         return ApiResponse.onSuccess(
                 RecipeSuccessCode.RECIPE_TRANSFORM_CREATED,
-                service.create(recipeId, loginUserId)
+                result
         );
     }
 
@@ -40,7 +52,7 @@ public class TransformedRecipeController {
     )
     public ApiResponse<TransformedRecipeDetailResponseDTO> getDetail(
             @PathVariable Long transformedRecipeId,
-            @AuthenticationPrincipal Long loginUserId   // ⭐ 여기
+            @AuthenticationPrincipal Long loginUserId   // 여기
     ) {
         TransformedRecipeDetailResponseDTO result =
                 transformedRecipeReadService.getTransformedRecipeDetail(

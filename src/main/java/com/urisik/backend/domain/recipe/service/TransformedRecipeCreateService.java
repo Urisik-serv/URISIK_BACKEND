@@ -78,10 +78,7 @@ public class TransformedRecipeCreateService {
                 allergySubstitutionService.generateSubstitutionRules(familyRoomId, ingredients);
 
         if (rules.isEmpty()) {
-            throw new GeneralException(
-                    RecipeErrorCode.RECIPE_NO_ALLERGY_RISK,
-                    "알레르기 대체가 필요 없는 레시피입니다."
-            );
+            return null;
         }
 
         // 5️. 프롬프트 생성
