@@ -1,7 +1,7 @@
 ## 🍽️Urisik | 알레르기 가족 모두가 안전하게, 한 식탁에서 즐겁게 먹을 수 있도록 돕는 맞춤형 식단 관리 서비스
 
 ## Project Introduction
-<img src="https://github.com/user-attachments/assets/dbeabecb-9501-4323-8f41-533b2eef2231" width="700" />
+<img src="https://github.com/user-attachments/assets/dbeabecb-9501-4323-8f41-533b2eef2231" width="500" />
 
 ### 🧩 서비스 한 줄 요약
 알레르기 정보를 기반으로  
@@ -60,15 +60,7 @@
 
 ## ERD
 
-<img width="686" height="879" alt="image" src="https://github.com/user-attachments/assets/0892439f-6565-41ac-984b-492d760bc024" />
-
-
-<details>
-<summary>🔍 ERD 자세히 보기</summary>
-
-<img src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" width="1000" />
-
-</details>
+<img src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" width="800" />
 
 ---
 
