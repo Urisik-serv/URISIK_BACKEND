@@ -162,6 +162,21 @@ public class FamilyMemberProfileController {
 
         return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_DELETE,result);
     }
+    /*-----------------------------------------------------------------
+    RecommendFood
+
+    */
 
 
+//사용자에게 추천
+    @GetMapping("/{familyRoomId}/profile/recommend")
+    public ApiResponse<WishListResponse.Recommendation> getMyFoodRecommendations(
+            @PathVariable Long familyRoomId,
+            @AuthenticationPrincipal Long memberId
+    ) {
+
+
+        WishListResponse.Recommendation result = memberWishListService.getMyRecommendation(familyRoomId,memberId);
+        return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_GET, result);
+    }
 }

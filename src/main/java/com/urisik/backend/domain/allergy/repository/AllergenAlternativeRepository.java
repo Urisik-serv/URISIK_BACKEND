@@ -10,11 +10,8 @@ import java.util.List;
 
 public interface AllergenAlternativeRepository extends JpaRepository<AllergenAlternative, Long> {
 
-
     @EntityGraph(attributePaths = "ingredient")
     List<AllergenAlternative> findByAllergenIn(List<Allergen> allergens);
-
-
 
     boolean existsByAllergenAndIngredient(Allergen allergen, AlternativeIngredient ingredient);
 

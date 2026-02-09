@@ -1,6 +1,7 @@
 package com.urisik.backend.domain.member.dto.res;
 
 import com.urisik.backend.domain.member.entity.MemberWishList;
+import com.urisik.backend.domain.recipe.enums.FoodSafety;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -51,6 +52,7 @@ public class WishListResponse {
         private String foodImage;
         private double avgScore;
         private List<String> recipeIngredients;
+        private FoodSafety foodSafety;
     }
 
     @Getter
@@ -63,6 +65,16 @@ public class WishListResponse {
         private String foodImage;
         private double avgScore;
         private List<String> recipeIngredients;
+        private FoodSafety foodSafety;
     }
+    @Getter
+    @Builder
+    public static class Recommendation {
+        private List<String> recipeName;
+
+
+    }
+
+
 
 }

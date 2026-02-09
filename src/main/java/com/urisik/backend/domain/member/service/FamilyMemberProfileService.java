@@ -72,7 +72,8 @@ public class FamilyMemberProfileService {
 
 
         // 엄마/아빠만 중복 제한
-        if (requestedRole == FamilyRole.MOM || requestedRole == FamilyRole.DAD) {
+        if (requestedRole == FamilyRole.MOM || requestedRole == FamilyRole.DAD
+                || requestedRole == FamilyRole.GRANDMA || requestedRole == FamilyRole.GRANDPA ) {
 
             boolean alreadyExists = familyMemberProfiles.stream()
                     .anyMatch(p -> p.getFamilyRole() == requestedRole);
@@ -149,8 +150,9 @@ public class FamilyMemberProfileService {
         // 3) role 변경 + (MOM/DAD) 중복 체크
         if (req.getRole() != null) {
             FamilyRole newRole = req.getRole();
-
-            if (newRole == FamilyRole.MOM || newRole == FamilyRole.DAD) {
+//FamilyRole.GRANDPA
+            if (newRole == FamilyRole.MOM || newRole == FamilyRole.DAD
+                    || newRole == FamilyRole.GRANDPA  || newRole == FamilyRole.GRANDMA  ) {
                 boolean alreadyExists = familyMemberProfileRepository
                         .existsByFamilyRoom_IdAndFamilyRoleAndIdNot(
                                 familyRoomId,
