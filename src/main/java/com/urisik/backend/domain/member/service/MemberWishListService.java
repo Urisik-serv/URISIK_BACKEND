@@ -5,6 +5,7 @@ import com.urisik.backend.domain.familyroom.repository.FamilyWishListExclusionRe
 import com.urisik.backend.domain.member.dto.req.WishListRequest;
 import com.urisik.backend.domain.member.dto.res.WishListResponse;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
+import com.urisik.backend.domain.member.entity.Member;
 import com.urisik.backend.domain.member.entity.MemberTransformedRecipeWish;
 import com.urisik.backend.domain.member.entity.MemberWishList;
 import com.urisik.backend.domain.member.exception.MemberException;
@@ -17,23 +18,31 @@ import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
+import com.urisik.backend.domain.review.entity.Review;
+import com.urisik.backend.domain.review.repository.ReviewRepository;
+import com.urisik.backend.global.auth.exception.AuthenExcetion;
+import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
+import com.urisik.backend.global.util.IngredientParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class MemberWishListService {
-
+    //파서
+    private final IngredientParser ingredientParser;
+    // 레포
     private final RecipeRepository recipeRepository;
     private final MemberWishListRepository memberWishListRepository;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final FamilyWishListExclusionRepository familyWishListExclusionRepository;
     private final TransformedRecipeRepository transformedRecipeRepository;
     private final MemberTransformedRecipeWishRepository memberTransformedRecipeWishRepository;
+    private final ReviewRepository reviewRepository;
 
     @Transactional
     public WishListResponse.PostWishes addWishItems
@@ -282,16 +291,59 @@ public class MemberWishListService {
                 .build();
     }
     public WishListResponse.Recommendation getMyRecommendation
-            (Long familyRoomId, Long memberId, Long profileId) {
+            (Long familyRoomId, Long memberId) {
+
+        //1. 프로필이 있는지 검색
+        FamilyMemberProfile profile = familyMemberProfileRepository.findByMember_Id(memberId)
+                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.NO_MEMBER));
+
+        //2. profile.getID + 평점 4이상인 recipe_review 찾기 이떄 recipe_review와 레시피 둘다 가져오기.
+       Long recipeId = reviewRepository.findRandomHighScoreReviewId(profile.getId(),4)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_REVIEW));
+
+       Recipe recipe = recipeRepository.findById(recipeId).orElseThrow(
+               () -> new MemberException(MemberErrorCode.NO_RECIPE)
+       );
+
+        //3.  recipe에 있는 ingredient 필드 파싱 해서 재료들 리스트로 저장. 재료들을 부분으로 가지고 있는 ingredient필드가 있는 레시피 검색== 레시피 리스트로 반환.
+
+        List<String> ingredients = new ArrayList<>(ingredientParser.parseIngredients(recipe.getIngredientsRaw()));
+        Collections.shuffle(ingredients);
+
+        // 4) 재료별 검색해서 최대 5개 모으기(중복 제거)
+        List<Recipe> picked = new ArrayList<>();
+        Set<Long> pickedIds = new HashSet<>();
+
+        for (String ing : ingredients) {
+            if (picked.size() >= 5) break;
+
+            List<Long> exclude = pickedIds.isEmpty() ? null : new ArrayList<>(pickedIds);
+
+            // 재료 하나당 최대 5개만 뽑고, 그 중에서 중복 제거하며 추가
+            List<Recipe> found = recipeRepository.findByIngredientLikeExcludeIdsRandom(
+                    ing,
+                    exclude,
+                    PageRequest.of(0, 5)
+            );
+
+            for (Recipe r : found) {
+                if (pickedIds.add(r.getId())) {
+                    picked.add(r);
+                    if (picked.size() >= 5) break;
+                }
+            }
+        }
+        List<String> recommendations = new ArrayList<>();
+        for(Recipe r : picked) {
+            recommendations.add(r.getTitle());
+        }
 
 
 
-
-
-
-
-
-        return null;
+        //4. 이름들을 Recommendation DTO로 만들고 반환.
+        return WishListResponse.Recommendation.builder()
+                .recipeName(recommendations)
+                .build();
     }
 
 }

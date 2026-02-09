@@ -15,6 +15,9 @@ public enum MemberErrorCode implements BaseErrorCode {
     WISH_NOT_FOUND(HttpStatus.NOT_FOUND,
             "WISH_404",
             "요청한 레시피 위시가 존재하지 않습니다."),
+    NO_REVIEW(HttpStatus.NOT_FOUND,
+            "WISH_404",
+            "4점 이상의 리뷰가 없어서 추천이 없습니다."),
 
     WISH_ALREADY_IN(HttpStatus.CONFLICT,
             "WISH_409",

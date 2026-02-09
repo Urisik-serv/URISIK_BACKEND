@@ -169,15 +169,14 @@ public class FamilyMemberProfileController {
 
 
 //사용자에게 추천
-    @GetMapping("/{familyRoomId}/profile/{profileId}/recommend")
+    @GetMapping("/{familyRoomId}/profile/recommend")
     public ApiResponse<WishListResponse.Recommendation> getMyFoodRecommendations(
             @PathVariable Long familyRoomId,
-            @AuthenticationPrincipal Long memberId,
-            @PathVariable Long profileId
+            @AuthenticationPrincipal Long memberId
     ) {
 
 
-        WishListResponse.Recommendation result = memberWishListService.getMyRecommendation(memberId,familyRoomId, profileId);
+        WishListResponse.Recommendation result = memberWishListService.getMyRecommendation(memberId,familyRoomId);
         return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_GET, result);
     }
 }
