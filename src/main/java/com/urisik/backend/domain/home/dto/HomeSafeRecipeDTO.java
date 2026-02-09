@@ -9,15 +9,13 @@ public class HomeSafeRecipeDTO {
 
     private String id;
     private String title;
-
     private String imageUrl;
-    private String category;
-
-    private double avgScore;
-    private int reviewCount;
-
+    private String description;
     private int wishCount;
 
+    private String category;
+    private double avgScore;
+    private int reviewCount;
     private boolean isTransformed;
     private boolean isSafe;
 

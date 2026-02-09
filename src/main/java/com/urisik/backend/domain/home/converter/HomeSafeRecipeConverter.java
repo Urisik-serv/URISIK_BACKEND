@@ -19,10 +19,11 @@ public class HomeSafeRecipeConverter {
                 c.getId().toString(),
                 c.getTitle(),
                 c.getImageUrl(),
+                c.getDescription(),
+                c.getWishCount(),
                 c.getCategory(),
                 c.getAvgScore(),
                 c.getReviewCount(),
-                c.getWishCount(),
                 isTransformed,
                 true
         );

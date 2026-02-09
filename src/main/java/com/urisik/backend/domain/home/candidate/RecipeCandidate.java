@@ -1,7 +1,10 @@
 package com.urisik.backend.domain.home.candidate;
 
+import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 public class RecipeCandidate implements HomeRecipeCandidate {
@@ -19,6 +22,20 @@ public class RecipeCandidate implements HomeRecipeCandidate {
     }
 
     @Override
+    public List<String> getIngredients() {
+        return RecipeTextParser.parseIngredients(
+                recipe.getIngredientsRaw()
+        );
+    }
+
+    @Override
+    public String getDescription() {
+        return String.join(", ", getIngredients());
+    }
+
+    @Override public int getWishCount() { return recipe.getWishCount(); }
+
+    @Override
     public String getCategory() {
         return recipe.getRecipeExternalMetadata() != null
                 ? recipe.getRecipeExternalMetadata().getCategory()
@@ -27,12 +44,7 @@ public class RecipeCandidate implements HomeRecipeCandidate {
 
     @Override public double getAvgScore() { return recipe.getAvgScore(); }
     @Override public int getReviewCount() { return recipe.getReviewCount(); }
-    @Override public int getWishCount() { return recipe.getWishCount(); }
 
-    @Override
-    public String getIngredientsRaw() {
-        return recipe.getIngredientsRaw();
-    }
 
 }
 
