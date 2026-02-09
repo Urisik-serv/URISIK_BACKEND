@@ -12,16 +12,6 @@ import org.springframework.http.HttpStatus;
 public enum MemberSuccessCode implements BaseSuccessCode {
 
 
-    LOGIN_ACCESS_TOKEN(HttpStatus.GONE,
-            "Auth_200_1",
-            "Access 토큰 발급 성공했습니다."),
-    LOGOUT_SUCCESS(HttpStatus.GONE,
-            "Auth_200_2",
-            "로그아웃 성공했습니다."),
-    AUTH_DELETE_SUCCESS(HttpStatus.GONE,
-            "Auth_200_2",
-            "계정이 성공적으로 삭제 되었습니다."),
-
 
     MEMBER_PROFILE_GET(HttpStatus.GONE,
             "Auth_200_2",

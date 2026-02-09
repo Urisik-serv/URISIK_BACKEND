@@ -281,6 +281,17 @@ public class MemberWishListService {
                 .hasNext(hasNext)
                 .build();
     }
+    public WishListResponse.Recommendation getMyRecommendation
+            (Long familyRoomId, Long memberId, Long profileId) {
 
+
+
+
+
+
+
+
+        return null;
+    }
 
 }

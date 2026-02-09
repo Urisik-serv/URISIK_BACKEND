@@ -64,5 +64,14 @@ public class WishListResponse {
         private double avgScore;
         private List<String> recipeIngredients;
     }
+    @Getter
+    @Builder
+    public static class Recommendation {
+        private List<String> recipeName;
+
+
+    }
+
+
 
 }

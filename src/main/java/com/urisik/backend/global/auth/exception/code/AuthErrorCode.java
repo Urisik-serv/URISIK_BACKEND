@@ -11,29 +11,29 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum AuthErrorCode implements BaseErrorCode {
 
-    NO_HEADER(HttpStatus.GONE,
-            "AUTH_200",
-            "요청에 헤더가 없습니다."),
+    NO_HEADER(HttpStatus.BAD_REQUEST,
+            "AUTH_400",
+            "요청에 인증 헤더가 없습니다."),
 
-    NOT_REFRESH_TOKEN(HttpStatus.GONE,
-            "AUTH_200",
+    NOT_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED,
+            "AUTH_401",
             "리프레시 토큰이 아닙니다."),
 
-    TOKEN_NOT_VALID(HttpStatus.GONE,
-            "AUTH_200",
+    TOKEN_NOT_VALID(HttpStatus.UNAUTHORIZED,
+            "AUTH_401",
             "토큰이 유효하지 않습니다."),
 
-    TYPE_ERROR(HttpStatus.GONE,
-            "AUTH_200",
+    TYPE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,
+            "AUTH_500_TYPE_ERROR",
             "서버 내부 오류"),
 
-    NO_TOKEN(HttpStatus.GONE,
-            "AUTH_200",
-            "인증되지 않은 사용자 입니다."),
+    NO_TOKEN(HttpStatus.UNAUTHORIZED,
+            "AUTH_401",
+            "인증되지 않은 사용자입니다."),
 
-    NO_MEMBER(HttpStatus.GONE,
-            "AUTH_200",
-            "해당하는 사용자가 없습니다.");
+    NO_MEMBER(HttpStatus.NOT_FOUND,
+            "MEMBER_404",
+            "해당 사용자가 없습니다.");
 
 
 
