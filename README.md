@@ -60,7 +60,8 @@
 
 ## ERD
 
-<img src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" width="700" />
+<img width="686" height="879" alt="image" src="https://github.com/user-attachments/assets/0892439f-6565-41ac-984b-492d760bc024" />
+
 
 <details>
 <summary>🔍 ERD 자세히 보기</summary>
