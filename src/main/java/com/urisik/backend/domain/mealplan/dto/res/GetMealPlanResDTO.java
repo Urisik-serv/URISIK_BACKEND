@@ -55,8 +55,8 @@ public class GetMealPlanResDTO {
             String ingredients
     ) {}
 
-    /** 최근 1개월 식단 조회 응답 */
-    public record MonthlyMealPlanResDTO(
+    /** 기간별 식단 기록 조회 응답 (fromDate ~ toDate) */
+    public record MealPlanHistoryResDTO(
             LocalDate fromDate,
             LocalDate toDate,
             List<WeekHistoryDTO> weeks

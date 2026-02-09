@@ -195,6 +195,7 @@ public class FamilyWishListQueryService {
                     agg.getImageUrl(),
                     agg.getAvgScore(),
                     agg.getCategory(),
+                    agg.getIngredientsRaw(),
                     new FamilyWishListItemResDTO.SourceProfile(new ArrayList<>(agg.getProfiles().values()))
             ));
         }
