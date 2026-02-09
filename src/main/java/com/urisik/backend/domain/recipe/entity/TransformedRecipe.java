@@ -62,6 +62,9 @@ public class TransformedRecipe {
     @Column(columnDefinition = "MEDIUMTEXT")
     private String substitutionSummaryJson;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     /* =========================
        생성자
        ========================= */
@@ -71,7 +74,8 @@ public class TransformedRecipe {
             String title,
             String ingredientsRaw,
             String instructionsRaw,
-            String substitutionSummaryJson
+            String substitutionSummaryJson,
+            String imageUrl
     ) {
         this.baseRecipe = baseRecipe;
         this.familyRoomId = familyRoomId;
@@ -79,6 +83,7 @@ public class TransformedRecipe {
         this.ingredientsRaw = ingredientsRaw;
         this.instructionsRaw = instructionsRaw;
         this.substitutionSummaryJson = substitutionSummaryJson;
+        this.imageUrl = imageUrl;
     }
 
     /* =========================

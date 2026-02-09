@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
@@ -121,5 +122,23 @@ public class S3Uploader {
             fileName = "image" + extension;
         }
         return fileName;
+    }
+
+    public String uploadBytes(
+            byte[] data,
+            String fileName,
+            String contentType,
+            String dirName
+    ) {
+        String safeContentType =
+                (contentType == null || contentType.isBlank())
+                        ? "image/png"
+                        : contentType;
+
+        try (ByteArrayInputStream is = new ByteArrayInputStream(data)) {
+            return putS3(is, fileName, safeContentType, data.length, dirName);
+        } catch (Exception e) {
+            throw new S3Exception(S3ErrorCode.S3_UPLOAD_FAIL);
+        }
     }
 }

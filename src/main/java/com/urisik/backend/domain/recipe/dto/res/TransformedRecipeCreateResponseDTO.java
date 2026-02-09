@@ -8,11 +8,10 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class TransformedRecipeCreateResponse {
+public class TransformedRecipeCreateResponseDTO {
 
     private Long transformedRecipeId;
     private String title;
-    private String imageUrl;
     private Long baseRecipeId;
     private boolean validationStatus;
 

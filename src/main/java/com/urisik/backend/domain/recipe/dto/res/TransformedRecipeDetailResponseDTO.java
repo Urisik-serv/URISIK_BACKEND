@@ -12,7 +12,6 @@ public class TransformedRecipeDetailResponseDTO {
 
     private Long transformedRecipeId;
     private String title;
-    private String imageUrl;
     private Long baseRecipeId;
 
     private List<String> ingredients;
