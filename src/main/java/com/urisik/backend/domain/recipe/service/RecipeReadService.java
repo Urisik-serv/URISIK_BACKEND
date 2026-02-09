@@ -100,7 +100,7 @@ public class RecipeReadService {
 
     /**
      * 외부 API 레시피 상세 조회 + 내부 저장
-     * (이 메서드는 알레르기 판별 ❌ — 저장 전용)
+     * (이 메서드는 알레르기 판별 X — 저장 전용)
      */
     @Transactional
     public Recipe loadOrCreateByExternalId(String rcpSeq) {

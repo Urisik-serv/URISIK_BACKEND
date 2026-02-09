@@ -28,6 +28,9 @@ public class Recipe {
     @Column(nullable = false)
     private String title;
 
+    @OneToOne(mappedBy = "recipe", fetch = FetchType.LAZY, optional = false)
+    private RecipeExternalMetadata recipeExternalMetadata;
+
     // 외부 API 원본 재료 문자열 그대로
     @Lob
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
