@@ -54,13 +54,20 @@
 
 ##  Architecture Diagram
 
-<img width="1536" height="1024" alt="ChatGPT Image 2026년 1월 29일 오후 03_06_54" src="https://github.com/user-attachments/assets/ba8962eb-3e53-45d6-ac7d-4050eae0dc2d" />
+<img src="https://github.com/user-attachments/assets/ba8962eb-3e53-45d6-ac7d-4050eae0dc2d" width="800" />
 
 ---
 
 ## ERD
 
-<img width="2460" height="2162" alt="URISIK (6)" src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" />
+<img src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" width="700" />
+
+<details>
+<summary>🔍 ERD 자세히 보기</summary>
+
+<img src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" width="1000" />
+
+</details>
 
 ---
 
