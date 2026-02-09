@@ -25,6 +25,8 @@ public class RecipeSearchResponseDTO {
 
         private String description;
 
+        private Boolean safe; //외부 레시피에서 처음 불러오면 null
+
         private ExternalSnapshot external;
     }
 

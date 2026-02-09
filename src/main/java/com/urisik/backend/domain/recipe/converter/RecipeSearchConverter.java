@@ -24,7 +24,8 @@ public class RecipeSearchConverter {
     /** 내부 원본 레시피 */
     public static RecipeSearchResponseDTO.Item fromRecipe(
             Recipe recipe,
-            RecipeExternalMetadata meta
+            RecipeExternalMetadata meta,
+            Boolean safe
     ) {
         return new RecipeSearchResponseDTO.Item(
                 recipe.getId().toString(),
@@ -36,6 +37,7 @@ public class RecipeSearchConverter {
                 recipe.getReviewCount(),
                 recipe.getWishCount(),
                 buildRecipeDescription(recipe),
+                safe,
                 null
 
         );
@@ -44,7 +46,8 @@ public class RecipeSearchConverter {
     /** 변형 레시피 */
     public static RecipeSearchResponseDTO.Item fromTransformed(
             TransformedRecipe tr,
-            RecipeExternalMetadata meta
+            RecipeExternalMetadata meta,
+            Boolean safe
     ) {
         return new RecipeSearchResponseDTO.Item(
                 tr.getId().toString(),
@@ -56,6 +59,7 @@ public class RecipeSearchConverter {
                 tr.getReviewCount(),
                 tr.getWishCount(),
                 buildTransformedDescription(tr),
+                safe,
                 null
         );
     }
@@ -88,6 +92,7 @@ public class RecipeSearchConverter {
                 row.getRcpNm(),
                 row.getImageSmall(),
                 row.getCategory(),
+                null,
                 null,
                 null,
                 null,
