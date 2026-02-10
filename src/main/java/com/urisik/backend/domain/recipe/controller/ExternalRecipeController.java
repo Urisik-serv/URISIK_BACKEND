@@ -18,7 +18,7 @@ public class ExternalRecipeController {
 
     private final ExternalRecipeService externalRecipeService;
 
-    @PostMapping("/external")
+    @PostMapping("/external/import")
     @Operation(summary = "외부 레시피 상세 저장 & 내부 레시피 생성 API", description = "외부 레시피를 내부 레시피로 저장하는 api 입니다.")
     public ApiResponse<ExternalRecipeUpsertResponseDTO> upsertExternal(
             @RequestBody ExternalRecipeSnapshotDTO snapshot
