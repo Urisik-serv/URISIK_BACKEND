@@ -1,6 +1,5 @@
 package com.urisik.backend.domain.recipe.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recipe.converter.RecipeSearchConverter;
@@ -14,6 +13,7 @@ import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.dto.F
 import com.urisik.backend.domain.recipe.repository.RecipeExternalMetadataRepository;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
+import com.urisik.backend.domain.searchLog.service.SearchLogService;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +33,7 @@ public class RecipeSearchService {
     private final FoodSafetyRecipeClient foodSafetyRecipeClient;
     private final AllergyRiskService allergyRiskService;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
+    private final SearchLogService searchLogService;
 
     private static final Map<String, Integer> TYPE_PRIORITY = Map.of(
             "TRANSFORMED", 0,
@@ -43,6 +43,8 @@ public class RecipeSearchService {
 
     @Transactional(readOnly = true)
     public RecipeSearchResponseDTO search(Long loginUserId,String keyword, int page, int size) {
+
+        searchLogService.logSearch(loginUserId, keyword);
 
         FamilyMemberProfile profile =
                 familyMemberProfileRepository.findByMember_Id(loginUserId)
