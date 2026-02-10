@@ -176,7 +176,7 @@ public class FamilyWishListQueryService {
             String type = toApiType(key.type());
             Long id = key.id();
             String title = agg.getTitle();
-            String allergyStatus = agg.isAllergySafe() ? "SAFE" : "RISK";
+            String allergyStatus = agg.isAllergySafe() ? "SAFE" : "DANGEROUS";
 
             items.add(new FamilyWishListItemResDTO(
                     type,

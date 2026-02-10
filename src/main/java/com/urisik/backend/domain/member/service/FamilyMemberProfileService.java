@@ -73,7 +73,7 @@ public class FamilyMemberProfileService {
 
         // 엄마/아빠만 중복 제한
         if (requestedRole == FamilyRole.MOM || requestedRole == FamilyRole.DAD
-                || requestedRole == FamilyRole.GRANDMA || requestedRole == FamilyRole.GRANDPA ) {
+                || requestedRole == FamilyRole.GRANDMOTHER || requestedRole == FamilyRole.GRANDFATHER ) {
 
             boolean alreadyExists = familyMemberProfiles.stream()
                     .anyMatch(p -> p.getFamilyRole() == requestedRole);
@@ -152,7 +152,7 @@ public class FamilyMemberProfileService {
             FamilyRole newRole = req.getRole();
 //FamilyRole.GRANDPA
             if (newRole == FamilyRole.MOM || newRole == FamilyRole.DAD
-                    || newRole == FamilyRole.GRANDPA  || newRole == FamilyRole.GRANDMA  ) {
+                    || newRole == FamilyRole.GRANDMOTHER  || newRole == FamilyRole.GRANDFATHER  ) {
                 boolean alreadyExists = familyMemberProfileRepository
                         .existsByFamilyRoom_IdAndFamilyRoleAndIdNot(
                                 familyRoomId,
