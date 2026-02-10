@@ -34,7 +34,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         addRefreshCookie(response, refreshToken);
 
         // 프론트 특정 url 로컬에서 : "http://localhost:5173/login/callback"
-        response.sendRedirect("http://localhost:5173/login/callback");
+        response.sendRedirect("https://urisik.vercel.app/login/callback");
     }
     // 배포 에선 "https://urisik.vercel.app/login/callback"
 
