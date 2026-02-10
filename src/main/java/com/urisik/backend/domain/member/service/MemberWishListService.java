@@ -303,7 +303,7 @@ public class MemberWishListService {
                             .wishId(w.getId())
                             .transformedRecipeId(w.getRecipe().getId())
                             .transformedRecipeName(w.getRecipe().getTitle())
-                            .foodImage(w.getRecipe().getBaseRecipe().getRecipeExternalMetadata().getImageSmallUrl())
+                            .foodImage(w.getRecipe().getImageUrl())
                             .category(w.getRecipe().getBaseRecipe().getRecipeExternalMetadata().getCategory())
                             .avgScore(w.getRecipe().getAvgScore())
                             .recipeIngredients(RecipeTextParser.parseIngredients(w.getRecipe().getIngredientsRaw()))
