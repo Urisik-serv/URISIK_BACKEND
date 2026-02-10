@@ -39,7 +39,6 @@ public class FamilyMemberProfileService {
     private final S3Uploader s3Uploader;
     private final S3Remover s3Remover;
     private final AllergenAlternativeRepository allergenAlternativeRepository;
-    //
 
     //post
     @Transactional
@@ -71,9 +70,9 @@ public class FamilyMemberProfileService {
         FamilyRole requestedRole = req.getRole();
 
 
-        // 엄마/아빠만 중복 제한
+        // 엄마/아빠/할머니/할아버지 중복 제한
         if (requestedRole == FamilyRole.MOM || requestedRole == FamilyRole.DAD
-                || requestedRole == FamilyRole.GRANDMA || requestedRole == FamilyRole.GRANDPA ) {
+                || requestedRole == FamilyRole.GRANDMOTHER || requestedRole == FamilyRole.GRANDFATHER ) {
 
             boolean alreadyExists = familyMemberProfiles.stream()
                     .anyMatch(p -> p.getFamilyRole() == requestedRole);
@@ -150,9 +149,9 @@ public class FamilyMemberProfileService {
         // 3) role 변경 + (MOM/DAD) 중복 체크
         if (req.getRole() != null) {
             FamilyRole newRole = req.getRole();
-//FamilyRole.GRANDPA
+
             if (newRole == FamilyRole.MOM || newRole == FamilyRole.DAD
-                    || newRole == FamilyRole.GRANDPA  || newRole == FamilyRole.GRANDMA  ) {
+                    || newRole == FamilyRole.GRANDMOTHER  || newRole == FamilyRole.GRANDFATHER  ) {
                 boolean alreadyExists = familyMemberProfileRepository
                         .existsByFamilyRoom_IdAndFamilyRoleAndIdNot(
                                 familyRoomId,

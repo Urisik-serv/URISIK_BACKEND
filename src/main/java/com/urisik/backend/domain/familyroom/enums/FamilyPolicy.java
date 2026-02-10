@@ -4,7 +4,9 @@ import com.urisik.backend.domain.member.enums.FamilyRole;
 
 public enum FamilyPolicy {
     MOTHER_ONLY("엄마"),
-    FATHER_ONLY("아빠");
+    FATHER_ONLY("아빠"),
+    GRANDMOTHER_ONLY("할머니"),
+    GRANDFATHER_ONLY("할아버지");
 
     private final String koreanName;
 
@@ -30,6 +32,8 @@ public enum FamilyPolicy {
         return switch (this) {
             case MOTHER_ONLY -> role == FamilyRole.MOM;
             case FATHER_ONLY -> role == FamilyRole.DAD;
+            case GRANDMOTHER_ONLY -> role == FamilyRole.GRANDMOTHER;
+            case GRANDFATHER_ONLY -> role == FamilyRole.GRANDFATHER;
         };
     }
 }

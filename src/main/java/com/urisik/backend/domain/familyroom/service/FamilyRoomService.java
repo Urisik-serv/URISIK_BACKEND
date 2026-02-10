@@ -72,7 +72,7 @@ public class FamilyRoomService {
         FamilyMemberProfile profile = familyMemberProfileRepository.findByMember_Id(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
-        FamilyRole role = profile.getFamilyRole(); // "MOM" / "DAD" / "SON" / "DAUGHTER"
+        FamilyRole role = profile.getFamilyRole(); // "MOM" / "DAD" / "GRANDMOTHER" / "GRANDFATHER" / "SON" / "DAUGHTER"
         boolean isLeader = familyRoom.getFamilyPolicy().isLeaderRole(role);
 
         // 방장 권한 = 위시리스트 수정 + 식단 생성/수정
@@ -115,9 +115,11 @@ public class FamilyRoomService {
             throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
         }
 
-        // 엄마/아빠 중 하나는 반드시 존재
+        // 엄마/아빠/할머니/할아버지 중 하나는 반드시 존재
         boolean hasMother = req.familyComposition().hasMother();
         boolean hasFather = req.familyComposition().hasFather();
+        boolean hasGrandMother = req.familyComposition().hasGrandMother();
+        boolean hasGrandFather = req.familyComposition().hasGrandFather();
 
         switch (req.familyPolicy()) {
             case MOTHER_ONLY -> {
@@ -125,6 +127,12 @@ public class FamilyRoomService {
             }
             case FATHER_ONLY -> {
                 if (!hasFather) throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
+            }
+            case GRANDMOTHER_ONLY -> {
+                if (!hasGrandMother) throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
+            }
+            case GRANDFATHER_ONLY -> {
+                if (!hasGrandFather) throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
             }
             default -> throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM);
         }

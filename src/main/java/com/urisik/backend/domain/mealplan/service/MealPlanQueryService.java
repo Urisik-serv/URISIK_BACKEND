@@ -420,6 +420,17 @@ public class MealPlanQueryService {
             List<String> trStepDescriptions = splitInstructionsToSteps(tr.getInstructionsRaw());
             Map<Integer, String> stepImgMap = trStepImageByTrId.getOrDefault(tr.getId(), Map.of());
 
+            // Base recipe step image fallback (same stepOrder)
+            Map<Integer, String> baseStepImgByOrder = new HashMap<>();
+            if (baseRecipeId != null) {
+                List<GetMealPlanResDTO.MealPlanRecipeStepDTO> baseSteps = stepsByRecipeId.getOrDefault(baseRecipeId, List.of());
+                for (GetMealPlanResDTO.MealPlanRecipeStepDTO s : baseSteps) {
+                    if (s == null) continue;
+                    if (s.imageUrl() == null || s.imageUrl().isBlank()) continue;
+                    baseStepImgByOrder.put(s.stepOrder(), s.imageUrl());
+                }
+            }
+
             List<GetMealPlanResDTO.MealPlanRecipeStepDTO> steps = new ArrayList<>();
             int max = Math.max(
                     trStepDescriptions == null ? 0 : trStepDescriptions.size(),
@@ -435,6 +446,14 @@ public class MealPlanQueryService {
                 String img = stepImgMap.get(i);
                 if (img != null && img.isBlank()) img = null;
 
+                // If transformed step image is missing, try base recipe step image (same stepOrder)
+                if (img == null) {
+                    String baseImg = baseStepImgByOrder.get(i);
+                    if (baseImg != null && !baseImg.isBlank()) {
+                        img = baseImg;
+                    }
+                }
+
                 // Avoid phantom steps when stepOrder keys are sparse
                 if (desc == null && img == null) {
                     continue;
@@ -443,7 +462,7 @@ public class MealPlanQueryService {
                 steps.add(new GetMealPlanResDTO.MealPlanRecipeStepDTO(i, desc, img));
             }
 
-            // Fallback: if step image is missing, use title image
+            // Fallback: if step image is still missing, use title image
             steps = fillStepImageWithTitleImage(steps, titleImageUrl);
 
             resolved.put(new SlotRefKey(MealPlan.SlotRefType.TRANSFORMED_RECIPE, storedId), new ResolvedRecipe(

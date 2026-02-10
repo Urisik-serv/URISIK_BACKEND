@@ -4,9 +4,9 @@ public enum FamilyRole {
     MOM("엄마"),
     DAD("아빠"),
     SON("아들"),
-    GRANDPA("할아버지"),
-    GRANDMA("할머니"),
-    DAUGHTER("딸");
+    DAUGHTER("딸"),
+    GRANDMOTHER("할머니"),
+    GRANDFATHER("할아버지");
 
     private final String koreanName;
 
