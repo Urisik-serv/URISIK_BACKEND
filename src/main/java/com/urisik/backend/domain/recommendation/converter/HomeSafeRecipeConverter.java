@@ -1,19 +1,19 @@
 package com.urisik.backend.domain.recommendation.converter;
 
-import com.urisik.backend.domain.recommendation.candidate.HomeRecipeCandidate;
-import com.urisik.backend.domain.recommendation.candidate.TransformedRecipeCandidate;
-import com.urisik.backend.domain.recommendation.dto.HomeSafeRecipeDTO;
+import com.urisik.backend.domain.recommendation.candidate.HomeRecommendationRecipeCandidate;
+import com.urisik.backend.domain.recommendation.candidate.RecommendationTransformedRecipeCandidate;
+import com.urisik.backend.domain.recommendation.dto.HomeSafeRecommendationRecipeDTO;
 import org.springframework.stereotype.Component;
 
 @Component
 public class HomeSafeRecipeConverter {
 
-    public HomeSafeRecipeDTO toDto(HomeRecipeCandidate c) {
+    public HomeSafeRecommendationRecipeDTO toDto(HomeRecommendationRecipeCandidate c) {
 
         boolean isTransformed =
-                c instanceof TransformedRecipeCandidate;
+                c instanceof RecommendationTransformedRecipeCandidate;
 
-        return new HomeSafeRecipeDTO(
+        return new HomeSafeRecommendationRecipeDTO(
                 c.getId().toString(),
                 c.getTitle(),
                 c.getImageUrl(),

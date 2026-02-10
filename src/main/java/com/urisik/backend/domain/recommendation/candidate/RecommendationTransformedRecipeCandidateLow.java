@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-public class TransformedRecipeCandidateLow implements HighScoreRecipeCandidate{
+public class RecommendationTransformedRecipeCandidateLow implements HighScoreRecommendationRecipeCandidate {
 
     private final TransformedRecipe tr;
 

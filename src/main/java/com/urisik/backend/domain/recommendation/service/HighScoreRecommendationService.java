@@ -5,8 +5,8 @@ import com.urisik.backend.domain.recommendation.converter.HighScoreRecommendatio
 import com.urisik.backend.domain.recommendation.dto.res.HighScoreRecommendationResponseDTO;
 import com.urisik.backend.domain.recommendation.policy.CategoryMapper;
 import com.urisik.backend.domain.recommendation.policy.UnifiedCategory;
-import com.urisik.backend.domain.recommendation.repository.HomeRepository;
-import com.urisik.backend.domain.recommendation.repository.HomeTransformedRecipeRepository;
+import com.urisik.backend.domain.recommendation.repository.HomeRecommendationRepository;
+import com.urisik.backend.domain.recommendation.repository.HomeTransformedRecommendationRecipeRepository;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recipe.service.AllergyRiskService;
@@ -27,8 +27,8 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class HighScoreRecommendationService {
 
-    private final HomeRepository homeRepository;
-    private final HomeTransformedRecipeRepository homeTransformedRecipeRepository;
+    private final HomeRecommendationRepository homeRecommendationRepository;
+    private final HomeTransformedRecommendationRecipeRepository homeTransformedRecommendationRecipeRepository;
     private final HighScoreRecommendationConverter converter;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final AllergyRiskService allergyRiskService;
@@ -61,7 +61,7 @@ public class HighScoreRecommendationService {
         Long familyRoomId = profile.getFamilyRoom().getId();
 
         Pageable pageable = PageRequest.of(0, 20);
-        List<HighScoreRecipeCandidate> candidates = new ArrayList<>();
+        List<HighScoreRecommendationRecipeCandidate> candidates = new ArrayList<>();
 
         /* =========================
          * 1️. 후보 수집
@@ -69,16 +69,16 @@ public class HighScoreRecommendationService {
         if (normalizedCategory == null) {
             // 카테고리 미입력: 전체
             candidates.addAll(
-                    homeRepository.findTopByScore(pageable)
+                    homeRecommendationRepository.findTopByScore(pageable)
                             .stream()
-                            .map(RecipeCandidateLow::new)
+                            .map(RecommendationRecipeCandidateLow::new)
                             .toList()
             );
 
             candidates.addAll(
-                    homeTransformedRecipeRepository.findTopByScore(pageable)
+                    homeTransformedRecommendationRecipeRepository.findTopByScore(pageable)
                             .stream()
-                            .map(TransformedRecipeCandidateLow::new)
+                            .map(RecommendationTransformedRecipeCandidateLow::new)
                             .toList()
             );
         } else {
@@ -87,16 +87,16 @@ public class HighScoreRecommendationService {
                     CategoryMapper.toLegacyList(normalizedCategory);
 
             candidates.addAll(
-                    homeRepository.findTopByCategories(legacyCategories, pageable)
+                    homeRecommendationRepository.findTopByCategories(legacyCategories, pageable)
                             .stream()
-                            .map(RecipeCandidateLow::new)
+                            .map(RecommendationRecipeCandidateLow::new)
                             .toList()
             );
 
             candidates.addAll(
-                    homeTransformedRecipeRepository.findTopByCategories(legacyCategories, pageable)
+                    homeTransformedRecommendationRecipeRepository.findTopByCategories(legacyCategories, pageable)
                             .stream()
-                            .map(TransformedRecipeCandidateLow::new)
+                            .map(RecommendationTransformedRecipeCandidateLow::new)
                             .toList()
             );
         }
@@ -106,15 +106,15 @@ public class HighScoreRecommendationService {
          * 평점 → 리뷰 수 → 위시 수
          * ========================= */
         candidates.sort(
-                Comparator.comparingDouble(HighScoreRecipeCandidate::getAvgScore).reversed()
-                        .thenComparingInt(HighScoreRecipeCandidate::getReviewCount).reversed()
-                        .thenComparingInt(HighScoreRecipeCandidate::getWishCount).reversed()
+                Comparator.comparingDouble(HighScoreRecommendationRecipeCandidate::getAvgScore).reversed()
+                        .thenComparingInt(HighScoreRecommendationRecipeCandidate::getReviewCount).reversed()
+                        .thenComparingInt(HighScoreRecommendationRecipeCandidate::getWishCount).reversed()
         );
 
         /* =========================
          * 3️. 완전 동점자 알레르기 tie-break
          * ========================= */
-        List<HighScoreRecipeCandidate> finalSorted =
+        List<HighScoreRecommendationRecipeCandidate> finalSorted =
                 applyAllergyTieBreaker(candidates, profile);
 
         /* =========================
@@ -144,20 +144,20 @@ public class HighScoreRecommendationService {
      * ⚠전제:
      * - candidates 는 이미 점수 기준으로 정렬되어 있음
      */
-    private List<HighScoreRecipeCandidate> applyAllergyTieBreaker(
-            List<HighScoreRecipeCandidate> candidates,
+    private List<HighScoreRecommendationRecipeCandidate> applyAllergyTieBreaker(
+            List<HighScoreRecommendationRecipeCandidate> candidates,
             FamilyMemberProfile profile
     ) {
         if (candidates.size() <= 1) return candidates;
 
-        List<HighScoreRecipeCandidate> result = new ArrayList<>();
+        List<HighScoreRecommendationRecipeCandidate> result = new ArrayList<>();
         int i = 0;
 
         while (i < candidates.size()) {
-            HighScoreRecipeCandidate base = candidates.get(i);
+            HighScoreRecommendationRecipeCandidate base = candidates.get(i);
 
             // 같은 점수 그룹 찾기
-            List<HighScoreRecipeCandidate> sameRankGroup = new ArrayList<>();
+            List<HighScoreRecommendationRecipeCandidate> sameRankGroup = new ArrayList<>();
             sameRankGroup.add(base);
 
             int j = i + 1;
@@ -195,7 +195,7 @@ public class HighScoreRecommendationService {
      */
     private boolean isSafeRecipe(
             FamilyMemberProfile profile,
-            HighScoreRecipeCandidate candidate
+            HighScoreRecommendationRecipeCandidate candidate
     ) {
         return allergyRiskService
                 .detectRiskAllergens(

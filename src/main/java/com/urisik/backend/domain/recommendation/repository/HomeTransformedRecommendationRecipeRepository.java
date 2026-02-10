@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface HomeTransformedRecipeRepository
+public interface HomeTransformedRecommendationRecipeRepository
         extends JpaRepository<TransformedRecipe, Long> {
 
     @Query("""

@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class RecipeCandidateLow implements HighScoreRecipeCandidate{
+public class RecommendationRecipeCandidateLow implements HighScoreRecommendationRecipeCandidate {
 
     private final Recipe recipe;
 

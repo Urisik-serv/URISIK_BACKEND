@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface HomeRepository extends JpaRepository<Recipe, Long> {
+public interface HomeRecommendationRepository extends JpaRepository<Recipe, Long> {
 
     @Query("""
         select r

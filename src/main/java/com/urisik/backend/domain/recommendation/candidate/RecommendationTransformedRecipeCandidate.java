@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-public class TransformedRecipeCandidate implements HomeRecipeCandidate {
+public class RecommendationTransformedRecipeCandidate implements HomeRecommendationRecipeCandidate {
 
     private final TransformedRecipe tr;
 

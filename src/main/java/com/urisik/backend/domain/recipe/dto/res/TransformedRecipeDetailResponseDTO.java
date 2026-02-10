@@ -13,6 +13,7 @@ public class TransformedRecipeDetailResponseDTO {
     private Long transformedRecipeId;
     private String title;
     private Long baseRecipeId;
+    private String category;
 
     private List<String> ingredients;
     private List<RecipeStepDTO> steps;

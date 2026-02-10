@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class RecipeCandidate implements HomeRecipeCandidate {
+public class RecommendationRecipeCandidate implements HomeRecommendationRecipeCandidate {
 
     private final Recipe recipe;
 

@@ -1,14 +1,14 @@
 package com.urisik.backend.domain.recommendation.service;
 
-import com.urisik.backend.domain.recommendation.candidate.HomeRecipeCandidate;
-import com.urisik.backend.domain.recommendation.candidate.RecipeCandidate;
-import com.urisik.backend.domain.recommendation.candidate.TransformedRecipeCandidate;
-import com.urisik.backend.domain.recommendation.repository.HomeRepository;
-import com.urisik.backend.domain.recommendation.repository.HomeTransformedRecipeRepository;
+import com.urisik.backend.domain.recommendation.candidate.HomeRecommendationRecipeCandidate;
+import com.urisik.backend.domain.recommendation.candidate.RecommendationRecipeCandidate;
+import com.urisik.backend.domain.recommendation.candidate.RecommendationTransformedRecipeCandidate;
+import com.urisik.backend.domain.recommendation.repository.HomeRecommendationRepository;
+import com.urisik.backend.domain.recommendation.repository.HomeTransformedRecommendationRecipeRepository;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recommendation.converter.HomeSafeRecipeConverter;
-import com.urisik.backend.domain.recommendation.dto.HomeSafeRecipeDTO;
+import com.urisik.backend.domain.recommendation.dto.HomeSafeRecommendationRecipeDTO;
 import com.urisik.backend.domain.recommendation.dto.res.HomeSafeRecipeResponseDTO;
 import com.urisik.backend.domain.recipe.service.AllergyRiskService;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class HomeRecommendationService {
 
-    private final HomeRepository homeRepository;
-    private final HomeTransformedRecipeRepository transformedRecipeRepository;
+    private final HomeRecommendationRepository homeRecommendationRepository;
+    private final HomeTransformedRecommendationRecipeRepository transformedRecipeRepository;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final AllergyRiskService allergyRiskService;
     private final HomeSafeRecipeConverter converter;
@@ -43,31 +43,31 @@ public class HomeRecommendationService {
 
         Long familyRoomId = profile.getFamilyRoom().getId();
 
-        List<HomeRecipeCandidate> candidates = new ArrayList<>();
+        List<HomeRecommendationRecipeCandidate> candidates = new ArrayList<>();
 
         candidates.addAll(
-                homeRepository.findTopForHome(PageRequest.of(0, 20))
+                homeRecommendationRepository.findTopForHome(PageRequest.of(0, 20))
                         .stream()
-                        .map(RecipeCandidate::new)
+                        .map(RecommendationRecipeCandidate::new)
                         .collect(Collectors.toList())
         );
 
         candidates.addAll(
                 transformedRecipeRepository.findTopForHome(PageRequest.of(0, 20))
                         .stream()
-                        .map(TransformedRecipeCandidate::new)
+                        .map(RecommendationTransformedRecipeCandidate::new)
                         .collect(Collectors.toList())
         );
 
 
         candidates.sort(
-                Comparator.comparingInt(HomeRecipeCandidate::getWishCount)
+                Comparator.comparingInt(HomeRecommendationRecipeCandidate::getWishCount)
                         .reversed()
         );
 
-        List<HomeSafeRecipeDTO> result = new ArrayList<>();
+        List<HomeSafeRecommendationRecipeDTO> result = new ArrayList<>();
 
-        for (HomeRecipeCandidate candidate : candidates) {
+        for (HomeRecommendationRecipeCandidate candidate : candidates) {
 
             List<String> ingredients = candidate.getIngredients();
 

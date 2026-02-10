@@ -5,8 +5,7 @@ import com.urisik.backend.domain.recommendation.dto.res.HomeSafeRecipeResponseDT
 import com.urisik.backend.domain.recommendation.enums.RecommendationSuccessCode;
 import com.urisik.backend.domain.recommendation.service.HighScoreRecommendationService;
 import com.urisik.backend.domain.recommendation.service.SafeHighScoreRecommendationService;
-import com.urisik.backend.domain.recommendation.service.WishHighScoreRecommendationService;
-import com.urisik.backend.domain.recipe.enums.RecipeSuccessCode;
+import com.urisik.backend.domain.recommendation.service.WishRecommendationService;
 import com.urisik.backend.domain.recommendation.service.HomeRecommendationService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -77,7 +76,7 @@ public class HomeRecommendationController {
         );
     }
 
-    private final WishHighScoreRecommendationService wishHighScoreRecommendationService;
+    private final WishRecommendationService wishRecommendationService;
 
     @GetMapping("/wish")
     @Operation(
@@ -90,7 +89,7 @@ public class HomeRecommendationController {
     ) {
         return ApiResponse.onSuccess(
                 RecommendationSuccessCode.RECOMMEND_WISH_HIGH_SCORE_OK,
-                wishHighScoreRecommendationService.recommend(loginUserId, category)
+                wishRecommendationService.recommend(loginUserId, category)
         );
     }
 

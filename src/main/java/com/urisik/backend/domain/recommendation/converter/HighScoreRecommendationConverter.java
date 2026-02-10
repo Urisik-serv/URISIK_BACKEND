@@ -1,17 +1,17 @@
 package com.urisik.backend.domain.recommendation.converter;
 
-import com.urisik.backend.domain.recommendation.candidate.HighScoreRecipeCandidate;
-import com.urisik.backend.domain.recommendation.candidate.TransformedRecipeCandidateLow;
+import com.urisik.backend.domain.recommendation.candidate.HighScoreRecommendationRecipeCandidate;
+import com.urisik.backend.domain.recommendation.candidate.RecommendationTransformedRecipeCandidateLow;
 import com.urisik.backend.domain.recommendation.dto.HighScoreRecommendationDTO;
 import org.springframework.stereotype.Component;
 
 @Component
 public class HighScoreRecommendationConverter {
 
-    public HighScoreRecommendationDTO toDto(HighScoreRecipeCandidate candidate, boolean isSafe) {
+    public HighScoreRecommendationDTO toDto(HighScoreRecommendationRecipeCandidate candidate, boolean isSafe) {
 
         boolean isTransformed =
-                candidate instanceof TransformedRecipeCandidateLow;
+                candidate instanceof RecommendationTransformedRecipeCandidateLow;
 
         return new HighScoreRecommendationDTO(
                 candidate.getId().toString(),

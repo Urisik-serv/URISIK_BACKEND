@@ -7,6 +7,7 @@ import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
 import com.urisik.backend.domain.recipe.dto.res.TransformedRecipeDetailResponseDTO;
+import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.enums.RecipeErrorCode;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -72,11 +74,17 @@ public class TransformedRecipeReadService {
         List<TransformedRecipeDetailResponseDTO.SubstitutionSummaryDTO> subs =
                 parseSubstitutionSummary(tr.getSubstitutionSummaryJson());
 
+        String category =
+                Optional.ofNullable(tr.getBaseRecipe().getRecipeExternalMetadata())
+                        .map(RecipeExternalMetadata::getCategory)
+                        .orElse(null);
+
         // 6. DTO 조립
         return new TransformedRecipeDetailResponseDTO(
                 tr.getId(),
                 tr.getBaseRecipe().getTitle(),
                 tr.getBaseRecipe().getId(),
+                category,
 
                 ingredients,
                 RecipeTextParser.parseSteps(tr.getInstructionsRaw()),

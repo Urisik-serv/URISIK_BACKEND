@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class HomeSafeRecipeDTO {
+public class HomeSafeRecommendationRecipeDTO {
 
     private String id;
     private String title;

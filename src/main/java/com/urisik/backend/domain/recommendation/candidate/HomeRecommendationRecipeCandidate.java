@@ -2,18 +2,17 @@ package com.urisik.backend.domain.recommendation.candidate;
 
 import java.util.List;
 
-public interface HighScoreRecipeCandidate {
+public interface HomeRecommendationRecipeCandidate {
 
     Long getId();
     String getTitle();
     String getImageUrl();
-    String getCategory();
-    double getAvgScore();
     List<String> getIngredients();
     String getDescription();
-
-    int getReviewCount();
     int getWishCount();
 
-}
+    String getCategory();
+    double getAvgScore();
+    int getReviewCount();
 
+}

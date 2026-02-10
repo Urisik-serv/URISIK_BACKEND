@@ -27,22 +27,19 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class SafeHighScoreRecommendationService {
+public class WishRecommendationService {
 
     private final HomeRecommendationRepository homeRecommendationRepository;
-    private final HomeTransformedRecommendationRecipeRepository homeTransformedRecommendationRecipeRepository;
+    private final HomeTransformedRecommendationRecipeRepository transformedRecipeRepository;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final AllergyRiskService allergyRiskService;
     private final HighScoreRecommendationConverter converter;
 
-    /**
-     * 알레르기 안전 + 카테고리 기준 레시피 추천
-     */
-    public HighScoreRecommendationResponseDTO recommendSafeRecipes(
+    public HighScoreRecommendationResponseDTO recommend(
             Long loginUserId,
             String category
     ) {
-        // 1️. 로그인 사용자 → 가족방
+        // 1. 로그인 사용자 → 가족방
         FamilyMemberProfile profile =
                 familyMemberProfileRepository.findByMember_Id(loginUserId)
                         .orElseThrow(() -> new GeneralException(GeneralErrorCode.NOT_FOUND));
@@ -50,88 +47,64 @@ public class SafeHighScoreRecommendationService {
         Long familyRoomId = profile.getFamilyRoom().getId();
         String normalizedCategory = normalizeCategory(category);
 
-        Pageable pageable = PageRequest.of(0, 50);
+        Pageable pageable = PageRequest.of(0, 30);
         List<HighScoreRecommendationRecipeCandidate> candidates = new ArrayList<>();
 
-        /* =========================
-         * 2️. 카테고리 기준 후보 수집
-         * ========================= */
+        // 2. 후보 수집 (위시 기준 정렬은 DB에서)
         if (normalizedCategory == null) {
-            // 카테고리 미선택 → 전체
             candidates.addAll(
-                    homeRecommendationRepository.findTopByScore(pageable)
+                    homeRecommendationRepository.findTopByWish(pageable)
                             .stream()
                             .map(RecommendationRecipeCandidateLow::new)
                             .toList()
             );
-
             candidates.addAll(
-                    homeTransformedRecommendationRecipeRepository.findTopByScore(pageable)
+                    transformedRecipeRepository.findTopByWish(pageable)
                             .stream()
                             .map(RecommendationTransformedRecipeCandidateLow::new)
                             .toList()
             );
         } else {
-            List<String> legacyCategories =
-                    CategoryMapper.toLegacyList(normalizedCategory);
+            List<String> legacyCategories = CategoryMapper.toLegacyList(normalizedCategory);
 
             candidates.addAll(
-                    homeRecommendationRepository.findTopByCategories(legacyCategories, pageable)
+                    homeRecommendationRepository.findTopByWishAndCategories(legacyCategories, pageable)
                             .stream()
                             .map(RecommendationRecipeCandidateLow::new)
                             .toList()
             );
-
             candidates.addAll(
-                    homeTransformedRecommendationRecipeRepository.findTopByCategories(legacyCategories, pageable)
+                    transformedRecipeRepository.findTopByWishAndCategories(legacyCategories, pageable)
                             .stream()
                             .map(RecommendationTransformedRecipeCandidateLow::new)
                             .toList()
             );
         }
 
-        /* =========================
-         * 3. 알레르기 안전 필터 (핵심 차이)
-         * ========================= */
-        List<HighScoreRecommendationRecipeCandidate> safeCandidates =
-                new ArrayList<>(
-                        candidates.stream()
-                                .filter(c ->
-                                        allergyRiskService
-                                                .detectRiskAllergens(
-                                                        familyRoomId,
-                                                        c.getIngredients()
-                                                )
-                                                .isEmpty()
-                                )
-                                .toList()
-                );
-
-        /* =========================
-         * 4️. 정렬 기준 유지
-         * ========================= */
-        safeCandidates.sort(
-                Comparator
-                        .comparingDouble(HighScoreRecommendationRecipeCandidate::getAvgScore).reversed()
+        // 3. 최종 정렬 (알레르기 X)
+        candidates.sort(
+                Comparator.comparingInt(HighScoreRecommendationRecipeCandidate::getWishCount).reversed()
+                        .thenComparingDouble(HighScoreRecommendationRecipeCandidate::getAvgScore).reversed()
                         .thenComparingInt(HighScoreRecommendationRecipeCandidate::getReviewCount).reversed()
-                        .thenComparingInt(HighScoreRecommendationRecipeCandidate::getWishCount).reversed()
         );
 
-        /* =========================
-         * 5️. 결과 반환
-         * ========================= */
+        // 4. Top 3 + 알레르기 여부 표시만
         return new HighScoreRecommendationResponseDTO(
-                safeCandidates.stream()
+                candidates.stream()
                         .limit(3)
-                        .map(c -> converter.toDto(c, true)) // 항상 안전
+                        .map(c -> {
+                            boolean isSafe =
+                                    allergyRiskService
+                                            .detectRiskAllergens(familyRoomId, c.getIngredients())
+                                            .isEmpty();
+                            return converter.toDto(c, isSafe);
+                        })
                         .toList()
         );
     }
 
     private String normalizeCategory(String category) {
-        if (category == null || category.isBlank()) {
-            return null;
-        }
+        if (category == null || category.isBlank()) return null;
 
         return switch (category) {
             case UnifiedCategory.BOWL,
@@ -142,3 +115,4 @@ public class SafeHighScoreRecommendationService {
         };
     }
 }
+
