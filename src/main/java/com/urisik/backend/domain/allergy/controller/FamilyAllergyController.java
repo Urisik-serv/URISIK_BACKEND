@@ -16,13 +16,13 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/allergy")
+@RequestMapping("/api/families")
 @Tag(name = "Allergy", description = "알레르기 관련 API")
 public class FamilyAllergyController {
 
     private final FamilyAllergyQueryService familyAllergyQueryService;
 
-    @GetMapping("/families/allergies")
+    @GetMapping("/allergies")
     @Operation(
             summary = "가족방 전체 알레르기 조회 API",
             description = "로그인한 사용자가 속한 가족방 구성원들의 알레르기를 종합 조회합니다."

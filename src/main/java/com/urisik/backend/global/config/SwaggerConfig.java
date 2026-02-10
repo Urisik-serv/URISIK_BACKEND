@@ -138,19 +138,10 @@ public class SwaggerConfig {
     }
 
     @Bean
-    public GroupedOpenApi allergyApi() {
-        return GroupedOpenApi.builder()
-                .group("12. allergy")
-                .displayName("12. 알레르기 API")
-                .pathsToMatch("/api/allergy/**")
-                .build();
-    }
-
-    @Bean
     public GroupedOpenApi searchApi() {
         return GroupedOpenApi.builder()
                 .group("13. search")
-                .displayName("13. 인기 검색어 API")
+                .displayName("12. 인기 검색어 API")
                 .pathsToMatch("/api/search/**")
                 .build();
     }
