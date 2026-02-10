@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.searchLog.entity;
+package com.urisik.backend.domain.search.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

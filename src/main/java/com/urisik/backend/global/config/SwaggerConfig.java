@@ -58,8 +58,7 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("03. recipe")
                 .displayName("03. 레시피 API")
-                .pathsToMatch("/api/recipes/**")
-                .pathsToMatch("/api/transformed-recipes/**")
+                .pathsToMatch("/api/recipes/**","/api/transformed-recipes/**")
                 .build();
     }
 
@@ -126,6 +125,33 @@ public class SwaggerConfig {
                 .group("10. notification")
                 .displayName("10. 알림 API")
                 .pathsToMatch("/api/notifications/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi recommendationApi() {
+        return GroupedOpenApi.builder()
+                .group("11. recommendation")
+                .displayName("11. 추천 API")
+                .pathsToMatch("/api/recommendations/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi allergyApi() {
+        return GroupedOpenApi.builder()
+                .group("12. allergy")
+                .displayName("12. 알레르기 API")
+                .pathsToMatch("/api/allergy/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi searchApi() {
+        return GroupedOpenApi.builder()
+                .group("13. search")
+                .displayName("13. 인기 검색어 API")
+                .pathsToMatch("/api/search/**")
                 .build();
     }
 

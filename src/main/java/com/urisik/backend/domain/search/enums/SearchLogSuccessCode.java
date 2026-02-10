@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.searchLog.enums;
+package com.urisik.backend.domain.search.enums;
 
 import com.urisik.backend.global.apiPayload.code.BaseSuccessCode;
 import com.urisik.backend.global.apiPayload.code.SuccessReason;

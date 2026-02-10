@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.searchLog.config;
+package com.urisik.backend.domain.search.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;

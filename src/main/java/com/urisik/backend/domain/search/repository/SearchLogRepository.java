@@ -1,6 +1,6 @@
-package com.urisik.backend.domain.searchLog.repository;
+package com.urisik.backend.domain.search.repository;
 
-import com.urisik.backend.domain.searchLog.entity.SearchLog;
+import com.urisik.backend.domain.search.entity.SearchLog;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

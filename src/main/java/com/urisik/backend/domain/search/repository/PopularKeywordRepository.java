@@ -1,6 +1,6 @@
-package com.urisik.backend.domain.searchLog.repository;
+package com.urisik.backend.domain.search.repository;
 
-import com.urisik.backend.domain.searchLog.entity.PopularKeyword;
+import com.urisik.backend.domain.search.entity.PopularKeyword;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

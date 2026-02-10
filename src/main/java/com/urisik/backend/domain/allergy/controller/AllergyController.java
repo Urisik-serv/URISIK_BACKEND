@@ -22,13 +22,13 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/members")
-@Tag(name = "Allergy", description = "개인 알레르기 관련 API")
+@RequestMapping("/api/allergy")
+@Tag(name = "Allergy", description = "알레르기 관련 API")
 public class AllergyController {
 
     private final AllergyQueryService allergyQueryService;
 
-    @GetMapping("/{memberId}/allergies")
+    @GetMapping("/members/{memberId}/allergies")
     @Operation(summary = "사용자 알레르기 조회 API", description = "사용자의 알레르기를 조회하는 api 입니다. ")
     public ApiResponse<List<AllergyResponseDTO>> getUserAllergies(
             @PathVariable Long memberId,

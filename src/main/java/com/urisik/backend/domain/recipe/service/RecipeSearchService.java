@@ -13,7 +13,7 @@ import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.dto.F
 import com.urisik.backend.domain.recipe.repository.RecipeExternalMetadataRepository;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
-import com.urisik.backend.domain.searchLog.service.SearchLogService;
+import com.urisik.backend.domain.search.service.SearchLogService;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;

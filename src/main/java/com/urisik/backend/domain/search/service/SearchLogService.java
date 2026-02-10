@@ -1,7 +1,7 @@
-package com.urisik.backend.domain.searchLog.service;
+package com.urisik.backend.domain.search.service;
 
-import com.urisik.backend.domain.searchLog.entity.SearchLog;
-import com.urisik.backend.domain.searchLog.repository.SearchLogRepository;
+import com.urisik.backend.domain.search.entity.SearchLog;
+import com.urisik.backend.domain.search.repository.SearchLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;

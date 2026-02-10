@@ -1,8 +1,8 @@
-package com.urisik.backend.domain.searchLog.batch;
+package com.urisik.backend.domain.search.batch;
 
-import com.urisik.backend.domain.searchLog.entity.PopularKeyword;
-import com.urisik.backend.domain.searchLog.repository.PopularKeywordRepository;
-import com.urisik.backend.domain.searchLog.repository.SearchLogRepository;
+import com.urisik.backend.domain.search.entity.PopularKeyword;
+import com.urisik.backend.domain.search.repository.PopularKeywordRepository;
+import com.urisik.backend.domain.search.repository.SearchLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;

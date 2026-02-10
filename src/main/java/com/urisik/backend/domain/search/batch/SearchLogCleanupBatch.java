@@ -1,4 +1,4 @@
-package com.urisik.backend.domain.searchLog.batch;
+package com.urisik.backend.domain.search.batch;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;

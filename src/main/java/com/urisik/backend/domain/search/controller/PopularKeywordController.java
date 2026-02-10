@@ -1,9 +1,9 @@
-package com.urisik.backend.domain.searchLog.controller;
+package com.urisik.backend.domain.search.controller;
 
-import com.urisik.backend.domain.searchLog.batch.PopularKeywordBatch;
-import com.urisik.backend.domain.searchLog.entity.PopularKeyword;
-import com.urisik.backend.domain.searchLog.enums.SearchLogSuccessCode;
-import com.urisik.backend.domain.searchLog.repository.PopularKeywordRepository;
+import com.urisik.backend.domain.search.batch.PopularKeywordBatch;
+import com.urisik.backend.domain.search.entity.PopularKeyword;
+import com.urisik.backend.domain.search.enums.SearchLogSuccessCode;
+import com.urisik.backend.domain.search.repository.PopularKeywordRepository;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/search")
-@Tag(name = "searchLog", description = "인기 검색어 관련 API")
+@Tag(name = "search", description = "인기 검색어 관련 API")
 public class PopularKeywordController {
 
     private final PopularKeywordRepository popularKeywordRepository;
