@@ -22,7 +22,9 @@ import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
 import com.urisik.backend.domain.recipe.service.AllergyRiskService;
 import com.urisik.backend.domain.review.entity.Review;
+import com.urisik.backend.domain.review.entity.TransformedRecipeReview;
 import com.urisik.backend.domain.review.repository.ReviewRepository;
+import com.urisik.backend.domain.review.repository.TransformedRecipeReviewRepository;
 import com.urisik.backend.global.auth.exception.AuthenExcetion;
 import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
 import com.urisik.backend.global.util.IngredientParser;
@@ -47,6 +49,7 @@ public class MemberWishListService {
     private final MemberTransformedRecipeWishRepository memberTransformedRecipeWishRepository;
     private final ReviewRepository reviewRepository;
     private final AllergyRiskService allergyRiskService;
+    private final TransformedRecipeReviewRepository transformedRecipeReviewRepository;
 
     @Transactional
     public WishListResponse.PostWishes addWishItems
@@ -335,9 +338,19 @@ public class MemberWishListService {
                () -> new MemberException(MemberErrorCode.NO_RECIPE)
        );
 
+       Long transformedRecipeId = transformedRecipeReviewRepository.findRandomHighScoreReviewId(profile.getId(),4)
+               .orElseThrow(() -> new MemberException(MemberErrorCode.NO_TRANS_REVIEW));
+
+       TransformedRecipeReview transformedRecipeReview = transformedRecipeReviewRepository.
+               findByIdWithRecipe(transformedRecipeId).orElseThrow(
+               () -> new MemberException(MemberErrorCode.NO_TRANS_RECIPE)
+       );
+
         //3.  recipe에 있는 ingredient 필드 파싱 해서 재료들 리스트로 저장. 재료들을 부분으로 가지고 있는 ingredient필드가 있는 레시피 검색== 레시피 리스트로 반환.
 
         List<String> ingredients = new ArrayList<>(ingredientParser.parseIngredients(review.getRecipe().getIngredientsRaw()));
+        ingredients.addAll(ingredientParser.parseIngredients(transformedRecipeReview.getTransformedRecipe().getIngredientsRaw()));
+
         Collections.shuffle(ingredients);
 
         // 4) 재료별 검색해서 최대 5개 모으기(중복 제거)
@@ -367,7 +380,6 @@ public class MemberWishListService {
         for(Recipe r : picked) {
             recommendations.add(r.getTitle());
         }
-
 
 
         //4. 이름들을 Recommendation DTO로 만들고 반환.

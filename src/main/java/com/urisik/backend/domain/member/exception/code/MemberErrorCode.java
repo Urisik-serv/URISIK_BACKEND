@@ -17,7 +17,10 @@ public enum MemberErrorCode implements BaseErrorCode {
             "요청한 레시피 위시가 존재하지 않습니다."),
     NO_REVIEW(HttpStatus.NOT_FOUND,
             "WISH_404",
-            "4점 이상의 리뷰가 없어서 추천이 없습니다."),
+            "4점 이상의 일반 레시피 리뷰가 없어서 추천이 없습니다."),
+    NO_TRANS_REVIEW(HttpStatus.NOT_FOUND,
+            "WISH_404",
+            "4점 이상의 변형 레시피 리뷰가 없어서 추천이 없습니다."),
 
     WISH_ALREADY_IN(HttpStatus.CONFLICT,
             "WISH_409",
