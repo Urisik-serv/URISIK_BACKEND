@@ -1,19 +1,18 @@
 package com.urisik.backend.domain.notification.controller;
 
+import com.urisik.backend.domain.notification.dto.NotificationReadResDto;
 import com.urisik.backend.domain.notification.dto.NotificationResDto;
 import com.urisik.backend.domain.notification.exception.NotificationSuccessCode;
 import com.urisik.backend.domain.notification.service.NotificationService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
@@ -49,5 +48,20 @@ public class NotificationController {
     ) {
         Slice<NotificationResDto> result = notificationService.getNotifications(memberId, size);
         return ApiResponse.onSuccess(NotificationSuccessCode.NOTIFICATION_GET_SUCCESS, result);
+    }
+
+
+    /**
+     * 3. 알림 "읽음" 상태로 변경
+     * @param memberId
+     */
+    @PatchMapping(value = "/{notificationId}/read")
+    @Operation(summary = "알림 읽음 처리 API", description = "알림 읽음 상태를 true로 변경합니다. ")
+    public ApiResponse<NotificationReadResDto> readNotification(
+            @PathVariable(name = "notificationId") Long notificationId,
+            @AuthenticationPrincipal Long memberId
+            ) {
+        return ApiResponse.onSuccess(NotificationSuccessCode.NOTIFICATION_READ_SUCCESS,
+                notificationService.readNotification(memberId, notificationId));
     }
 }

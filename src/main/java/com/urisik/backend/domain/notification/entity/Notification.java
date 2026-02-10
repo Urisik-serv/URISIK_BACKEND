@@ -6,6 +6,8 @@ import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Builder
@@ -18,10 +20,10 @@ public class Notification extends BaseEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "type", nullable = false, length = 20)
     private NotificationType type;
 
-    @Column(name = "is_read")
+    @Column(name = "is_read", nullable = false)
     private boolean isRead = false;
 
     @Column(name = "meal_plan_generation_count")
@@ -31,4 +33,9 @@ public class Notification extends BaseEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
+
+
+    public void updateIsRead(boolean isRead) {
+        this.isRead = isRead;
+    }
 }

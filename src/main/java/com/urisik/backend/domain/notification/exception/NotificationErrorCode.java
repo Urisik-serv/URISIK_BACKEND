@@ -16,7 +16,11 @@ public enum NotificationErrorCode implements BaseErrorCode {
 
     NOTIFICATION_SUBSCRIBE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,
             "NOTI_500_2",
-            "SSE 구독 연결 중 오류가 발생했습니다.");
+            "SSE 구독 연결 중 오류가 발생했습니다."),
+
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "NOTI_404_1",
+            "존재하지 않는 알림입니다.");
 
 
     private final HttpStatus httpStatus;
