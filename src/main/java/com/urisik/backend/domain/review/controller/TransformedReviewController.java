@@ -7,6 +7,7 @@ import com.urisik.backend.domain.review.service.TransformedReviewService;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,7 @@ public class TransformedReviewController {
     )
     public ApiResponse<ReviewResponseDto> createReview(
             @PathVariable Long transformedRecipeId,
-            @RequestBody ReviewRequestDto request,
+            @RequestBody @Valid ReviewRequestDto request,
             @AuthenticationPrincipal Long memberId
     ) {
         ReviewResponseDto response =

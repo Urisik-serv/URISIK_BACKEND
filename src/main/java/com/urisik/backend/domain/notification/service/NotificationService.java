@@ -3,6 +3,7 @@ package com.urisik.backend.domain.notification.service;
 import com.urisik.backend.domain.member.entity.Member;
 import com.urisik.backend.domain.member.repo.MemberRepository;
 import com.urisik.backend.domain.notification.converter.NotificationConverter;
+import com.urisik.backend.domain.notification.dto.NotificationReadResDto;
 import com.urisik.backend.domain.notification.dto.NotificationResDto;
 import com.urisik.backend.domain.notification.entity.Notification;
 import com.urisik.backend.domain.notification.enums.NotificationType;
@@ -80,6 +81,23 @@ public class NotificationService {
 
         return NotificationConverter.toNotificationResponseListDto(notifications);
 
+
+    }
+
+    /**
+     * 3.알림 읽음 처리 메서드
+     * @param memberId
+     * */
+    @Transactional
+    public NotificationReadResDto readNotification(Long memberId, Long notificationId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new AuthenExcetion(AuthErrorCode.NO_MEMBER));
+
+        Notification notification = notificationRepository.findByIdAndMember(notificationId, member)
+                .orElseThrow(() -> new NotificationException(NotificationErrorCode.NOTIFICATION_NOT_FOUND));
+
+        notification.updateIsRead(true);
+        return NotificationConverter.toNotificationReadResDto(notification);
 
     }
 

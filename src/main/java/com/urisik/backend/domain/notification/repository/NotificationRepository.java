@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     Slice<Notification> findAllByMember(Member member, Pageable pageable);
@@ -18,4 +19,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Transactional
     @Query("delete from Notification n where n.createAt < :deleteDate")
     void deleteNotifications(LocalDateTime deleteDate);
+
+    Optional<Notification> findByIdAndMember(Long id, Member member);
 }

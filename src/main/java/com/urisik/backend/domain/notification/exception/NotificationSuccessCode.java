@@ -17,7 +17,13 @@ public enum NotificationSuccessCode implements BaseSuccessCode {
 
      NOTIFICATION_GET_SUCCESS(HttpStatus.OK,
             "NOTI_200_2",
-            "알림 목록 조회 성공");
+            "알림 목록 조회 성공"),
+
+    NOTIFICATION_READ_SUCCESS(HttpStatus.OK,
+            "NOTI_200_3",
+            "알림 읽음 처리 성공");
+
+
 
 
     private final HttpStatus httpStatus;

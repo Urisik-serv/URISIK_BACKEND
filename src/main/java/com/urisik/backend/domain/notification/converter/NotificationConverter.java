@@ -1,5 +1,6 @@
 package com.urisik.backend.domain.notification.converter;
 
+import com.urisik.backend.domain.notification.dto.NotificationReadResDto;
 import com.urisik.backend.domain.notification.dto.NotificationResDto;
 import com.urisik.backend.domain.notification.entity.Notification;
 import org.springframework.data.domain.Slice;
@@ -22,5 +23,11 @@ public class NotificationConverter {
                 .build();
     }
 
+    // 알림 읽음 처리
+    public static NotificationReadResDto toNotificationReadResDto(Notification notification) {
+        return NotificationReadResDto.builder()
+                .isRead(notification.isRead())
+                .build();
+    }
 
 }
