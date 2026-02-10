@@ -40,7 +40,7 @@ public class PopularKeywordController {
     }
 
     @PostMapping("/admin/search/popular/batch")
-    @Operation(description = "인기 검색어 api 수동 실행용")
+    @Operation(summary = "인기 검색어 api 수동 실행용 API" ,description = "인기 검색어 api 사용하기 전 실행해주새요")
     public void runPopularBatch() {
         popularKeywordBatch.aggregate();
     }
