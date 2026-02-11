@@ -10,7 +10,8 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum SearchLogSuccessCode implements BaseSuccessCode {
 
-    POPULAR_KEYWORD_FETCHED(HttpStatus.OK, "SEARCH_200", "인기 검색어 조회 성공");
+    POPULAR_KEYWORD_FETCHED(HttpStatus.OK, "SEARCH_200_001", "인기 검색어 조회 성공"),
+    POPULAR_KEYWORD_BATCH_EXECUTED(HttpStatus.OK, "SEARCH_200_002", "인기 검색어 배치 실행 성공");
 
     private final HttpStatus httpStatus;
     private final String code;
