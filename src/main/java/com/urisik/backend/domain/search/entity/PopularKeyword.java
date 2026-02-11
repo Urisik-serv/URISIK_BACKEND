@@ -1,9 +1,7 @@
 package com.urisik.backend.domain.search.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.urisik.backend.domain.search.enums.RankChange;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,13 +22,35 @@ public class PopularKeyword {
     @Column(name = "rank_order")
     private int rank;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RankChange change;
+
+    @Column(nullable = false)
+    private LocalDateTime windowStart;
+
+    @Column(nullable = false)
+    private LocalDateTime windowEnd;
+
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    public PopularKeyword(String keyword, long count, int rank) {
+    public PopularKeyword(
+            String keyword,
+            long count,
+            int rank,
+            RankChange change,
+            LocalDateTime windowStart,
+            LocalDateTime windowEnd
+    ) {
         this.keyword = keyword;
         this.count = count;
         this.rank = rank;
+        this.change = change;
+        this.windowStart = windowStart;
+        this.windowEnd = windowEnd;
         this.updatedAt = LocalDateTime.now();
     }
 }
+
 
