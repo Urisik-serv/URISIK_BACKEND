@@ -177,12 +177,9 @@ public class FamilyRoomService {
         FamilyRoom familyRoom = familyRoomRepository.findById(familyRoomId)
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM_NOT_FOUND));
 
-        // 멤버 검증
-        validateMember(memberId, familyRoomId);
-
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
+                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.NOT_FAMILY_MEMBER));
 
         FamilyRole role = profile.getFamilyRole();
         boolean isLeader = familyRoom.getFamilyPolicy().isLeaderRole(role);

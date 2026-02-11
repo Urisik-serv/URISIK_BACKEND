@@ -282,7 +282,7 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
             return List.of();
         }
 
-        String[] parts = ingredientsRaw.split("[\\n\\r,;/\\t]+|[·•]");
+        String[] parts = ingredientsRaw.split("[\\n\\r,;/\\t·•]+");
 
         List<String> tokens = new ArrayList<>();
         for (String p : parts) {

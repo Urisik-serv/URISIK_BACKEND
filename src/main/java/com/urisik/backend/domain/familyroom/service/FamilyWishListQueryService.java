@@ -450,7 +450,7 @@ public class FamilyWishListQueryService {
             if (existing.size() != uniqueRecipeIds.size()) {
                 throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_WISHLIST_NOT_FOUND);
             }
-            familyWishListExclusionRepository.excludeRecipes(familyRoomId, recipeIds);
+            familyWishListExclusionRepository.excludeRecipes(familyRoomId, new ArrayList<>(uniqueRecipeIds));
         }
 
         if (hasTransformed) {
@@ -459,7 +459,7 @@ public class FamilyWishListQueryService {
             if (existing.size() != uniqueTransformedIds.size()) {
                 throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_WISHLIST_NOT_FOUND);
             }
-            familyWishListExclusionRepository.excludeTransformedRecipes(familyRoomId, transformedIds);
+            familyWishListExclusionRepository.excludeTransformedRecipes(familyRoomId, new ArrayList<>(uniqueTransformedIds));
         }
     }
 
