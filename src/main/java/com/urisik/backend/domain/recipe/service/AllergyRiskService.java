@@ -24,7 +24,13 @@ public class AllergyRiskService {
                         .distinct()
                         .toList();
 
-        if (familyAllergens.isEmpty()) return List.of();
+        return detectRiskAllergens(familyAllergens, ingredients);
+    }
+
+    /** N+1 방지를 위해 가족 알레르기 목록을 외부에서 1회 조회해 주입할 수 있는 overload */
+    public List<Allergen> detectRiskAllergens(List<Allergen> familyAllergens, List<String> ingredients) {
+        if (familyAllergens == null || familyAllergens.isEmpty()) return List.of();
+        if (ingredients == null || ingredients.isEmpty()) return List.of();
 
         List<String> normalized =
                 ingredients.stream().map(ingredientNormalizer::normalize).toList();
@@ -32,7 +38,6 @@ public class AllergyRiskService {
         return familyAllergens.stream()
                 .filter(a -> normalized.stream().anyMatch(a::matchesIngredient))
                 .toList();
-
     }
 
     // 개인 전용 알러지 탐색기

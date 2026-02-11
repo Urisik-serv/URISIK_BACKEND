@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
 
+import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO;
 import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO.Category;
@@ -103,12 +104,12 @@ public class FamilyWishListQueryService {
         for (MemberTransformedRecipeWish w : (allTrans == null ? List.<MemberTransformedRecipeWish>of() : allTrans)) {
             if (w == null || w.getRecipe() == null || w.getFamilyMemberProfile() == null) continue;
 
-            Long transId = w.getRecipe().getId();
-            if (transId == null) continue;
+            Long transformedRecipeId = w.getRecipe().getId();
+            if (transformedRecipeId == null) continue;
 
-            if (excludedTransformedRecipeIds != null && excludedTransformedRecipeIds.contains(transId)) continue;
+            if (excludedTransformedRecipeIds != null && excludedTransformedRecipeIds.contains(transformedRecipeId)) continue;
 
-            WishKey key = WishKey.transformed(transId);
+            WishKey key = WishKey.transformed(transformedRecipeId);
             Agg agg = grouped.computeIfAbsent(key, k -> Agg.fromTransformed(w.getRecipe()));
             agg.addTransformed(w);
         }
@@ -125,13 +126,16 @@ public class FamilyWishListQueryService {
         List<Map.Entry<WishKey, Agg>> sortedEntries = new ArrayList<>(grouped.entrySet());
         sortedEntries.sort(this::compareEntryRank);
 
-        // 알레르기 필터를 먼저 적용(페이지 빈칸 방지)
+        // 알레르기 필터를 먼저 적용 (페이지 빈칸 방지)
+        List<Allergen> familyAllergens =
+                memberAllergyRepository.findDistinctAllergensByFamilyRoomId(familyRoomId);
+
         List<Map.Entry<WishKey, Agg>> usableEntries = new ArrayList<>(sortedEntries.size());
         for (Map.Entry<WishKey, Agg> entry : sortedEntries) {
             Agg agg = entry.getValue();
 
             List<String> ingredients = splitIngredientsRaw(agg.getIngredientsRaw());
-            boolean safe = allergyRiskService.detectRiskAllergens(familyRoomId, ingredients).isEmpty();
+            boolean safe = allergyRiskService.detectRiskAllergens(familyAllergens, ingredients).isEmpty();
             agg.setAllergySafe(safe);
 
             if (safe) {
@@ -144,6 +148,7 @@ public class FamilyWishListQueryService {
         // 커서 적용: cursor 이후 항목부터
         int startIdx = 0;
         if (cursor != null && cursor.isValid()) {
+            startIdx = usableEntries.size(); // 기본: 결과 없음
             for (int i = 0; i < usableEntries.size(); i++) {
                 Map.Entry<WishKey, Agg> e = usableEntries.get(i);
                 // e 가 cursor 이후면(compareEntryToCursor > 0) 시작점
@@ -151,8 +156,6 @@ public class FamilyWishListQueryService {
                     startIdx = i;
                     break;
                 }
-                // 끝까지 다 cursor 이전/동일이면 결과 없음
-                startIdx = usableEntries.size();
             }
         }
 
@@ -325,7 +328,7 @@ public class FamilyWishListQueryService {
                     && latestWishId >= 0
                     && avgScore >= -1.0d
                     && type != null && !type.isBlank()
-                    && id != null;
+                    && id != null && id > 0;
         }
 
         static Cursor from(WishKey key, Agg agg) {
@@ -443,18 +446,20 @@ public class FamilyWishListQueryService {
 
         if (hasCanonical) {
             Set<Long> existing = memberWishListRepository.findExistingRecipeIds(familyRoomId, recipeIds);
-            if (existing.size() != new HashSet<>(recipeIds).size()) {
+            Set<Long> uniqueRecipeIds = new HashSet<>(recipeIds);
+            if (existing.size() != uniqueRecipeIds.size()) {
                 throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_WISHLIST_NOT_FOUND);
             }
-            familyWishListExclusionRepository.excludeRecipes(familyRoomId, recipeIds);
+            familyWishListExclusionRepository.excludeRecipes(familyRoomId, new ArrayList<>(uniqueRecipeIds));
         }
 
         if (hasTransformed) {
             Set<Long> existing = memberTransformedRecipeWishRepository.findExistingTransformedRecipeIds(familyRoomId, transformedIds);
-            if (existing.size() != new HashSet<>(transformedIds).size()) {
+            Set<Long> uniqueTransformedIds = new HashSet<>(transformedIds);
+            if (existing.size() != uniqueTransformedIds.size()) {
                 throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_WISHLIST_NOT_FOUND);
             }
-            familyWishListExclusionRepository.excludeTransformedRecipes(familyRoomId, transformedIds);
+            familyWishListExclusionRepository.excludeTransformedRecipes(familyRoomId, new ArrayList<>(uniqueTransformedIds));
         }
     }
 
@@ -466,39 +471,6 @@ public class FamilyWishListQueryService {
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.NOT_FAMILY_MEMBER));
     }
 
-    /**
-     * usableForMealPlan 판단
-     * - getFamilyWishList에서 미리 조회한 가족 알레르기를 사용해 in-memory로 매칭
-     */
-    private boolean isUsableForMealPlan(String ingredientsRaw, List<String> normalizedAllergens) {
-        if (normalizedAllergens == null || normalizedAllergens.isEmpty()) {
-            return true;
-        }
-
-        if (ingredientsRaw == null || ingredientsRaw.isBlank()) {
-            return false;
-        }
-
-        List<String> normalizedIngredients = splitIngredientsRaw(ingredientsRaw).stream()
-                .map(this::normalize)
-                .filter(s -> s != null && !s.isBlank())
-                .toList();
-
-        if (normalizedIngredients.isEmpty()) {
-            return false;
-        }
-
-        for (String allergenKey : normalizedAllergens) {
-            if (allergenKey == null || allergenKey.isBlank()) continue;
-
-            boolean matched = normalizedIngredients.stream()
-                    .anyMatch(ing -> ing.contains(allergenKey));
-
-            if (matched) return false;
-        }
-
-        return true;
-    }
 
     private String normalize(String s) {
         if (s == null) return "";
@@ -511,7 +483,7 @@ public class FamilyWishListQueryService {
             return List.of();
         }
 
-        String[] parts = ingredientsRaw.split("[\\n\\r,;/\\t]+|[·•]");
+        String[] parts = ingredientsRaw.split("[\\n\\r,;/\\t·•]+");
 
         List<String> tokens = new ArrayList<>();
         for (String p : parts) {
@@ -540,7 +512,6 @@ public class FamilyWishListQueryService {
      * - distinct profiles (인원 수)
      * - latest wish id (최신)
      * - title, ingredientsRaw (알레르기 필터링용)
-     * - foodImageUrl, score, foodCategory (추가)
      */
     private static class Agg {
         private final String title;

@@ -27,9 +27,7 @@ public class FamilyRoomService {
     private final MemberRepository memberRepository;
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
 
-    /**
-     * 가족방 생성
-     */
+    /** 가족방 생성 */
     @Transactional
     public CreateFamilyRoomResDTO createFamilyRoom(Long memberId, CreateFamilyRoomReqDTO req) {
         validate(req);
@@ -46,16 +44,13 @@ public class FamilyRoomService {
         FamilyRoom room = FamilyRoom.create(req.familyPolicy());
         FamilyRoom saved = familyRoomRepository.save(room);
 
-        // 생성자는 자동 참여
+        // 생성자는 자동 참여 (member는 영속 상태이므로 dirty checking으로 반영)
         member.setFamilyRoom(saved);
-        memberRepository.save(member);
 
         return new CreateFamilyRoomResDTO(saved.getId());
     }
 
-    /**
-     * 가족방 컨텍스트 조회
-     */
+    /** 가족방 컨텍스트 조회 */
     @Transactional(readOnly = true)
     public ReadFamilyRoomContextResDTO readMyFamilyRoomContext(Long memberId) {
         Member member = memberRepository.findById(memberId)
@@ -68,8 +63,9 @@ public class FamilyRoomService {
 
         FamilyRoom familyRoom = member.getFamilyRoom();
 
-        // 프로필 생성 이후 사용
-        FamilyMemberProfile profile = familyMemberProfileRepository.findByMember_Id(memberId)
+        // 프로필 생성 이후 사용 (해당 familyRoom 소속 프로필만 조회)
+        FamilyMemberProfile profile = familyMemberProfileRepository
+                .findByFamilyRoom_IdAndMember_Id(familyRoom.getId(), memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
         FamilyRole role = profile.getFamilyRole(); // "MOM" / "DAD" / "GRANDMOTHER" / "GRANDFATHER" / "SON" / "DAUGHTER"
@@ -163,7 +159,8 @@ public class FamilyRoomService {
             throw new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM_NOT_FOUND);
         }
 
-        FamilyMemberProfile profile = familyMemberProfileRepository.findByMember_Id(memberId)
+        FamilyMemberProfile profile = familyMemberProfileRepository
+                .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
         return profile.getFamilyRole();
@@ -180,10 +177,9 @@ public class FamilyRoomService {
         FamilyRoom familyRoom = familyRoomRepository.findById(familyRoomId)
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.FAMILY_ROOM_NOT_FOUND));
 
-        // 해당 가족방에서의 내 프로필 조회
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
+                .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.NOT_FAMILY_MEMBER));
 
         FamilyRole role = profile.getFamilyRole();
         boolean isLeader = familyRoom.getFamilyPolicy().isLeaderRole(role);
