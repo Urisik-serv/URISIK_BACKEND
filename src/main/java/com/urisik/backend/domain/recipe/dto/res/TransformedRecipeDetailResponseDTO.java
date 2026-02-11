@@ -1,6 +1,7 @@
 package com.urisik.backend.domain.recipe.dto.res;
 
 import com.urisik.backend.domain.recipe.dto.RecipeStepDTO;
+import com.urisik.backend.domain.recipe.dto.RecipeStepDetailDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -16,7 +17,7 @@ public class TransformedRecipeDetailResponseDTO {
     private String category;
 
     private List<String> ingredients;
-    private List<RecipeStepDTO> steps;
+    private List<RecipeStepDetailDTO> steps;
     private List<SubstitutionSummaryDTO> substitutionSummary;
 
     private AllergyWarningDTO allergyWarning;

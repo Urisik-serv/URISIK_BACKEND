@@ -86,9 +86,6 @@ public class TransformedRecipe {
         this.imageUrl = imageUrl;
     }
 
-    /* =========================
-       도메인 행위 (후속 API에서 사용)
-       ========================= */
 
     public void updateReviewCount() {
         this.reviewCount++;

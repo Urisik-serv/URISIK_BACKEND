@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Collection;
 
 public interface RecipeStepRepository extends JpaRepository<RecipeStep, Long> {
-    List<RecipeStep> findByRecipe_IdOrderByStepOrder(Long recipeId);
     List<RecipeStep> findAllByRecipe_IdInOrderByRecipe_IdAscStepOrderAsc(Collection<Long> recipeIds);
+
+    List<RecipeStep>
+    findByRecipe_IdOrderByStepOrderAsc(Long recipeId);
 }
