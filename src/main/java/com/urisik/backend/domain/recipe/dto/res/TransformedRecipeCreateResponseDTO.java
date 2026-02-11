@@ -15,6 +15,8 @@ public class TransformedRecipeCreateResponseDTO {
     private Long baseRecipeId;
     private boolean validationStatus;
 
+    private String imageUrl;
+
     private List<String> ingredients;
     private List<RecipeStepDTO> steps;
     private List<SubstitutionSummaryDTO> substitutionSummary;

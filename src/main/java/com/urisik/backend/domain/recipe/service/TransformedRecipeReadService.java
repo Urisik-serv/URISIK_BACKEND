@@ -142,6 +142,7 @@ public class TransformedRecipeReadService {
                 tr.getTitle(),
                 tr.getBaseRecipe().getId(),
                 category,
+                tr.getImageUrl(),
                 ingredients,
                 finalSteps,
                 subs,

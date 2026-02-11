@@ -15,7 +15,7 @@ public class TransformedRecipeDetailResponseDTO {
     private String title;
     private Long baseRecipeId;
     private String category;
-
+    private String imageUrl;
     private List<String> ingredients;
     private List<RecipeStepDetailDTO> steps;
     private List<SubstitutionSummaryDTO> substitutionSummary;

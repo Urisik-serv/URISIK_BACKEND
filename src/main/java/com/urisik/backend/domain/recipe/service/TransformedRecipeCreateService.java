@@ -7,6 +7,7 @@ import com.urisik.backend.domain.allergy.service.AllergySubstitutionService;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
+import com.urisik.backend.domain.recipe.converter.TransformedRecipeConverter;
 import com.urisik.backend.domain.recipe.dto.RecipeStepDTO;
 import com.urisik.backend.domain.recipe.dto.res.TransformedRecipeCreateResponseDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
@@ -136,7 +137,11 @@ public class TransformedRecipeCreateService {
                 result.getSteps()
         );
 
-        return toResponse(tr, recipe, result);
+        return TransformedRecipeConverter.toCreateResponse(
+                tr,
+                recipe,
+                result
+        );
     }
 
     /* =====================
@@ -275,24 +280,5 @@ public class TransformedRecipeCreateService {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    private TransformedRecipeCreateResponseDTO toResponse(
-            TransformedRecipe tr,
-            Recipe recipe,
-            GeminiTransformResult result
-    ) {
-        return new TransformedRecipeCreateResponseDTO(
-                tr.getId(),
-                tr.getTitle(),
-                recipe.getId(),
-                tr.isValidationStatus(),
-                result.getIngredients(),
-                result.getSteps(),
-                result.getSubstitutionSummary().stream()
-                        .map(s -> new TransformedRecipeCreateResponseDTO.SubstitutionSummaryDTO(
-                                s.getAllergen(), s.getReplacedWith(), s.getReason()))
-                        .toList()
-        );
     }
 }
