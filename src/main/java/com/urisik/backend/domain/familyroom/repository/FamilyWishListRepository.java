@@ -9,12 +9,10 @@ import java.util.Optional;
 public interface FamilyWishListRepository extends JpaRepository<FamilyWishList, Long> {
 
     boolean existsByFamilyRoomIdAndFoodId(Long familyRoomId, Long foodId);
-
     Optional<FamilyWishList> findByFamilyRoomIdAndFoodId(Long familyRoomId, Long foodId);
 
     List<FamilyWishList> findAllByFamilyRoomId(Long familyRoomId);
 
-    void deleteByFamilyRoomIdAndFoodIdIn(Long familyRoomId, List<Long> foodIds);
-
     void deleteByFamilyRoomIdAndFoodId(Long familyRoomId, Long foodId);
+    void deleteByFamilyRoomIdAndFoodIdIn(Long familyRoomId, List<Long> foodIds);
 }

@@ -8,6 +8,5 @@ import java.util.Optional;
 public interface InviteRepository extends JpaRepository<Invite, Long> {
 
     boolean existsByTokenHash(String tokenHash);
-
     Optional<Invite> findByTokenHash(String tokenHash);
 }

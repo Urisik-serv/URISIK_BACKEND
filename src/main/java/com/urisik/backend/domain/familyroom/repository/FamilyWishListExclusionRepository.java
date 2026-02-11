@@ -9,9 +9,7 @@ import java.util.Set;
 
 public interface FamilyWishListExclusionRepository extends JpaRepository<FamilyWishListExclusion, Long>, FamilyWishListExclusionRepositoryCustom {
 
-    /**
-     * 해당 가족방에서 제외된 recipeId 목록
-     */
+    /** 해당 가족방에서 제외된 recipeId 목록 */
     @Query("""
         select e.recipeId
         from FamilyWishListExclusion e
@@ -20,9 +18,7 @@ public interface FamilyWishListExclusionRepository extends JpaRepository<FamilyW
     """)
     Set<Long> findExcludedRecipeIdsByFamilyRoomId(Long familyRoomId);
 
-    /**
-     * 해당 가족방에서 제외된 transformedRecipeId 목록
-     */
+    /** 해당 가족방에서 제외된 transformedRecipeId 목록 */
     @Query("""
         select e.transformedRecipeId
         from FamilyWishListExclusion e
@@ -31,17 +27,11 @@ public interface FamilyWishListExclusionRepository extends JpaRepository<FamilyW
     """)
     Set<Long> findExcludedTransformedRecipeIdsByFamilyRoomId(Long familyRoomId);
 
-    /**
-     * 개인이 다시 담았을 때 exclusion 해제
-     */
+    /** 개인이 다시 담았을 때 exclusion 해제 */
     void deleteByFamilyRoom_IdAndRecipeId(Long familyRoomId, Long recipeId);
 
-    /**
-     * 필요 시 bulk 해제용
-     */
+    /** 필요 시 bulk 해제용 */
     void deleteByFamilyRoom_IdAndRecipeIdIn(Long familyRoomId, List<Long> recipeIds);
-
     void deleteByFamilyRoom_IdAndTransformedRecipeId(Long familyRoomId, Long transformedRecipeId);
-
     void deleteByFamilyRoom_IdAndTransformedRecipeIdIn(Long familyRoomId, List<Long> transformedRecipeIds);
 }

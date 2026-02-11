@@ -73,14 +73,14 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
 
             // transformed 우선
             if (isTransformed(item)) {
-                Long transId = item.getId();
-                Long baseKey = baseIdByTransformedId.get(transId);
+                Long transformedRecipeId = item.getId();
+                Long baseKey = baseIdByTransformedId.get(transformedRecipeId);
                 if (baseKey == null) continue;
                 if (!usedBaseKeys.add(baseKey)) continue;
 
                 result.add(new RecipeSelectionDTO(
                         RecipeSelectionDTO.RecipeSelectionType.TRANSFORMED_RECIPE,
-                        transId,
+                        transformedRecipeId,
                         baseKey
                 ));
                 continue;
