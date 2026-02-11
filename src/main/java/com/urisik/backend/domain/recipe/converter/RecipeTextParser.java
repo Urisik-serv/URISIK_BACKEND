@@ -24,7 +24,7 @@ public class RecipeTextParser {
     }
 
     private static final Pattern STEP_PATTERN =
-            Pattern.compile("(\\d+)[\\.\\)]\\s*(.*?)(?=(\\d+[\\.\\)])|$)", Pattern.DOTALL);
+            Pattern.compile("(?m)^(\\d+)\\.\\s*(.*)");
 
     public static List<RecipeStepDTO> parseSteps(String raw) {
 
@@ -32,36 +32,34 @@ public class RecipeTextParser {
             return List.of();
         }
 
-        String normalized = raw.replace("\r", "\n").trim();
+        String normalized = raw.replace("\r", "").trim();
 
         List<RecipeStepDTO> steps = new ArrayList<>();
-
         Matcher matcher = STEP_PATTERN.matcher(normalized);
 
-        while (matcher.find()) {
-            int order = Integer.parseInt(matcher.group(1));
-            String description = matcher.group(2).trim();
+        List<Integer> positions = new ArrayList<>();
 
-            if (!description.isBlank()) {
-                steps.add(new RecipeStepDTO(order, description));
-            }
+        while (matcher.find()) {
+            positions.add(matcher.start());
         }
 
-        // 번호 패턴이 없는 경우 fallback (줄 기준 분리)
-        if (steps.isEmpty()) {
-            String[] lines = normalized.split("\n");
-            int order = 1;
+        for (int i = 0; i < positions.size(); i++) {
+            int start = positions.get(i);
+            int end = (i + 1 < positions.size()) ? positions.get(i + 1) : normalized.length();
 
-            for (String line : lines) {
-                String trimmed = line.trim();
-                if (!trimmed.isBlank()) {
-                    steps.add(new RecipeStepDTO(order++, trimmed));
-                }
+            String block = normalized.substring(start, end).trim();
+
+            Matcher m = STEP_PATTERN.matcher(block);
+            if (m.find()) {
+                int order = Integer.parseInt(m.group(1));
+                String description = block.substring(m.end()).trim();
+                steps.add(new RecipeStepDTO(order, description));
             }
         }
 
         return steps;
     }
+
 
 }
 
