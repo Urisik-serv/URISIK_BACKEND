@@ -3,17 +3,21 @@ package com.urisik.backend.domain.recipe.service;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
+import com.urisik.backend.domain.recipe.converter.RecipeDetailConverter;
 import com.urisik.backend.domain.recipe.converter.RecipeTextParser;
+import com.urisik.backend.domain.recipe.dto.RecipeStepDetailDTO;
 import com.urisik.backend.domain.recipe.dto.res.AllergyWarningDTO;
 import com.urisik.backend.domain.recipe.dto.res.RecipeDetailResponseDTO;
 import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.RecipeExternalMetadata;
+import com.urisik.backend.domain.recipe.entity.RecipeStep;
 import com.urisik.backend.domain.recipe.enums.RecipeErrorCode;
 import com.urisik.backend.domain.recipe.enums.SourceType;
 import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.FoodSafetyRecipeClient;
 import com.urisik.backend.domain.recipe.infrastructure.external.foodsafety.dto.FoodSafetyRecipeResponse;
 import com.urisik.backend.domain.recipe.repository.RecipeExternalMetadataRepository;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
+import com.urisik.backend.domain.recipe.repository.RecipeStepRepository;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +35,7 @@ public class RecipeReadService {
     private final RecipeRepository recipeRepository;
     private final RecipeExternalMetadataRepository metadataRepository;
     private final FoodSafetyRecipeClient foodSafetyRecipeClient;
+    private final RecipeStepRepository recipeStepRepository;
 
     private final FamilyMemberProfileRepository familyMemberProfileRepository;
     private final AllergyRiskService allergyRiskService;
@@ -94,12 +99,34 @@ public class RecipeReadService {
                                 .toList()
                 );
 
-        // 7️. DTO 변환 후 반환
-        return toDetailDto(recipe, meta, warning);
+        // 7. recipe_step 테이블에서 단계 조회
+        List<RecipeStep> stepEntities =
+                recipeStepRepository
+                        .findAllByRecipe_IdInOrderByRecipe_IdAscStepOrderAsc(
+                                List.of(recipe.getId())
+                        );
+
+        // 8. Step → DTO 변환 (imageUrl 포함)
+        List<RecipeStepDetailDTO> stepDtos =
+                stepEntities.stream()
+                        .map(step -> new RecipeStepDetailDTO(
+                                step.getStepOrder(),
+                                step.getDescription(),
+                                step.getImageUrl()
+                        ))
+                        .toList();
+
+        return RecipeDetailConverter.toDetailDto(
+                recipe,
+                meta,
+                warning,
+                ingredients,
+                stepDtos
+        );
     }
 
     /**
-     * 외부 API 레시피 상세 조회 + 내부 저장
+     * 외부 API 레시피 상세 정보 내부 저장
      * (이 메서드는 알레르기 판별 X — 저장 전용)
      */
     @Transactional
@@ -150,39 +177,6 @@ public class RecipeReadService {
                     metadataRepository.save(meta);
                     return saved;
                 });
-    }
-
-    /* ================= DTO 변환 ================= */
-
-    private RecipeDetailResponseDTO toDetailDto(
-            Recipe recipe,
-            RecipeExternalMetadata meta,
-            RecipeDetailResponseDTO.AllergyWarningDTO warning
-    ) {
-        return new RecipeDetailResponseDTO(
-                recipe.getId(),
-                recipe.getTitle(),
-                meta != null ? meta.getCategory() : null,
-                meta != null ? meta.getServingWeight() : null,
-                new RecipeDetailResponseDTO.NutritionDTO(
-                        meta != null ? meta.getCalorie() : null,
-                        meta != null ? meta.getCarbohydrate() : null,
-                        meta != null ? meta.getProtein() : null,
-                        meta != null ? meta.getFat() : null,
-                        meta != null ? meta.getSodium() : null
-                ),
-                new RecipeDetailResponseDTO.ImagesDTO(
-                        meta != null ? meta.getImageSmallUrl() : null,
-                        meta != null ? meta.getImageLargeUrl() : null
-                ),
-                RecipeTextParser.parseIngredients(recipe.getIngredientsRaw()),
-                RecipeTextParser.parseSteps(recipe.getInstructionsRaw()),
-                recipe.getSourceType().name(),
-                warning,
-                recipe.getReviewCount(),
-                recipe.getWishCount(),
-                recipe.getAvgScore()
-        );
     }
 
     /* ================= 내부 헬퍼 메서드 ================= */

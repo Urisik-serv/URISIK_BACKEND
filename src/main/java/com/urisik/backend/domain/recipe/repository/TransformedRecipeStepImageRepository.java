@@ -10,4 +10,7 @@ public interface TransformedRecipeStepImageRepository
     List<TransformedRecipeStepImage> findAllByTransformedRecipeIdInOrderByTransformedRecipeIdAscStepOrderAsc(
             List<Long> transformedRecipeIds
     );
+
+    List<TransformedRecipeStepImage>
+    findByTransformedRecipeIdOrderByStepOrderAsc(Long transformedRecipeId);
 }

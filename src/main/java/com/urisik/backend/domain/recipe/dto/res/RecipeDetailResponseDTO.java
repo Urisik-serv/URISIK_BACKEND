@@ -1,6 +1,7 @@
 package com.urisik.backend.domain.recipe.dto.res;
 
 import com.urisik.backend.domain.recipe.dto.RecipeStepDTO;
+import com.urisik.backend.domain.recipe.dto.RecipeStepDetailDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -20,7 +21,7 @@ public class RecipeDetailResponseDTO {
     private ImagesDTO images;
 
     private List<String> ingredients;
-    private List<RecipeStepDTO> steps;
+    private List<RecipeStepDetailDTO> steps;
 
     private String sourceType; // EXTERNAL_API / AI_GENERATED
 
