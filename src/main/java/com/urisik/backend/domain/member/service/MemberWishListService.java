@@ -57,7 +57,7 @@ public class MemberWishListService {
 
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_MEMBER));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
         // 이미 위시리스트 안에 있는지 검증
         List<Long> recipeIds = req.getRecipeId();
@@ -122,7 +122,7 @@ public class MemberWishListService {
 
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_MEMBER));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NO_PROFILE_IN_FAMILY));
 
 
         long deleted =0;

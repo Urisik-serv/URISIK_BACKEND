@@ -123,7 +123,7 @@ public class AuthController {
         try {
             memberId = (Long) auth.getPrincipal();
         } catch (ClassCastException e) {
-            throw new GeneralException(GeneralErrorCode.UNAUTHORIZED);
+            throw new AuthenExcetion(AuthErrorCode.NO_TOKEN);
         }
 
         // ✅ 회원 조회

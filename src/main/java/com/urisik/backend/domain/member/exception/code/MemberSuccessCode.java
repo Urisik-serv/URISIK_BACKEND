@@ -53,6 +53,10 @@ public enum MemberSuccessCode implements BaseSuccessCode {
             "WISH_200_2",
             "위시리스트 조회 성공"),
 
+    RECOMMEND_LIST_GET(HttpStatus.OK,
+            "WISH_200_4",
+            "리뷰 기반 음식 추천 성공"),
+
     WISH_LIST_DELETE(HttpStatus.OK,
             "WISH_200_3",
             "위시리스트 삭제 성공")

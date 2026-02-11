@@ -177,6 +177,6 @@ public class FamilyMemberProfileController {
 
 
         WishListResponse.Recommendation result = memberWishListService.getMyRecommendation(familyRoomId,memberId);
-        return ApiResponse.onSuccess(MemberSuccessCode.WISH_LIST_GET, result);
+        return ApiResponse.onSuccess(MemberSuccessCode.RECOMMEND_LIST_GET, result);
     }
 }
