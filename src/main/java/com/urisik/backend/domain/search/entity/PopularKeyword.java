@@ -1,6 +1,7 @@
 package com.urisik.backend.domain.search.entity;
 
 import com.urisik.backend.domain.search.enums.RankChange;
+import com.urisik.backend.global.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -12,9 +13,13 @@ import java.time.LocalDateTime;
 @Table(name = "popular_keyword")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PopularKeyword {
+public class PopularKeyword extends BaseEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;   //
+
+    @Column(nullable = false)
     private String keyword;
 
     private long count;
@@ -23,17 +28,14 @@ public class PopularKeyword {
     private int rank;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RankChange change;
+    @Column(name = "rank_change", length = 20)
+    private RankChange rankChange;
 
-    @Column(nullable = false)
+    @Column(name = "window_start", nullable = false)
     private LocalDateTime windowStart;
 
-    @Column(nullable = false)
+    @Column(name = "window_end", nullable = false)
     private LocalDateTime windowEnd;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
 
     public PopularKeyword(
             String keyword,
@@ -46,10 +48,9 @@ public class PopularKeyword {
         this.keyword = keyword;
         this.count = count;
         this.rank = rank;
-        this.change = change;
+        this.rankChange = change;
         this.windowStart = windowStart;
         this.windowEnd = windowEnd;
-        this.updatedAt = LocalDateTime.now();
     }
 }
 

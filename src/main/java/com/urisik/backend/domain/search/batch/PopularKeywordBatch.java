@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,7 +23,7 @@ public class PopularKeywordBatch {
     private final SearchLogRepository searchLogRepository;
     private final PopularKeywordRepository popularKeywordRepository;
 
-    @Scheduled(cron = "0 0 */3 * * *")
+    @Scheduled(cron = "0 0 */3 * * *") // 3시간마다 실행
     @Transactional
     public void aggregate() {
 
@@ -38,6 +39,7 @@ public class PopularKeywordBatch {
                                 PopularKeyword::getRank
                         ));
 
+        // 최근 24시간 Top 8 조회
         List<Object[]> results =
                 searchLogRepository.findTopKeywords(
                         windowStart,
@@ -45,14 +47,15 @@ public class PopularKeywordBatch {
                         PageRequest.of(0, 8)
                 );
 
-        popularKeywordRepository.deleteAll();
+        // 기존 데이터 삭제
+        popularKeywordRepository.deleteAllInBatch();
 
         int rank = 1;
 
         for (Object[] row : results) {
 
             String keyword = (String) row[0];
-            long count = (Long) row[1];
+            long count = ((Number) row[1]).longValue();
 
             RankChange change;
 
@@ -67,18 +70,16 @@ public class PopularKeywordBatch {
                 else change = RankChange.SAME;
             }
 
-            popularKeywordRepository.save(
-                    new PopularKeyword(
-                            keyword,
-                            count,
-                            rank++,
-                            change,
-                            windowStart,
-                            windowEnd
-                    )
+            PopularKeyword entity = new PopularKeyword(
+                    keyword,
+                    count,
+                    rank++,
+                    change,
+                    windowStart,
+                    windowEnd
             );
+
+            popularKeywordRepository.save(entity);
         }
     }
 }
-
-

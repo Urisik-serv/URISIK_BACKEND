@@ -26,7 +26,7 @@ public final class PopularKeywordConverter {
                         .map(pk -> new PopularKeywordResponse.KeywordItem(
                                 pk.getKeyword(),
                                 pk.getRank(),
-                                pk.getChange()
+                                pk.getRankChange()
                         ))
                         .toList();
 

@@ -23,9 +23,6 @@ public class RecipeTextParser {
                 .toList();
     }
 
-    private static final Pattern STEP_PATTERN =
-            Pattern.compile("(?m)^(\\d+)\\.\\s*(.*)");
-
     public static List<RecipeStepDTO> parseSteps(String raw) {
 
         if (raw == null || raw.isBlank()) {
@@ -35,31 +32,29 @@ public class RecipeTextParser {
         String normalized = raw.replace("\r", "").trim();
 
         List<RecipeStepDTO> steps = new ArrayList<>();
-        Matcher matcher = STEP_PATTERN.matcher(normalized);
 
-        List<Integer> positions = new ArrayList<>();
+        // 숫자. 기준으로 split
+        String[] parts = normalized.split("(?=\\d+\\.\\s)");
 
-        while (matcher.find()) {
-            positions.add(matcher.start());
-        }
+        for (String part : parts) {
+            part = part.trim();
+            if (part.isBlank()) continue;
 
-        for (int i = 0; i < positions.size(); i++) {
-            int start = positions.get(i);
-            int end = (i + 1 < positions.size()) ? positions.get(i + 1) : normalized.length();
+            int dotIndex = part.indexOf(".");
+            if (dotIndex == -1) continue;
 
-            String block = normalized.substring(start, end).trim();
+            try {
+                int order = Integer.parseInt(part.substring(0, dotIndex).trim());
+                String description = part.substring(dotIndex + 1).trim();
 
-            Matcher m = STEP_PATTERN.matcher(block);
-            if (m.find()) {
-                int order = Integer.parseInt(m.group(1));
-                String description = block.substring(m.end()).trim();
-                steps.add(new RecipeStepDTO(order, description));
-            }
+                if (!description.isBlank()) {
+                    steps.add(new RecipeStepDTO(order, description));
+                }
+
+            } catch (NumberFormatException ignored) {}
         }
 
         return steps;
     }
-
-
 }
 
