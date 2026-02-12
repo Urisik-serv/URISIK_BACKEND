@@ -86,7 +86,7 @@ public class FamilyMemberProfileService {
                 .nickname(req.getNickname())
                 .member(member)
                 .familyRole(req.getRole())
-                .profilePicUrl(null)
+                .profilePicUrl("https://urisik-server-s3.s3.ap-northeast-2.amazonaws.com/family_member_profile/087eb145-8e4c-48c4-872c-a4b178a43639_no_profile_image_first.png")
                 .likedIngredients(req.getLikedIngredients())
                 .dislikedIngredients(req.getDislikedIngredients())
                 .familyRoom(familyRoom)
@@ -208,6 +208,7 @@ public class FamilyMemberProfileService {
             Long memberId,
             MultipartFile file
     ) {
+        String DEFAULT_URL = "https://urisik-server-s3.s3.ap-northeast-2.amazonaws.com/family_member_profile/087eb145-8e4c-48c4-872c-a4b178a43639_no_profile_image_first.png";
         // 1) 프로필 조회 (memberId + familyRoomId 조건으로 찾는 걸 추천)
         FamilyMemberProfile profile = familyMemberProfileRepository
                 .findByFamilyRoom_IdAndMember_Id(familyRoomId, memberId)
@@ -228,7 +229,7 @@ public class FamilyMemberProfileService {
         String newUrl = s3Uploader.uploadByFile(file, "family_member_profile"); // 폴더명 추천
         profile.setProfilePicUrl(newUrl);
 
-        if (oldUrl != null && !oldUrl.isBlank()) {
+        if (oldUrl != null && !oldUrl.isBlank() && !oldUrl.equals(DEFAULT_URL)) {
             s3Remover.remove(oldUrl);
         }
 
