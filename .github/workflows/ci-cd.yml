@@ -1,7 +1,7 @@
 name: URISIK Dev CI/CD
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, main ]
 
 jobs:
   build-and-push:
@@ -32,8 +32,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/urisik-app:latest
-
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/urisik-app:${{ github.ref == 'refs/heads/main' && 'prod' || 'latest' }}
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -58,17 +57,21 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 도커 로그인
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ vars.DOCKERHUB_USERNAME }}" --password-stdin
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              IMAGE_TAG="prod"
+              DDL_AUTO="none"
+            else
+              IMAGE_TAG="latest"
+              DDL_AUTO="update"
+            fi
             
-            # .env 파일 생성 
-            echo "DOCKERHUB_USERNAME=${{ vars.DOCKERHUB_USERNAME }}" > .env
+            echo "IMAGE_TAG=$IMAGE_TAG" > .env
+            echo "HIBERNATE_DDL_AUTO=$DDL_AUTO" >> .env
+            echo "DOCKERHUB_USERNAME=${{ vars.DOCKERHUB_USERNAME }}" >> .env
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-            echo "JWT_KEY=${{ secrets.JWT_KEY }}" >> .env 
+            echo "JWT_KEY=${{ secrets.JWT_KEY }}" >> .env
             
-            # 컨테이너 교체 작업
-            docker compose pull
-            docker compose up -d --remove-orphans
-            
-            # 안 쓰는 오래된 이미지 삭제
-            docker image prune -af
+             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ vars.DOCKERHUB_USERNAME }}" --password-stdin
+             docker compose pull
+             docker compose up -d --remove-orphans
+             docker image prune -af

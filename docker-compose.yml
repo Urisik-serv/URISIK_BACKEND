@@ -6,6 +6,7 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${HIBERNATE_DDL_AUTO:-update}
 
       # RDS 연결 정보
       - SPRING_DATASOURCE_URL=jdbc:mysql://urisik-db.crwokauswgl1.ap-northeast-2.rds.amazonaws.com:3306/urisik-db?useSSL=false&serverTimezone=Asia/Seoul
