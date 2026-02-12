@@ -9,14 +9,19 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface TransformedRecipeReviewRepository extends JpaRepository<TransformedRecipeReview, Long> {
 
     boolean existsByFamilyMemberProfileAndTransformedRecipe(FamilyMemberProfile profile, TransformedRecipe transformedRecipe);
 
-
-
+    boolean existsByFamilyMemberProfileIdAndTransformedRecipeIdAndCreateAtBetween(
+            Long profileId,
+            Long transformedRecipeId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
 
     // 1) 조건 만족 reviewId 랜덤 1개
     @Query(value = """

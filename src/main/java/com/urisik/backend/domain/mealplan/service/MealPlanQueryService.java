@@ -20,6 +20,7 @@ import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
 import com.urisik.backend.domain.review.repository.ReviewRepository;
+import com.urisik.backend.domain.review.repository.TransformedRecipeReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +41,7 @@ public class MealPlanQueryService {
     private final RecipeStepRepository recipeStepRepository;
     private final TransformedRecipeStepImageRepository transformedRecipeStepImageRepository;
     private final ReviewRepository reviewRepository;
+    private final TransformedRecipeReviewRepository transformedRecipeReviewRepository;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -103,11 +105,19 @@ public class MealPlanQueryService {
                     String ingredients = (rr == null) ? "" : rr.ingredients();
 
                     // 🛠️ 리뷰 작성 여부 체크
-                    Boolean isReviewed = false;
-                    if (ref.id() != null && MealPlan.SlotRefType.RECIPE.equals(ref.type())) {
-                        isReviewed = reviewRepository.existsByFamilyMemberProfile_IdAndRecipe_IdAndCreateAtBetween(
-                                profile.getId(), ref.id(), startOfDay, endOfDay
-                        );
+                    boolean isReviewed = false;
+                    if (ref.id() != null) {
+                        if (MealPlan.SlotRefType.RECIPE.equals(ref.type())) {
+                            // 일반 레시피인 경우
+                            isReviewed = reviewRepository.existsByFamilyMemberProfileIdAndRecipeIdAndCreateAtBetween(
+                                    profile.getId(), ref.id(), startOfDay, endOfDay
+                            );
+                        } else if (MealPlan.SlotRefType.TRANSFORMED_RECIPE.equals(ref.type())) {
+                            // 2. 변형 레시피인 경우
+                            isReviewed = transformedRecipeReviewRepository.existsByFamilyMemberProfileIdAndTransformedRecipeIdAndCreateAtBetween(
+                                    profile.getId(), ref.id(), startOfDay, endOfDay
+                            );
+                        }
                     }
                     return new GetMealPlanResDTO.TodayMealDTO(
                             e.getKey(),
