@@ -1,7 +1,9 @@
 package com.urisik.backend.domain.member.repo;
 
 import com.urisik.backend.domain.member.entity.MemberTransformedRecipeWish;
+import com.urisik.backend.domain.member.entity.MemberWishList;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,10 +18,10 @@ public interface MemberTransformedRecipeWishRepository extends JpaRepository<Mem
     long deleteByFamilyMemberProfile_IdAndRecipe_IdIn(Long profileId, List<Long> recipeIds);
     @Modifying
     @Query("""
-        update Recipe r
-        set r.wishCount = r.wishCount - 1
-        where r.id in :recipeIds
-    """)
+    update TransformedRecipe tr
+    set tr.wishCount = tr.wishCount - 1
+    where tr.id in :recipeIds
+""")
     int decreaseWishCount(@Param("recipeIds") List<Long> recipeIds);
 
     //존재 검증용
@@ -70,6 +72,10 @@ public interface MemberTransformedRecipeWishRepository extends JpaRepository<Mem
       and tr.id in :transformedIds
 """)
     Set<Long> findExistingTransformedRecipeIds(Long familyRoomId, List<Long> transformedIds);
+
+
+    @EntityGraph(attributePaths = {"recipe"})
+    List<MemberTransformedRecipeWish> findMemberWishListsByFamilyMemberProfile_Id(Long familyMemberProfileId);
 
 
 }

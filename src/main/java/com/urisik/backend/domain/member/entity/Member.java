@@ -2,8 +2,11 @@ package com.urisik.backend.domain.member.entity;
 
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
 import com.urisik.backend.domain.member.enums.AlarmPolicy;
+import com.urisik.backend.domain.notification.entity.Notification;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 
 @Entity
@@ -55,7 +58,18 @@ public class Member {
     @JoinColumn(name = "family_room")
     private FamilyRoom familyRoom;
 
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Notification> notifications;
 
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private FamilyMemberProfile familyMemberProfile;
+
+    public void setFamilyMemberProfiles(FamilyMemberProfile profile) {
+        this.familyMemberProfile = profile;
+        if (profile != null && profile.getMember() != this) {
+            profile.setMember(this);
+        }
+    }
 
 }
 

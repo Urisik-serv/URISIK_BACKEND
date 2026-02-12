@@ -143,7 +143,12 @@ public class FamilyMemberProfile extends BaseEntity {
             this.addDietPreference(DietPreference.of(d));
         }
     }
-
+    public void setMembers(Member member) {
+        this.member = member;
+        if (member != null && member.getFamilyMemberProfile() != this) {
+            member.setFamilyMemberProfiles(this);
+        }
+    }
 
 
 

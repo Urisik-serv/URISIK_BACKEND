@@ -1,7 +1,13 @@
 package com.urisik.backend.global.auth.controller;
 
+import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.member.entity.Member;
+import com.urisik.backend.domain.member.entity.MemberTransformedRecipeWish;
+import com.urisik.backend.domain.member.entity.MemberWishList;
+import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
 import com.urisik.backend.domain.member.repo.MemberRepository;
+import com.urisik.backend.domain.member.repo.MemberTransformedRecipeWishRepository;
+import com.urisik.backend.domain.member.repo.MemberWishListRepository;
 import com.urisik.backend.global.apiPayload.ApiResponse;
 import com.urisik.backend.global.apiPayload.code.GeneralErrorCode;
 import com.urisik.backend.global.apiPayload.code.GeneralSuccessCode;
@@ -12,6 +18,7 @@ import com.urisik.backend.global.auth.exception.AuthenExcetion;
 import com.urisik.backend.global.auth.exception.code.AuthErrorCode;
 import com.urisik.backend.global.auth.exception.code.AuthSuccessCode;
 import com.urisik.backend.global.auth.jwt.JwtUtil;
+import com.urisik.backend.global.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,6 +30,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -32,6 +41,8 @@ public class AuthController {
 
     private final JwtUtil jwtUtil;
     private final MemberRepository memberRepository;
+    private final FamilyMemberProfileRepository familyMemberProfileRepository;
+    private final AuthService authService;
 
     @PostMapping("/reissue")
     public ApiResponse<AccessTokenDto> reissue(
@@ -132,7 +143,10 @@ public class AuthController {
 
         // ✅ (중요) 연관 데이터 때문에 hard delete 실패할 수 있음
         // 2) hard delete면 cascade/orphanRemoval / FK on delete cascade 정리가 필요
-        memberRepository.delete(member);
+
+
+        authService.withdraw(memberId);
+
 
         // ✅ refresh_token 쿠키 삭제 내려주기
         Cookie cookie = new Cookie("refresh_token", "");

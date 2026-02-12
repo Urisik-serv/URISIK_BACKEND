@@ -2,6 +2,7 @@ package com.urisik.backend.domain.member.repo;
 
 import com.urisik.backend.domain.member.entity.MemberWishList;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -67,6 +68,9 @@ public interface MemberWishListRepository extends JpaRepository<MemberWishList, 
         where r.id in :recipeIds
     """)
     int decreaseWishCount(@Param("recipeIds") List<Long> recipeIds);
+
+    @EntityGraph(attributePaths = {"recipe"})
+    List<MemberWishList> findMemberWishListsByFamilyMemberProfile_Id(Long familyMemberProfileId);
 
 
 }
