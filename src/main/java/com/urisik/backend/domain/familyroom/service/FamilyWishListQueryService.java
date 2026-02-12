@@ -471,13 +471,6 @@ public class FamilyWishListQueryService {
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.NOT_FAMILY_MEMBER));
     }
 
-
-    private String normalize(String s) {
-        if (s == null) return "";
-        String lowered = s.toLowerCase(Locale.ROOT);
-        return lowered.replaceAll("[^0-9a-zA-Z가-힣]", "");
-    }
-
     private List<String> splitIngredientsRaw(String ingredientsRaw) {
         if (ingredientsRaw == null || ingredientsRaw.isBlank()) {
             return List.of();
@@ -507,12 +500,7 @@ public class FamilyWishListQueryService {
         }
     }
 
-    /**
-     * recipeId별 집계용 내부 클래스
-     * - distinct profiles (인원 수)
-     * - latest wish id (최신)
-     * - title, ingredientsRaw (알레르기 필터링용)
-     */
+    /** recipeId별 집계용 내부 클래스 */
     private static class Agg {
         private final String title;
         private final String ingredientsRaw;

@@ -29,10 +29,9 @@ public class GetMealPlanResDTO {
             Long id,                  // 선택된 엔티티의 id (type에 따라 Recipe.id 또는 TransformedRecipe.id)
             String title,
             String imageUrl,          // RecipeExternalMetadata#getThumbnailImageUrl() (imageSmallUrl 우선). 없으면 null
+            Boolean isReviewed, // 리뷰 작성 여부
             String ingredients,
-            List<MealPlanRecipeStepDTO> recipeSteps,
-
-            Boolean isReviewed // 리뷰 작성 여부
+            List<MealPlanRecipeStepDTO> recipeSteps
     ) {}
 
     /** 레시피 조리 단계 (순서 + 설명 + 이미지) */

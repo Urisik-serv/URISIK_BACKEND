@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MealPlanRepository extends JpaRepository<MealPlan, Long> {
-    boolean existsByFamilyRoomIdAndWeekStartDate(Long familyRoomId, LocalDate weekStartDate);
 
+    boolean existsByFamilyRoomIdAndWeekStartDate(Long familyRoomId, LocalDate weekStartDate);
     Optional<MealPlan> findByFamilyRoomIdAndWeekStartDate(Long familyRoomId, LocalDate weekStartDate);
 
     List<MealPlan> findAllByFamilyRoomIdAndWeekStartDateBetweenOrderByWeekStartDateAsc(

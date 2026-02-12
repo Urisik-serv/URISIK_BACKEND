@@ -5,6 +5,7 @@ import com.urisik.backend.domain.familyroom.repository.FamilyRoomRepository;
 import com.urisik.backend.domain.familyroom.service.FamilyRoomService;
 import com.urisik.backend.domain.mealplan.ai.candidate.MealPlanCandidateProvider;
 import com.urisik.backend.domain.mealplan.ai.generator.MealPlanGenerator;
+import com.urisik.backend.domain.mealplan.ai.service.MealPlanAiService;
 import com.urisik.backend.domain.mealplan.ai.validation.MealPlanGenerationValidator;
 import com.urisik.backend.domain.mealplan.dto.common.RecipeDTO;
 import com.urisik.backend.domain.mealplan.dto.event.MealPlanConfirmedEvent;
@@ -43,16 +44,12 @@ public class MealPlanService {
     private final MealPlanRepository mealPlanRepository;
     private final FamilyRoomRepository familyRoomRepository;
     private final FamilyRoomService familyRoomService;
-
+    private final MealPlanAiService mealPlanAiService;
     private final RecipeRepository recipeRepository;
     private final TransformedRecipeRepository transformedRecipeRepository;
-
     private final MealPlanCandidateProvider candidateProvider;
     private final MealPlanGenerator generator;
     private final MealPlanGenerationValidator validator;
-
-    private final com.urisik.backend.domain.mealplan.ai.service.MealPlanAiService mealPlanAiService;
-
     private final ApplicationEventPublisher eventPublisher;
 
     /** 식단 생성 API */

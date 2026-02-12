@@ -104,16 +104,16 @@ public class MealPlanQueryService {
                     String title = (rr == null) ? "(레시피 정보를 불러올 수 없음)" : rr.title();
                     String ingredients = (rr == null) ? "" : rr.ingredients();
 
-                    // 🛠️ 리뷰 작성 여부 체크
+                    // 리뷰 작성 여부 확인
                     boolean isReviewed = false;
                     if (ref.id() != null) {
                         if (MealPlan.SlotRefType.RECIPE.equals(ref.type())) {
-                            // 일반 레시피인 경우
+                            // 일반 레시피
                             isReviewed = reviewRepository.existsByFamilyMemberProfileIdAndRecipeIdAndCreateAtBetween(
                                     profile.getId(), ref.id(), startOfDay, endOfDay
                             );
                         } else if (MealPlan.SlotRefType.TRANSFORMED_RECIPE.equals(ref.type())) {
-                            // 2. 변형 레시피인 경우
+                            // 변형 레시피
                             isReviewed = transformedRecipeReviewRepository.existsByFamilyMemberProfileIdAndTransformedRecipeIdAndCreateAtBetween(
                                     profile.getId(), ref.id(), startOfDay, endOfDay
                             );
@@ -125,9 +125,9 @@ public class MealPlanQueryService {
                             ref.id(),
                             title,
                             rr == null ? null : rr.imageUrl(),
+                            isReviewed,
                             ingredients,
-                            rr == null || rr.recipeSteps() == null ? List.of() : rr.recipeSteps(),
-                            isReviewed
+                            rr == null || rr.recipeSteps() == null ? List.of() : rr.recipeSteps()
                     );
                 })
                 .toList();
