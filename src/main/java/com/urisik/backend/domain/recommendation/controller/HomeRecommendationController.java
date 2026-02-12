@@ -81,7 +81,7 @@ public class HomeRecommendationController {
     @GetMapping("/wish")
     @Operation(
             summary = "홈 위시리스트 많은 순 레시피 추천 API(하단)",
-            description = "위시리스트 개수가 많은 순으로 정렬하되, 동일할 경우 평점·리뷰 수·알레르기 안전 여부를 기준으로 Top 3를 추천하는 api 입니다."
+            description = "카테고리 선택 여부에 따라 레시피 및 변형 레시피를 통합하여 위시리스트 개수가 많은 레시피 Top 3를 추천하는 api 입니다."
     )
     public ApiResponse<HighScoreRecommendationResponseDTO> recommendWishHighScore(
             @AuthenticationPrincipal Long loginUserId,
