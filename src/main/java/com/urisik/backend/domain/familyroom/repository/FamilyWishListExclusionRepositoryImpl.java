@@ -56,15 +56,15 @@ public class FamilyWishListExclusionRepositoryImpl implements FamilyWishListExcl
             );
 
             StringBuilder sb = new StringBuilder();
-            sb.append("INSERT INTO family_wish_list_exclusion (family_room_id, ")
+            sb.append("INSERT INTO family_wishlist_exclusion (family_room_id, ")
               .append(columnName)
-              .append(") VALUES ");
+              .append(", create_at, updated_at) VALUES ");
 
             List<Object> params = new ArrayList<>();
 
             for (int i = 0; i < chunk.size(); i++) {
                 if (i > 0) sb.append(", ");
-                sb.append("(?, ?)");
+                sb.append("(?, ?, NOW(), NOW())");
                 params.add(familyRoomId);
                 params.add(chunk.get(i));
             }
@@ -72,7 +72,8 @@ public class FamilyWishListExclusionRepositoryImpl implements FamilyWishListExcl
             sb.append(" ON DUPLICATE KEY UPDATE ")
               .append(columnName)
               .append(" = ")
-              .append(columnName);
+              .append(columnName)
+              .append(", updated_at = NOW()");
 
             var q = em.createNativeQuery(sb.toString());
             for (int i = 0; i < params.size(); i++) {

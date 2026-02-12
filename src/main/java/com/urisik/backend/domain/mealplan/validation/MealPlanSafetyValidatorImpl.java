@@ -40,12 +40,12 @@ public class MealPlanSafetyValidatorImpl implements MealPlanSafetyValidator {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
-        // 1) exclusion(방장 제외 목록) 검증
+        // exclusion(방장 제외 목록) 검증
         if (isExcluded(familyRoomId, selection)) {
             throw new MealPlanException(MealPlanErrorCode.MEAL_PLAN_VALIDATION_FAILED);
         }
 
-        // 2) 가족 알레르기 기준 검증 (ingredientsRaw 기반)
+        // 가족 알레르기 기준 검증 (ingredientsRaw 기반)
         String ingredientsRaw = loadIngredientsRaw(selection);
         if (ingredientsRaw == null || ingredientsRaw.isBlank()) {
             // 재료정보가 없으면 안전 판정 불가 -> unsafe 처리

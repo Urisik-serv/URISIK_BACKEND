@@ -21,6 +21,8 @@ import java.util.Set;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.springframework.data.domain.PageRequest.of;
+
 @Component
 @RequiredArgsConstructor
 public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider {
@@ -102,14 +104,14 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
         return result;
     }
 
-    /** fallback 후보 제공 (가족 변형 + 원형) */
+    /** fallback 후보 제공 (원형 + 변형) */
     @Override
     public List<RecipeSelectionDTO> getFallbackRecipeSelections(Long memberId, Long familyRoomId) {
 
-        // wish 후보에서 이미 사용된 baseKey는 fallback에서 제외 (위시 후보 로직 재사용)
+        // wish 후보에서 이미 사용된 baseKey는 fallback에서 제외
         Set<Long> excludedBaseKeys = collectBaseKeys(getWishRecipeSelections(memberId, familyRoomId));
 
-        // 가족방 전체 알레르기 조회 + 정규화(위시리스트 로직과 동일한 방식)
+        // 가족방 전체 알레르기 조회 + 정규화
         List<Allergen> familyAllergens =
                 memberAllergyRepository.findDistinctAllergensByFamilyRoomId(familyRoomId);
 
@@ -122,7 +124,7 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
                 .distinct()
                 .toList();
 
-        // 방장 exclusion(조회에서만 제외)도 후보군에서 제외
+        // 방장 exclusion도 후보군에서 제외
         Set<Long> excludedRecipeIds =
                 familyWishListExclusionRepository.findExcludedRecipeIdsByFamilyRoomId(familyRoomId);
         Set<Long> excludedTransformedRecipeIds =
@@ -130,11 +132,40 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
 
         List<RecipeSelectionDTO> pool = new ArrayList<>();
 
-        // 1. 변형 레시피
+        // 원형 레시피 (DB에서 제한/샘플링)
+        for (int attempt = 0; attempt < DB_MAX_ATTEMPTS && pool.size() < TARGET_POOL_SIZE; attempt++) {
+            List<RecipeRepository.RecipeCandidateRow> rows =
+                    recipeRepository.findRandomCandidateRows(of(0, DB_BATCH_SIZE));
+
+            if (rows == null || rows.isEmpty()) break;
+
+            for (RecipeRepository.RecipeCandidateRow row : rows) {
+                if (row == null || row.getId() == null) continue;
+
+                Long recipeId = row.getId();
+                if (excludedRecipeIds != null && excludedRecipeIds.contains(recipeId)) continue;
+
+                // 알레르기 필터링: unsafe(알레르기 포함)면 제외
+                if (!isUsableForMealPlan(row.getIngredientsRaw(), normalizedAllergens)) continue;
+
+                Long baseKey = recipeId;
+                if (excludedBaseKeys.contains(baseKey)) continue;
+
+                pool.add(new RecipeSelectionDTO(
+                        RecipeSelectionDTO.RecipeSelectionType.RECIPE,
+                        recipeId,
+                        recipeId
+                ));
+
+                if (pool.size() >= TARGET_POOL_SIZE) break;
+            }
+        }
+
+        // 변형 레시피
         for (int attempt = 0; attempt < DB_MAX_ATTEMPTS && pool.size() < TARGET_POOL_SIZE; attempt++) {
             List<TransformedRecipeRepository.TransformedCandidateRow> rows =
                     transformedRecipeRepository.findRandomCandidateRows(
-                            org.springframework.data.domain.PageRequest.of(0, DB_BATCH_SIZE)
+                            of(0, DB_BATCH_SIZE)
                     );
 
             if (rows == null || rows.isEmpty()) break;
@@ -158,35 +189,6 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
                         RecipeSelectionDTO.RecipeSelectionType.TRANSFORMED_RECIPE,
                         transformedId,
                         baseKey
-                ));
-
-                if (pool.size() >= TARGET_POOL_SIZE) break;
-            }
-        }
-
-        // 2. 원형 레시피 (DB에서 제한/샘플링해서 가져오기: findAll() 금지)
-        for (int attempt = 0; attempt < DB_MAX_ATTEMPTS && pool.size() < TARGET_POOL_SIZE; attempt++) {
-            List<RecipeRepository.RecipeCandidateRow> rows =
-                    recipeRepository.findRandomCandidateRows(org.springframework.data.domain.PageRequest.of(0, DB_BATCH_SIZE));
-
-            if (rows == null || rows.isEmpty()) break;
-
-            for (RecipeRepository.RecipeCandidateRow row : rows) {
-                if (row == null || row.getId() == null) continue;
-
-                Long recipeId = row.getId();
-                if (excludedRecipeIds != null && excludedRecipeIds.contains(recipeId)) continue;
-
-                // 알레르기 필터링: unsafe(알레르기 포함)면 제외
-                if (!isUsableForMealPlan(row.getIngredientsRaw(), normalizedAllergens)) continue;
-
-                Long baseKey = recipeId;
-                if (excludedBaseKeys.contains(baseKey)) continue;
-
-                pool.add(new RecipeSelectionDTO(
-                        RecipeSelectionDTO.RecipeSelectionType.RECIPE,
-                        recipeId,
-                        recipeId
                 ));
 
                 if (pool.size() >= TARGET_POOL_SIZE) break;
@@ -239,7 +241,7 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
 
     /**
      * usableForMealPlan 판단
-     * - in-memory로 가족 알레르기 키워드를 재료 문자열에 매칭
+     * - 성능을 위해 in-memory로 가족 알레르기 키워드를 재료 문자열에 매칭
      */
     private boolean isUsableForMealPlan(String ingredientsRaw, List<String> normalizedAllergens) {
         if (normalizedAllergens == null || normalizedAllergens.isEmpty()) {

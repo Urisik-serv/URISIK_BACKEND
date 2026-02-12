@@ -8,7 +8,6 @@ import java.time.Instant;
 import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO;
-import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO.Category;
 import com.urisik.backend.domain.familyroom.dto.res.FamilyWishListItemResDTO.Profile;
 import com.urisik.backend.domain.familyroom.exception.FamilyRoomException;
 import com.urisik.backend.domain.familyroom.exception.code.FamilyRoomErrorCode;
@@ -471,13 +470,6 @@ public class FamilyWishListQueryService {
                 .orElseThrow(() -> new FamilyRoomException(FamilyRoomErrorCode.NOT_FAMILY_MEMBER));
     }
 
-
-    private String normalize(String s) {
-        if (s == null) return "";
-        String lowered = s.toLowerCase(Locale.ROOT);
-        return lowered.replaceAll("[^0-9a-zA-Z가-힣]", "");
-    }
-
     private List<String> splitIngredientsRaw(String ingredientsRaw) {
         if (ingredientsRaw == null || ingredientsRaw.isBlank()) {
             return List.of();
@@ -507,18 +499,13 @@ public class FamilyWishListQueryService {
         }
     }
 
-    /**
-     * recipeId별 집계용 내부 클래스
-     * - distinct profiles (인원 수)
-     * - latest wish id (최신)
-     * - title, ingredientsRaw (알레르기 필터링용)
-     */
+    /** recipeId별 집계용 내부 클래스 */
     private static class Agg {
         private final String title;
         private final String ingredientsRaw;
         private final String imageUrl;
         private final Double avgScore;
-        private final Category category;
+        private final String category;
 
         private boolean allergySafe = false; // computed per request
         private final Map<Long, Profile> profiles = new LinkedHashMap<>();
@@ -528,7 +515,7 @@ public class FamilyWishListQueryService {
                     String ingredientsRaw,
                     String imageUrl,
                     Double avgScore,
-                    Category category) {
+                    String category) {
             this.title = title;
             this.ingredientsRaw = ingredientsRaw;
             this.imageUrl = imageUrl;
@@ -542,16 +529,9 @@ public class FamilyWishListQueryService {
 
             RecipeExternalMetadata meta = (recipe == null) ? null : recipe.getRecipeExternalMetadata();
 
-            String imageUrl = (meta == null) ? null : meta.getImageSmallUrl();
+            String imageUrl = (meta == null) ? null : meta.getThumbnailImageUrl();
             Double avgScore = (recipe == null) ? null : recipe.getAvgScore();
-
-            Category category = null;
-            if (meta != null && meta.getCategory() != null) {
-                category = new Category(
-                        meta.getCategory(),
-                        meta.getCategory()
-                );
-            }
+            String category = (meta == null) ? null : meta.getCategory();
 
             return new Agg(t, ing, imageUrl, avgScore, category);
         }
@@ -560,26 +540,19 @@ public class FamilyWishListQueryService {
             String t = (recipe == null) ? null : recipe.getTitle();
             String ing = (recipe == null) ? null : recipe.getIngredientsRaw();
 
-            String imageUrl = null;
-            if (recipe != null && recipe.getBaseRecipe() != null) {
-                RecipeExternalMetadata meta = recipe.getBaseRecipe().getRecipeExternalMetadata();
-                if (meta != null) {
-                    imageUrl = meta.getThumbnailImageUrl();
+            // Base recipe metadata is used for shared fields (image/category) to avoid duplicated null-safe navigation
+            RecipeExternalMetadata meta = null;
+            if (recipe != null) {
+                Recipe base = recipe.getBaseRecipe();
+                if (base != null) {
+                    meta = base.getRecipeExternalMetadata();
                 }
             }
 
+            // If both feed the same UI component and should be consistent, consider aligning to the same field.
+            String imageUrl = (meta == null) ? null : meta.getThumbnailImageUrl();
             Double avgScore = (recipe == null) ? null : recipe.getAvgScore();
-
-            Category category = null;
-            if (recipe != null && recipe.getBaseRecipe() != null) {
-                RecipeExternalMetadata meta = recipe.getBaseRecipe().getRecipeExternalMetadata();
-                if (meta != null && meta.getCategory() != null) {
-                    category = new Category(
-                            meta.getCategory(),
-                            meta.getCategory()
-                    );
-                }
-            }
+            String category = (meta == null) ? null : meta.getCategory();
 
             return new Agg(t, ing, imageUrl, avgScore, category);
         }
@@ -636,7 +609,7 @@ public class FamilyWishListQueryService {
             return avgScore;
         }
 
-        private Category getCategory() {
+        private String getCategory() {
             return category;
         }
 

@@ -5,6 +5,7 @@ import com.urisik.backend.domain.mealplan.dto.common.RecipeSelectionDTO;
 import java.util.List;
 
 public interface MealPlanCandidateProvider {
+
     List<RecipeSelectionDTO> getWishRecipeSelections(Long memberId, Long familyRoomId);
 
     List<RecipeSelectionDTO> getFallbackRecipeSelections(Long memberId, Long familyRoomId);
