@@ -1,9 +1,7 @@
 # 🍽️ URISIK  
 ### 알레르기 가족 모두가 안전하게,  
 ### 한 식탁에서 함께 식사할 수 있도록 돕는  
-## 🧠 AI 기반 맞춤형 식단 관리 서비스
-
-> 🔥 단순 제외가 아닌, **대체 레시피 자동 생성까지 제공하는 서비스**
+## AI 기반 맞춤형 식단 관리 서비스
 
 ---
 
@@ -14,39 +12,8 @@ URISIK은 가족 구성원의 서로 다른 알레르기를 고려하여
 필요 시 **식감과 맛이 유사한 대체 재료로 레시피를 자동 변형/생성**하는  
 AI 기반 맞춤형 식단 관리 플랫폼입니다.
 
-기존 서비스가 “제외”에 머물렀다면,  
-URISIK은 **“대체 생성”까지 확장**한 것이 핵심 차별점입니다.
-
 ---
 
-## ✨ Key Features
-
-- 🛡️ **알레르기 자동 판별** (가족 구성원별 알레르기 기반 위험 계산)
-- 🔁 **대체 레시피 제공** (대체 재료 + 조리 단계 자동 변형)
-- ⭐ **안전 / 별점 / 위시리스트 기반 추천**
-- 👨‍👩‍👧 **가족 단위 알레르기 관리** (가족방 단위 프로필/선호 관리)
-- 📅 **알레르기 고려 주간 식단 생성**
-- 📝 **리뷰 및 평점 기반 추천 고도화**
-
----
-
-## 🚀 Technical Highlights
-
-- 🤖 **AI 기반 레시피 변형 생성**
-  - 알레르기 위험 재료 탐지 → 대체 재료 추천 → 조리 단계 자동 변형
-  - JSON 규격 강제/검증을 통한 안정적인 AI 응답 파싱
-- 🧩 **가족방 단위 위험 판별 로직**
-  - 구성원별 알레르기 조합에 따라 레시피 위험도 계산
-  - “표시/필터링” 정책 분리 가능 구조
-- 🧵 **비동기 처리로 UX 개선**
-  - 레시피 단계 이미지 생성 등 비용 큰 작업을 `@Async`로 분리
-- 📈 **성능 검증**
-  - k6 기반 부하 테스트 및 병목 개선 경험
-- ☁️ **운영 환경 배포 자동화**
-  - Docker + GitHub Actions + Nginx 기반 CI/CD
-  - Blue/Green 배포 구조 적용
-
----
 
 ## 📱 Screen Preview
 
@@ -55,8 +22,6 @@ URISIK은 **“대체 생성”까지 확장**한 것이 핵심 차별점입니�
 <img width="1886" height="6031" alt="step2" src="https://github.com/user-attachments/assets/ceb3548a-5e0b-4171-96b0-e7e1b12a695e" />
 <img width="1886" height="3075" alt="step3" src="https://github.com/user-attachments/assets/48ff594a-d8ac-4254-8657-947cf3f1a4db" />
 <img width="1886" height="2408" alt="step4" src="https://github.com/user-attachments/assets/768ee56a-6b99-4dce-a93a-bee4b7176bb8" />
-
-
 
 ---
 
@@ -108,11 +73,6 @@ URISIK은 **“대체 생성”까지 확장**한 것이 핵심 차별점입니�
 ## 🏗 Architecture
 
 <img src="https://github.com/user-attachments/assets/ba8962eb-3e53-45d6-ac7d-4050eae0dc2d" width="800" />
-
-- Spring Boot 기반 모놀리식 구조
-- 도메인 중심 패키지 구조 분리 (DDD-lite)
-- AI 서버 / AWS S3 등 외부 시스템 연동
-- Docker 기반 배포 및 GitHub Actions 자동화
 
 ---
 
