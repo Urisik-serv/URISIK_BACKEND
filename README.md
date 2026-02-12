@@ -1,7 +1,7 @@
 # 🍽️ URISIK 
 ### 알레르기 가족 모두가 안전하게, 
 ### 한 식탁에서 즐겁게 먹을 수 있도록 돕는 맞춤형 식단 관리 서비스 
-
+<img width="1886" height="1128" alt="1" src="https://github.com/user-attachments/assets/4d1c60af-e55a-4979-9121-08a7d64b6aca" />
 ---
 
 ## 📌 Project Overview
@@ -56,7 +56,6 @@ AI 기반 맞춤형 식단 관리 플랫폼입니다.
 
 ## 📱 Screen Preview
 
-<img width="1886" height="1128" alt="1" src="https://github.com/user-attachments/assets/4d1c60af-e55a-4979-9121-08a7d64b6aca" />
 <img width="1886" height="3481" alt="step1" src="https://github.com/user-attachments/assets/5f52beae-048c-4129-81db-ab4381335c25" />
 <img width="1886" height="6031" alt="step2" src="https://github.com/user-attachments/assets/ceb3548a-5e0b-4171-96b0-e7e1b12a695e" />
 <img width="1886" height="3075" alt="step3" src="https://github.com/user-attachments/assets/48ff594a-d8ac-4254-8657-947cf3f1a4db" />
