@@ -16,6 +16,7 @@ public class NotificationConverter {
 
     public static NotificationResDto toNotificationResponseDto(Notification notification) {
         return NotificationResDto.builder()
+                .id(notification.getId())
                 .isRead(notification.isRead())
                 .type(notification.getType())
                 .createdAt(notification.getCreateAt())

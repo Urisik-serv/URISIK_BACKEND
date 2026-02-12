@@ -36,14 +36,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
+        String token = null;
 
-        // ✅ 헤더 없으면 그냥 다음으로 (permitAll API들도 있으니까)
-        if (header == null || !header.startsWith("Bearer ")) {
+        // 1. 헤더에서 토큰 추출 시도
+        if (header != null && header.startsWith("Bearer ")) {
+            token = header.substring("Bearer ".length());
+        }
+        // 2. 헤더에 없다면, SSE 구독 API인 경우 쿼리 파라미터에서 추출 시도
+        else if (request.getRequestURI().contains("/api/notifications/subscribe")) {
+            token = request.getParameter("accessToken");
+        }
+
+        // ✅ 추출된 토큰이 아예 없으면 그냥 다음 필터로 넘어감 (permitAll 대응)
+        if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = header.substring("Bearer ".length());
 
         try {
             // ✅ 유효 + access 토큰인지 확인까지 하고 싶으면 isAccess() 추가 추천

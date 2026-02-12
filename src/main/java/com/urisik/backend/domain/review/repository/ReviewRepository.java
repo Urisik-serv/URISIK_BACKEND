@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +15,12 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     boolean existsByFamilyMemberProfileAndRecipe(FamilyMemberProfile profile, Recipe recipe);
 
+    boolean existsByFamilyMemberProfile_IdAndRecipe_IdAndCreateAtBetween(
+            Long profileId,
+            Long recipeId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
 
     // 1) 조건 만족 reviewId 랜덤 1개
     @Query(value = """

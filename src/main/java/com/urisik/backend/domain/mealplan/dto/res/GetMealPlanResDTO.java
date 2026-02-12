@@ -30,7 +30,9 @@ public class GetMealPlanResDTO {
             String title,
             String imageUrl,          // RecipeExternalMetadata#getThumbnailImageUrl() (imageSmallUrl 우선). 없으면 null
             String ingredients,
-            List<MealPlanRecipeStepDTO> recipeSteps
+            List<MealPlanRecipeStepDTO> recipeSteps,
+
+            Boolean isReviewed // 리뷰 작성 여부
     ) {}
 
     /** 레시피 조리 단계 (순서 + 설명 + 이미지) */
