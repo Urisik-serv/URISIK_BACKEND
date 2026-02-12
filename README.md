@@ -112,7 +112,8 @@ AI 기반 맞춤형 식단 관리 플랫폼입니다.
 
 ## 🏗 Architecture
 
-<img width="1536" height="1024" alt="ChatGPT Image 2026년 2월 12일 오후 07_49_02" src="https://github.com/user-attachments/assets/54a3d3e4-30c0-42aa-986e-87ac66d4018b" />
+<img width="1536" height="1024" alt="ChatGPT Image 2026년 2월 12일 오후 08_09_04" src="https://github.com/user-attachments/assets/748d218a-d34b-4b85-90b0-dae1d4d094ec" />
+
 
 
 ---
