@@ -8,14 +8,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     boolean existsByFamilyMemberProfileAndRecipe(FamilyMemberProfile profile, Recipe recipe);
 
-    boolean existsByFamilyMemberProfile_IdAndRecipe_IdAndCreateAtBetween(
+    boolean existsByFamilyMemberProfileIdAndRecipeIdAndCreateAtBetween(
             Long profileId,
             Long recipeId,
             LocalDateTime startDate,
