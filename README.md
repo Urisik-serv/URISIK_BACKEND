@@ -5,19 +5,9 @@
 ---
 
 ## 📌 Project Introduction
+<img width="1886" height="1128" alt="1" src="https://github.com/user-attachments/assets/2920881e-b2ef-42f4-a7da-69dad7a8ee42" />
 
-<table>
-<tr>
-<td width="520">
 
-<img src="https://github.com/user-attachments/assets/dbeabecb-9501-4323-8f41-533b2eef2231" width="500" />
-
-</td>
-<td width="420" valign="top">
-
-### 🧩 서비스 한 줄 요약
-알레르기 정보를 기반으로  
-**안전한 레시피만 골라 추천하는 가족 맞춤 식단 서비스**
 
 ### ✨ 주요 기능
 - 🛡️ 알레르기 자동 판별
@@ -47,23 +37,15 @@
 ---
 
 ## 📱 주요 화면 미리보기
+<img width="1886" height="3481" alt="step1" src="https://github.com/user-attachments/assets/940686ef-e00e-443b-a7a6-16531c8273bc" />
+<img width="1886" height="6031" alt="step2" src="https://github.com/user-attachments/assets/87b88f05-b71e-4f7e-91ad-21016b27c623" />
+<img width="1886" height="3075" alt="step3" src="https://github.com/user-attachments/assets/a86731dc-3d21-4100-8813-0971174fc9a2" />
+<img width="1886" height="2408" alt="step4" src="https://github.com/user-attachments/assets/82f3aa0f-8181-4831-8767-85907079e355" />
 
-### 👤 마이페이지 & 가족 관리
-<img src="https://github.com/user-attachments/assets/a7d5e329-6e55-4235-b6ee-4ad1eff50dd0" width="300" />
-<img src="https://github.com/user-attachments/assets/575b3a79-f037-4435-b0a5-93b2b798a055" width="300" />
 
----
 
-### 🍽️ 레시피 추천
-<img src="https://github.com/user-attachments/assets/bc388a94-b57e-4601-be2a-1fa551a7df04" width="300" />
-<img src="https://github.com/user-attachments/assets/2b7dff3e-193d-4b0f-bd57-45f5360a353d" width="300" />
-<img src="https://github.com/user-attachments/assets/9ccd4640-97c3-4439-8002-c96944b40147" width="300" />
 
----
 
-### 🗓️ 식단 생성 & 리뷰
-<img src="https://github.com/user-attachments/assets/32ecc60a-5d35-4064-ad5d-3dcbb562e96b" width="300" />
-<img src="https://github.com/user-attachments/assets/b909040c-daa3-4c5f-b9a2-4599fbc4698f" width="300" />
 
 ---
 
