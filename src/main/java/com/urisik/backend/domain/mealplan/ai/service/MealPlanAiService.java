@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @RequiredArgsConstructor
@@ -38,28 +40,40 @@ public class MealPlanAiService {
                 candidateCount,
                 clientName);
 
-        // 1) Prompt build timing
+        // Prompt build timing
         final long tPrompt0 = System.nanoTime();
         String prompt = promptBuilder.build(selectedSlots, candidateSelections);
         final long promptMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tPrompt0);
         log.info("[AI][FLOW] prompt built (chars={}, promptMs={})", prompt == null ? 0 : prompt.length(), promptMs);
 
-        // 2) AI call timing (Gemini / external)
+        // AI call timing (Gemini / external) with MealPlan-specific timeout (20s)
         String json;
         long aiMs;
         try {
-            log.info("[AI][FLOW] calling aiClient.generateJson (client={})", clientName);
+            log.info("[AI][FLOW] calling aiClient.generateJson (client={}, timeout=20s)", clientName);
             final long tAi0 = System.nanoTime();
-            json = aiClient.generateJson(prompt);
+
+            json = CompletableFuture
+                    .supplyAsync(() -> aiClient.generateJson(prompt))
+                    .orTimeout(20, TimeUnit.SECONDS)
+                    .join();
+
             aiMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tAi0);
-            log.info("[AI][FLOW] aiClient.generateJson success (jsonChars={}, aiMs={})", json == null ? 0 : json.length(), aiMs);
+            log.info("[AI][FLOW] aiClient.generateJson success (jsonChars={}, aiMs={})",
+                    json == null ? 0 : json.length(),
+                    aiMs);
+
         } catch (Exception e) {
-            // Still record AI duration if we can
-            // (If the exception occurs before returning, totalMs is still useful in logs)
-            log.error("[AI][FLOW] aiClient.generateJson FAILED (client={}, errType={}, msg={})",
-                    clientName,
-                    e.getClass().getSimpleName(),
-                    e.getMessage());
+            Throwable cause = e.getCause();
+            if (cause instanceof TimeoutException) {
+                log.warn("[AI][FLOW] aiClient.generateJson TIMEOUT (client={}, timeout=20s)",
+                        clientName);
+            } else {
+                log.error("[AI][FLOW] aiClient.generateJson FAILED (client={}, errType={}, msg={})",
+                        clientName,
+                        e.getClass().getSimpleName(),
+                        e.getMessage());
+            }
 
             final long totalMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t0);
             log.warn("[PERF] mealplan_ai_generate totalMs={} promptMs={} aiMs={} slots={} candidates={} aiClient={} success=false",
@@ -72,14 +86,14 @@ public class MealPlanAiService {
             throw e;
         }
 
-        // 3) Parse timing
+        // Parse timing
         final long tParse0 = System.nanoTime();
         Map<MealPlan.SlotKey, RecipeSelectionDTO> assignments =
                 responseParser.parseSelections(json, selectedSlots, candidateSelections);
         final long parseMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - tParse0);
         log.info("[AI][FLOW] parsed assignments (count={}, parseMs={})", assignments == null ? 0 : assignments.size(), parseMs);
 
-        // 4) Validation timing
+        // Validation timing
         final long tVal0 = System.nanoTime();
         validator.validateRecipeSelections(
                 selectedSlots,
