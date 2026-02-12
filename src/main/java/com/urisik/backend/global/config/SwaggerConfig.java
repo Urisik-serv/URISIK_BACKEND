@@ -68,7 +68,8 @@ public class SwaggerConfig {
                 .group("04. profile")
                 .displayName("04. 프로필 API")     // UI 드롭다운에 보일 이름
                 .pathsToMatch("/api/family-rooms/*/profiles/**",
-                        "/api/family-rooms/*/profile-pic") // 이 그룹에 포함될 API의 URL 패턴
+                        "/api/family-rooms/*/profile-pic",
+                        "/api/family-rooms/*/all-profiles") // 이 그룹에 포함될 API의 URL 패턴
                 .build();
     }
 
@@ -87,7 +88,7 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("06. wishList")
                 .displayName("06. 개인 위시리스트 API")     // UI 드롭다운에 보일 이름
-                .pathsToMatch("/api/family-rooms/*/profile-wishes","/api/family-rooms/*/profile-wishes-trans") // 이 그룹에 포함될 API의 URL 패턴
+                .pathsToMatch("/api/family-rooms/*/profile-wishes/**","/api/family-rooms/*/profile-wishes-trans/**") // 이 그룹에 포함될 API의 URL 패턴
                 .build();
     }
   
@@ -133,7 +134,7 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("11. recommendation")
                 .displayName("11. 추천 API")
-                .pathsToMatch("/api/recommendations/**")
+                .pathsToMatch("/api/recommendations/**","/api/family-rooms/*/profile/recommend")
                 .build();
     }
 
