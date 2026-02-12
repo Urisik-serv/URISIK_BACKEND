@@ -102,6 +102,14 @@
   <img src="https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white">
 </div>
 
+### 🧪 Testing & Performance
+<div>
+  <img src="https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black">
+  <img src="https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=postman&logoColor=white">
+  <img src="https://img.shields.io/badge/JUnit5-25A162?style=flat-square&logo=java&logoColor=white">
+  <img src="https://img.shields.io/badge/K6-7D64FF?style=flat-square&logo=k6&logoColor=white">
+</div>
+
 ---
 
 ## 🏗  Architecture Diagram
@@ -119,7 +127,7 @@
 ## Directory Structure
 ```
 📦 src/main/java/com/urisik/backend
- ├──📁 domain          #핵심 비즈니스 로직
+ ├──📁 domain          # 핵심 비즈니스 로직
      ├── 📁 allergy          # 알레르기 관련 패키지
      ├── 📁 familyroom       # 가족방 관련 패키지
      ├── 📁 home             # 홈 화면 관련 패키지
@@ -128,14 +136,14 @@
      ├── 📁 notification     # 알림 관련 패키지
      ├── 📁 recipe           # 레시피 관련 패키지
      └── 📁 review           # 리뷰 관련 패키지
-├── 📁 global          #공통 모듈
-     ├── 📁 ai               # ai 연동
+├── 📁 global          # 공통 모듈
+     ├── 📁 ai               # ai 연동 관련 패키지
      ├── 📁 apiPayload       # 공통 응답, 에러 코드, 예외 처리 등 API 응답 관련 패키지
-     ├── 📁 auth             # 인증/인가 
-     ├── 📁 config           # 공통 설정 정의
-     ├── 📁 external         # AWS S3 연동
-     ├── 📁 util             # 공통 사용 유틸리티
-     └── 📄 BaseEntity.java  # JPA 엔티티의 생성·수정 시간 관
+     ├── 📁 auth             # 인증/인가 관련 패키지
+     ├── 📁 config           # 공통 설정 정의 관련 패키지
+     ├── 📁 external         # AWS S3 연동 관련 패키지
+     ├── 📁 util             # 공통 사용 유틸리티 관련 패키지
+     └── 📄 BaseEntity.java  # JPA 엔티티의 생성·수정 시간 관련 패키지
 └── 📄 UrisikBackendApplication.java
 ```
 
