@@ -1,51 +1,60 @@
 # 🍽️ URISIK  
 ### 알레르기 가족 모두가 안전하게,  
-### 한 식탁에서 즐겁게 먹을 수 있도록 돕는 맞춤형 식단 관리 서비스
+### 한 식탁에서 함께 식사할 수 있도록 돕는  
+## 🧠 AI 기반 맞춤형 식단 관리 서비스
+
+> 🔥 단순 제외가 아닌, **대체 레시피 자동 생성까지 제공하는 서비스**
 
 ---
 
-## 📌 Project Introduction
+## 📌 Project Overview
+
+URISIK은 가족 구성원의 서로 다른 알레르기를 고려하여  
+**레시피별 알레르기 위험을 자동 판별**하고,  
+필요 시 **식감과 맛이 유사한 대체 재료로 레시피를 자동 변형/생성**하는  
+AI 기반 맞춤형 식단 관리 플랫폼입니다.
+
+기존 서비스가 “제외”에 머물렀다면,  
+URISIK은 **“대체 생성”까지 확장**한 것이 핵심 차별점입니다.
+
+---
+
+## ✨ Key Features
+
+- 🛡️ **알레르기 자동 판별** (가족 구성원별 알레르기 기반 위험 계산)
+- 🔁 **대체 레시피 제공** (대체 재료 + 조리 단계 자동 변형)
+- ⭐ **안전 / 별점 / 위시리스트 기반 추천**
+- 👨‍👩‍👧 **가족 단위 알레르기 관리** (가족방 단위 프로필/선호 관리)
+- 📅 **알레르기 고려 주간 식단 생성**
+- 📝 **리뷰 및 평점 기반 추천 고도화**
+
+---
+
+## 🚀 Technical Highlights
+
+- 🤖 **AI 기반 레시피 변형 생성**
+  - 알레르기 위험 재료 탐지 → 대체 재료 추천 → 조리 단계 자동 변형
+  - JSON 규격 강제/검증을 통한 안정적인 AI 응답 파싱
+- 🧩 **가족방 단위 위험 판별 로직**
+  - 구성원별 알레르기 조합에 따라 레시피 위험도 계산
+  - “표시/필터링” 정책 분리 가능 구조
+- 🧵 **비동기 처리로 UX 개선**
+  - 레시피 단계 이미지 생성 등 비용 큰 작업을 `@Async`로 분리
+- 📈 **성능 검증**
+  - k6 기반 부하 테스트 및 병목 개선 경험
+- ☁️ **운영 환경 배포 자동화**
+  - Docker + GitHub Actions + Nginx 기반 CI/CD
+  - Blue/Green 배포 구조 적용
+
+---
+
+## 📱 Screen Preview
+
 <img width="1886" height="1128" alt="1" src="https://github.com/user-attachments/assets/2920881e-b2ef-42f4-a7da-69dad7a8ee42" />
-
-
-
-### ✨ 주요 기능
-- 🛡️ 알레르기 자동 판별
-- ⭐ 안전 / 별점 / 위시리스트 기반 추천
-- 🔁 알레르기 대체 레시피 제공
-- 👨‍👩‍👧 가족 단위 알레르기 관리
-- 📝 리뷰 및 평점 기반 추천 고도화
-
-</td>
-</tr>
-</table>
-
----
-
-## 🎯 Problem & Solution
-
-### ❗ Problem
-- 가족 구성원마다 서로 다른 알레르기
-- 레시피 선택 시 매번 성분 확인 필요
-- 기존 레시피 서비스는 **“개인 기준” 추천에만 집중**
-
-### ✅ Solution
-- 가족방 단위 알레르기 정보 관리
-- 레시피별 알레르기 위험 자동 판별
-- 안전 / 선호 / 행동 데이터를 결합한 추천 제공
-
----
-
-## 📱 주요 화면 미리보기
 <img width="1886" height="3481" alt="step1" src="https://github.com/user-attachments/assets/940686ef-e00e-443b-a7a6-16531c8273bc" />
 <img width="1886" height="6031" alt="step2" src="https://github.com/user-attachments/assets/87b88f05-b71e-4f7e-91ad-21016b27c623" />
 <img width="1886" height="3075" alt="step3" src="https://github.com/user-attachments/assets/a86731dc-3d21-4100-8813-0971174fc9a2" />
 <img width="1886" height="2408" alt="step4" src="https://github.com/user-attachments/assets/82f3aa0f-8181-4831-8767-85907079e355" />
-
-
-
-
-
 
 ---
 
@@ -80,7 +89,7 @@
   <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white">
   <img src="https://img.shields.io/badge/GitHub Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white">
   <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white">
-  <img src="https://img.shields.io/badge/Docker Hub-2496ED?style=flat-square&logo=docker&logoColor=white">
+  <img src="https://img.shields.io/badge/Docker Hub-2496ED?style=flat-square&logo=dockerhub&logoColor=white">
   <img src="https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white">
 </div>
 
@@ -88,45 +97,52 @@
 <div>
   <img src="https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black">
   <img src="https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=postman&logoColor=white">
-  <img src="https://img.shields.io/badge/JUnit5-25A162?style=flat-square&logo=java&logoColor=white">
-  <img src="https://img.shields.io/badge/K6-7D64FF?style=flat-square&logo=k6&logoColor=white">
+  <img src="https://img.shields.io/badge/JUnit5-25A162?style=flat-square&logo=junit5&logoColor=white">
+  <img src="https://img.shields.io/badge/k6-7D64FF?style=flat-square&logo=k6&logoColor=white">
 </div>
 
 ---
 
-## 🏗  Architecture Diagram
+## 🏗 Architecture
 
 <img src="https://github.com/user-attachments/assets/ba8962eb-3e53-45d6-ac7d-4050eae0dc2d" width="800" />
+
+- Spring Boot 기반 모놀리식 구조
+- 도메인 중심 패키지 구조 분리 (DDD-lite)
+- AI 서버 / AWS S3 등 외부 시스템 연동
+- Docker 기반 배포 및 GitHub Actions 자동화
 
 ---
 
 ## 🗄 ERD
 
-<img src="https://github.com/user-attachments/assets/0e7dfd3d-b7b9-4b58-a1b4-fb30660d9be6" width="800" />
+<img width="2100" height="2572" alt="URISIK (9)" src="https://github.com/user-attachments/assets/75dd01f8-ced0-4ffd-84d2-6f943e2367a4" />
 
 ---
 
-## Directory Structure
-```
+## 📂 Directory Structure
+```text
 📦 src/main/java/com/urisik/backend
  ├──📁 domain          # 핵심 비즈니스 로직
-     ├── 📁 allergy          # 알레르기 관련 패키지
-     ├── 📁 familyroom       # 가족방 관련 패키지
-     ├── 📁 home             # 홈 화면 관련 패키지
-     ├── 📁 mealplan         # 식단 계획 관련 패키지
-     ├── 📁 member           # 사용자 관련 패키지
-     ├── 📁 notification     # 알림 관련 패키지
-     ├── 📁 recipe           # 레시피 관련 패키지
-     └── 📁 review           # 리뷰 관련 패키지
-├── 📁 global          # 공통 모듈
-     ├── 📁 ai               # ai 연동 관련 패키지
-     ├── 📁 apiPayload       # 공통 응답, 에러 코드, 예외 처리 등 API 응답 관련 패키지
-     ├── 📁 auth             # 인증/인가 관련 패키지
-     ├── 📁 config           # 공통 설정 정의 관련 패키지
-     ├── 📁 external         # AWS S3 연동 관련 패키지
-     ├── 📁 util             # 공통 사용 유틸리티 관련 패키지
-     └── 📄 BaseEntity.java  # JPA 엔티티의 생성·수정 시간 관련 패키지
-└── 📄 UrisikBackendApplication.java
+ │   ├── 📁 allergy          # 알레르기 관련 패키지
+ │   ├── 📁 familyroom       # 가족방 관련 패키지
+ │   ├── 📁 mealplan         # 식단 계획 관련 패키지
+ │   ├── 📁 member           # 사용자 관련 패키지
+ │   ├── 📁 notification     # 알림 관련 패키지
+ │   ├── 📁 recipe           # 레시피 관련 패키지
+ │   ├── 📁 recommendation   # 추천 관련 패키지
+ │   ├── 📁 review           # 리뷰 관련 패키지
+ │   └── 📁 search           # 인기 검색어 관련 패키지
+ ├── 📁 global          # 공통 모듈
+ │   ├── 📁 ai               # AI 연동 관련 패키지
+ │   ├── 📁 apiPayload       # 공통 응답/에러/예외 처리 관련 패키지
+ │   ├── 📁 auth             # 인증/인가 관련 패키지
+ │   ├── 📁 config           # 공통 설정 정의 관련 패키지
+ │   ├── 📁 external         # AWS S3 연동 관련 패키지
+ │   ├── 📁 util             # 공통 유틸리티 관련 패키지
+ │   └── 📄 BaseEntity.java  # 생성/수정 시간 자동 관리
+ └── 📄 UrisikBackendApplication.java
+
 ```
 
 ---
