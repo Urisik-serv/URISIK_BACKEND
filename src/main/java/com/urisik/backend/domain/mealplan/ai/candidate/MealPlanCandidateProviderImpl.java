@@ -10,7 +10,6 @@ import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -21,6 +20,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.springframework.data.domain.PageRequest.of;
 
 @Component
 @RequiredArgsConstructor
@@ -134,7 +135,7 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
         // 원형 레시피 (DB에서 제한/샘플링)
         for (int attempt = 0; attempt < DB_MAX_ATTEMPTS && pool.size() < TARGET_POOL_SIZE; attempt++) {
             List<RecipeRepository.RecipeCandidateRow> rows =
-                    recipeRepository.findRandomCandidateRows(org.springframework.data.domain.PageRequest.of(0, DB_BATCH_SIZE));
+                    recipeRepository.findRandomCandidateRows(of(0, DB_BATCH_SIZE));
 
             if (rows == null || rows.isEmpty()) break;
 
@@ -164,7 +165,7 @@ public class MealPlanCandidateProviderImpl implements MealPlanCandidateProvider 
         for (int attempt = 0; attempt < DB_MAX_ATTEMPTS && pool.size() < TARGET_POOL_SIZE; attempt++) {
             List<TransformedRecipeRepository.TransformedCandidateRow> rows =
                     transformedRecipeRepository.findRandomCandidateRows(
-                            PageRequest.of(0, DB_BATCH_SIZE)
+                            of(0, DB_BATCH_SIZE)
                     );
 
             if (rows == null || rows.isEmpty()) break;

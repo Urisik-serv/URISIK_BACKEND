@@ -7,7 +7,7 @@ export const options = {
     maxDuration: '30m',
 };
 
-const BASE_URL = 'https://api.urisik.com';
+const BASE_URL = 'http://localhost:8080';
 const FAMILY_ROOM_ID = 3;
 
 const TOKEN = __ENV.K6_TOKEN;
@@ -48,7 +48,6 @@ export default function () {
     timeout: '60s',
   };
 
-  console.log('POST', url);
   const res = http.post(url, payload, params);
 
   check(res, {
