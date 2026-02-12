@@ -1,0 +1,77 @@
+name: URISIK Dev CI/CD
+on:
+  push:
+    branches: [ develop, main ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 소스 체크아웃
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.SUBMODULE_TOKEN }}
+
+      # Docker Hub 로그인
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # buildx 설정
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Docker 이미지 빌드 & 푸시 (Dockerfile 이용)
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/urisik-app:${{ github.ref == 'refs/heads/main' && 'prod' || 'latest' }}
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 프로젝트 docker-compose.yml -> EC2 복사 (최신버전 반영)
+      - name: Copy docker-compose.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }} # 보통 ec2-user 또는 ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml"
+          target: "~/" # 홈 디렉토리로 복사
+
+      # EC2 배포
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              IMAGE_TAG="prod"
+              DDL_AUTO="none"
+            else
+              IMAGE_TAG="latest"
+              DDL_AUTO="update"
+            fi
+            
+            echo "IMAGE_TAG=$IMAGE_TAG" > .env
+            echo "HIBERNATE_DDL_AUTO=$DDL_AUTO" >> .env
+            echo "DOCKERHUB_USERNAME=${{ vars.DOCKERHUB_USERNAME }}" >> .env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+            echo "JWT_KEY=${{ secrets.JWT_KEY }}" >> .env
+            
+             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ vars.DOCKERHUB_USERNAME }}" --password-stdin
+             docker compose pull
+             docker compose up -d --remove-orphans
+             docker image prune -af

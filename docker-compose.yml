@@ -1,0 +1,22 @@
+services:
+  app:
+    image: euuunchae/urisik-app:latest
+    container_name: urisik-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${HIBERNATE_DDL_AUTO:-update}
+
+      # RDS 연결 정보
+      - SPRING_DATASOURCE_URL=jdbc:mysql://urisik-db.crwokauswgl1.ap-northeast-2.rds.amazonaws.com:3306/urisik-db?useSSL=false&serverTimezone=Asia/Seoul
+      - SPRING_DATASOURCE_USERNAME=urisik
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+
+      # JWT 설정
+      - JWT_TOKEN_SECRETKEY=${JWT_KEY}
+      - JWT_TOKEN_EXPIRATION_ACCESS=14400000
+      - JWT_TOKEN_EXPIRATION_REFRESH=604800000
+
+
+    restart: always
