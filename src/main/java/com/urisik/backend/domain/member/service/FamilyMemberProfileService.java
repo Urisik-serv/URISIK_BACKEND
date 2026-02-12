@@ -6,19 +6,16 @@ import com.urisik.backend.domain.allergy.enums.Allergen;
 import com.urisik.backend.domain.allergy.repository.AllergenAlternativeRepository;
 import com.urisik.backend.domain.allergy.repository.MemberAllergyRepository;
 import com.urisik.backend.domain.familyroom.entity.FamilyRoom;
+import com.urisik.backend.domain.member.entity.*;
 import com.urisik.backend.domain.member.enums.FamilyRole;
 import com.urisik.backend.domain.member.converter.FamilyMemberProfileConverter;
 import com.urisik.backend.domain.member.dto.req.FamilyMemberProfileRequest;
 import com.urisik.backend.domain.member.dto.res.FamilyMemberProfileResponse;
-import com.urisik.backend.domain.member.entity.DietPreference;
-import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
-import com.urisik.backend.domain.member.entity.Member;
 import com.urisik.backend.domain.member.enums.DietPreferenceList;
 import com.urisik.backend.domain.member.exception.MemberException;
 import com.urisik.backend.domain.member.exception.code.MemberErrorCode;
-import com.urisik.backend.domain.member.repo.DietPreferenceRepository;
-import com.urisik.backend.domain.member.repo.FamilyMemberProfileRepository;
-import com.urisik.backend.domain.member.repo.MemberRepository;
+import com.urisik.backend.domain.member.repo.*;
+import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.global.external.s3.S3Remover;
 import com.urisik.backend.global.external.s3.S3Uploader;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +36,9 @@ public class FamilyMemberProfileService {
     private final S3Uploader s3Uploader;
     private final S3Remover s3Remover;
     private final AllergenAlternativeRepository allergenAlternativeRepository;
+    private final MemberWishListRepository memberWishListRepository;
+    private final MemberTransformedRecipeWishRepository transformedRecipeWishRepository;
+    private final MemberTransformedRecipeWishRepository memberTransformedRecipeWishRepository;
 
     //post
     @Transactional
@@ -91,6 +91,9 @@ public class FamilyMemberProfileService {
                 .dislikedIngredients(req.getDislikedIngredients())
                 .familyRoom(familyRoom)
                 .build();
+
+        profile.setMembers(member);
+
 
         if (req.getAllergy() != null) {
             for (Allergen allergen : req.getAllergy()) {
@@ -365,6 +368,28 @@ public class FamilyMemberProfileService {
         // 5) 본인이거나 리더면 삭제 가능
         if (!isSelf && !isLeader) {
             throw new MemberException(MemberErrorCode.FORBIDDEN_MEMBER);
+        }
+
+        List<MemberWishList> memberWishLists =
+                memberWishListRepository.findMemberWishListsByFamilyMemberProfile_Id(targetProfile.getId());
+
+        List<Long> recipeIds = memberWishLists.stream()
+                .map(w -> w.getRecipe().getId())
+                .toList();
+
+        List<MemberTransformedRecipeWish> transformedWishes =
+                transformedRecipeWishRepository.findMemberWishListsByFamilyMemberProfile_Id(targetProfile.getId());
+
+        List<Long> transformedRecipeIds = transformedWishes.stream()
+                .map(w -> w.getRecipe().getId())
+                .toList();
+
+        if (!recipeIds.isEmpty()) {
+            int a = memberWishListRepository.decreaseWishCount(recipeIds);
+        }
+
+        if (!transformedRecipeIds.isEmpty()) {
+            int b = memberTransformedRecipeWishRepository.decreaseWishCount(transformedRecipeIds);
         }
 
         // 6) 방 탈퇴
