@@ -73,12 +73,14 @@ public class SecurityConfig  {
                         .requestMatchers(
                                 ""
                         ).permitAll()
+                        */
 
                         // 3. 🔒 로그인 필수 기능들
                         .requestMatchers(
-                                ""
+                                "/api/notifications/subscribe" // SSE 구독
                         ).authenticated()
 
+                        /*
                         // 4. 나머지 다 막기 (안 쓰는 이상한 URL 접근 방지용)
                         .anyRequest().authenticated()
 

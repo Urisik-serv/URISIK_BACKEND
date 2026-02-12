@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 @Builder
 public record NotificationResDto (
+        Long id,
         Boolean isRead,
         NotificationType type,
         LocalDateTime createdAt,

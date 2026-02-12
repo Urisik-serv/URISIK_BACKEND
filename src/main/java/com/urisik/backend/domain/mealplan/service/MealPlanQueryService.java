@@ -1,5 +1,6 @@
 package com.urisik.backend.domain.mealplan.service;
 
+import com.urisik.backend.domain.member.entity.FamilyMemberProfile;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipeStepImage;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeStepImageRepository;
 
@@ -18,13 +19,12 @@ import com.urisik.backend.domain.recipe.entity.Recipe;
 import com.urisik.backend.domain.recipe.entity.TransformedRecipe;
 import com.urisik.backend.domain.recipe.repository.RecipeRepository;
 import com.urisik.backend.domain.recipe.repository.TransformedRecipeRepository;
+import com.urisik.backend.domain.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Comparator;
@@ -39,13 +39,14 @@ public class MealPlanQueryService {
     private final FamilyRoomService familyRoomService;
     private final RecipeStepRepository recipeStepRepository;
     private final TransformedRecipeStepImageRepository transformedRecipeStepImageRepository;
+    private final ReviewRepository reviewRepository;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     /** 오늘의 식단 조회 */
     @Transactional(readOnly = true)
     public GetMealPlanResDTO.TodayMealPlanResDTO getTodayMealPlan(Long memberId, Long familyRoomId) {
-        familyRoomService.validateMember(memberId, familyRoomId);
+        FamilyMemberProfile profile = familyRoomService.validateMember(memberId, familyRoomId);
 
         LocalDate today = LocalDate.now(KST);
         LocalDate weekStart = normalizeToMonday(today);
@@ -88,6 +89,10 @@ public class MealPlanQueryService {
 
         ResolvedMaps resolved = resolveStoredRefs(familyRoomId, refKeys);
 
+        // 오늘 날짜의 00:00:00 ~ 23:59:59 설정
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
+
         List<GetMealPlanResDTO.TodayMealDTO> meals = storedRefsByMealType.entrySet().stream()
                 .map(e -> {
                     MealPlan.SlotRef ref = e.getValue();
@@ -97,6 +102,13 @@ public class MealPlanQueryService {
                     String title = (rr == null) ? "(레시피 정보를 불러올 수 없음)" : rr.title();
                     String ingredients = (rr == null) ? "" : rr.ingredients();
 
+                    // 🛠️ 리뷰 작성 여부 체크
+                    Boolean isReviewed = false;
+                    if (ref.id() != null && MealPlan.SlotRefType.RECIPE.equals(ref.type())) {
+                        isReviewed = reviewRepository.existsByFamilyMemberProfile_IdAndRecipe_IdAndCreateAtBetween(
+                                profile.getId(), ref.id(), startOfDay, endOfDay
+                        );
+                    }
                     return new GetMealPlanResDTO.TodayMealDTO(
                             e.getKey(),
                             toDtoSlotRefType(ref.type()),
@@ -104,7 +116,8 @@ public class MealPlanQueryService {
                             title,
                             rr == null ? null : rr.imageUrl(),
                             ingredients,
-                            rr == null || rr.recipeSteps() == null ? List.of() : rr.recipeSteps()
+                            rr == null || rr.recipeSteps() == null ? List.of() : rr.recipeSteps(),
+                            isReviewed
                     );
                 })
                 .toList();
