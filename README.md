@@ -136,6 +136,7 @@ AI 기반 맞춤형 식단 관리 플랫폼입니다.
  │   ├── 📁 recommendation   # 추천 관련 패키지
  │   ├── 📁 review           # 리뷰 관련 패키지
  │   └── 📁 search           # 인기 검색어 관련 패키지
+ │ 
  ├── 📁 global          # 공통 모듈
  │   ├── 📁 ai               # AI 연동 관련 패키지
  │   ├── 📁 apiPayload       # 공통 응답/에러/예외 처리 관련 패키지
@@ -144,6 +145,7 @@ AI 기반 맞춤형 식단 관리 플랫폼입니다.
  │   ├── 📁 external         # AWS S3 연동 관련 패키지
  │   ├── 📁 util             # 공통 유틸리티 관련 패키지
  │   └── 📄 BaseEntity.java  # 생성/수정 시간 자동 관리
+ │ 
  └── 📄 UrisikBackendApplication.java
 
 ```
