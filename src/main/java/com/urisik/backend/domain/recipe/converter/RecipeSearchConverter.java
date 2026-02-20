@@ -55,7 +55,7 @@ public class RecipeSearchConverter {
                 tr.getId().toString(),
                 "TRANSFORMED",
                 tr.getTitle(),
-                meta != null ? meta.getImageSmallUrl() : null,
+                tr != null ? tr.getImageUrl() : null,
                 meta != null ? meta.getCategory() : null,
                 tr.getAvgScore(),
                 tr.getReviewCount(),
