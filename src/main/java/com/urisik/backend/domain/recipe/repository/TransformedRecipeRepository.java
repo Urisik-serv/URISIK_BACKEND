@@ -8,8 +8,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface TransformedRecipeRepository extends JpaRepository<TransformedRecipe, Long> {
+
+    Optional<TransformedRecipe> findById(Long transformedRecipeId);
 
     @Query("""
     select tr

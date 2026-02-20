@@ -81,7 +81,7 @@ public class RecipeSearchService {
             Boolean safe = determineSafety(
                     familyRoomId,
                     RecipeTextParser.parseIngredients(
-                            tr.getBaseRecipe().getIngredientsRaw()
+                            tr.getIngredientsRaw()
                     )
             );
 

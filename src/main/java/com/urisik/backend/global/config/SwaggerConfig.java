@@ -31,7 +31,6 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .addServersItem(new Server().url("https://api.urisik.com"));
     }
-
     /*
      * 각 API 도메인 별로 그룹화하여 Swagger UI에 표시합니다.
      * */
