@@ -40,26 +40,44 @@ AI 기반 맞춤형 식단 관리 플랫폼입니다.
 
 ---
 
-## 🚀 Technical Highlights
-
-- 🤖 **AI 기반 레시피 변형 생성 및 식단 생성**
-  - 알레르기·중복 제한이 반영된 후보군 기반 생성 파이프라인 설계
+## 🚀 Technical Highlights                                                                                                                          
+- 🤖 **AI 기반 레시피 변형 생성 및 식단 생성**                                                     - 알레르기·중복 제한이 반영된 후보군 기반 생성 파이프라인 설계
   - 알레르기 위험 재료 탐지 → 대체 재료 추천 → 조리 단계 자동 변형 파이프라인 설계
   - 프롬프트 → AI 호출 → 파싱 → 도메인 검증 → fallback으로 이어지는 단계적 책임 분리 로직 설계
-    - JSON 스키마 강제 및 도메인 검증기 분리를 통한 안정적인 AI 응답 파싱
-    - AI 타임아웃 관리 및 명시적 예외 전파·fallback 로직 설계
+  - JSON 스키마 강제 및 도메인 검증기 분리를 통한 안정적인 AI 응답 파싱
+  - AI 타임아웃 관리 및 명시적 예외 전파·fallback 로직 설계
 
 - 🧵 **비동기 처리로 UX 개선**
   - 이미지 생성 등 비용 큰 작업을 `@Async`로 분리
   - 사용자 체감 응답 속도 개선
 
+- 🔍 **Elasticsearch + Nori 기반 검색 고도화**
+  - MySQL LIKE 검색에서 Elasticsearch 역색인 기반 검색으로 전환
+  - Nori 한국어 형태소 분석기 + Fuzzy 매칭으로 오타 보정 및 재료 기반 검색 지원
+  - ES 장애 시 MySQL fallback으로 서비스 가용성 유지
+
+- 🔒 **동시성 제어 및 데이터 정합성**
+   - SELECT ... FOR UPDATE로 리뷰/위시 동시 작성 시 MySQL Deadlock 해결
+   - DB atomic UPDATE + unique constraint로 Lost Update 및 중복 등록 방지
+   - k6 부하 테스트로 동시 100명 환경에서 정합성 검증 (성공률 15% → 100%)
+
+- ⚡ **Redis 캐싱 + Kafka 기반 캐시 무효화**
+   - 추천/인기검색어 등 7개 대상 Redis 캐싱 (응답 시간 76% 단축)
+   - Kafka 이벤트 기반 비동기 캐시 무효화로 API 응답에서 캐시 삭제 지연 제거
+   - TransactionSynchronization.afterCommit()으로 DB 커밋 후 이벤트 발행 보장
+
+- 🛡️**외부 API 장애 격리**
+   - Resilience4j Retry + CircuitBreaker로 식품안전나라 API 장애 시 핵심 검색 기능 보호
+   - RestTemplate 타임아웃 설정으로 스레드 무한 대기 방지
+
 - ☁️ **운영 환경 배포 자동화**
-  - Docker + GitHub Actions + Nginx 기반 CI/CD
- 
+   - Docker + GitHub Actions + Nginx 기반 CI/CD
+
 - 📊 **성능 측정 및 병목 분석 기반 개선**
-	- k6 기반 p95 기준 성능 측정
-	- stage / candidate / assign 로그 분리로 AI generation 병목 구조적 식별
-	- 프롬프트·후보군·temperature 최적화를 실험하고 코드 레벨에 반영
+   - k6 기반 p95 기준 성능 측정
+   - stage / candidate / assign 로그 분리로 AI generation 병목 구조적 식별
+   - 프롬프트·후보군·temperature 최적화를 실험하고 코드 레벨에 반영
+   - HikariCP 커넥션 풀 병목 식별 → 풀 사이즈 튜닝으로 처리량 38% 향상
  
 ---
 
@@ -82,12 +100,16 @@ AI 기반 맞춤형 식단 관리 플랫폼입니다.
   <img src="https://img.shields.io/badge/Spring Data JPA-6DB33F?style=flat-square&logo=hibernate&logoColor=white">
   <img src="https://img.shields.io/badge/Spring Security-6DB33F?style=flat-square&logo=springsecurity&logoColor=white">
   <img src="https://img.shields.io/badge/OAuth2-000000?style=flat-square&logo=oauth&logoColor=white">
+  <img src="https://img.shields.io/badge/Apache Kafka-231F20?style=flat-square&logo=apachekafka&logoColor=white">
+  <img src="https://img.shields.io/badge/Resilience4j-000000?style=flat-square&logo=resilience4j&logoColor=white">
 </div>
 
 ### 🗄 Database
 <div>
   <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white">
   <img src="https://img.shields.io/badge/Amazon RDS-527FFF?style=flat-square&logo=amazonrds&logoColor=white">
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white">
+  <img src="https://img.shields.io/badge/Elasticsearch-005571?style=flat-square&logo=elasticsearch&logoColor=white">
 </div>
 
 ### ☁ Cloud & Infrastructure
@@ -120,8 +142,6 @@ AI 기반 맞춤형 식단 관리 플랫폼입니다.
 ## 🏗 Architecture
 
 <img width="1536" height="1024" alt="ChatGPT Image 2026년 2월 12일 오후 08_09_04" src="https://github.com/user-attachments/assets/748d218a-d34b-4b85-90b0-dae1d4d094ec" />
-
-
 
 ---
 
@@ -161,6 +181,7 @@ AI 기반 맞춤형 식단 관리 플랫폼입니다.
  │   ├── 📁 auth             # 인증/인가 관련 패키지
  │   ├── 📁 config           # 공통 설정 정의 관련 패키지
  │   ├── 📁 external         # AWS S3 연동 관련 패키지
+ │   ├── 📁 kafka            # Kafka 이벤트 발행/소비 관련 패키지 
  │   ├── 📁 util             # 공통 유틸리티 관련 패키지
  │   └── 📄 BaseEntity.java  # 생성/수정 시간 자동 관리
  │ 
